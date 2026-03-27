@@ -11,13 +11,12 @@ baseurl: ""
 
 lang: zh-TW
 
-title: 工研院部落格
+title: 守夜人-桌遊社
 
 description: >
-  這是工研院的 GitHub Pages 網站，使用 Hydejack 主題建置，
-  分享技術觀點、研究內容與活動資訊。
+  這是工研院院內社團"守夜人-桌遊社"的單一通道網頁，供社員進行電子刊物了解以及最新活動等功能查閱。
 
-tagline: 科技觀點 × 研究分享
+tagline: 最新活動 × 電子報報 × 集錦花絮
 
 keywords:
   - 工研院
@@ -36,9 +35,9 @@ author:
 menu:
   - title: 首頁
     url: /
-  - title: 文章
+  - title: 電子報報
     url: /posts/
-  - title: 關於我
+  - title: 近期活動
     url: /about/
 
 legal:
