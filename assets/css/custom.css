@@ -125,7 +125,7 @@ code, pre, kbd, samp {
 .sidebar .site-title,
 .sidebar-sticky .site-title,
 .sidebar-about .site-title {
-  margin-top: 8px !important;
+  margin-top:-308px !important;
   margin-bottom: 8px !important;
 }
 
