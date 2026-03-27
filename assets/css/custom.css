@@ -1,8 +1,101 @@
 @font-face {
   font-family: "MyChineseFont";
   src: url("/assets/fonts/madoufmg.ttf") format("truetype");
+  font-display: swap;
 }
 
-body {
-  font-family: "MyChineseFont", "Noto Sans TC", sans-serif;
+/* ===== 全站基本內文 ===== */
+html, body {
+  font-family:
+    "MyChineseFont",
+    "Noto Sans TC",
+    "Microsoft JhengHei",
+    sans-serif !important;
+  line-height: 1.8;
+  letter-spacing: 0.03em;
+}
+
+/* ===== 所有標題 ===== */
+h1, h2, h3, h4, h5, h6 {
+  font-family:
+    "MyChineseFont",
+    "Noto Sans TC",
+    "Microsoft JhengHei",
+    sans-serif !important;
+  letter-spacing: 0.02em;
+}
+
+/* ===== 站名 / 側邊欄標題 / 副標 ===== */
+.sidebar-about h1,
+.sidebar-about h2,
+.sidebar-about h3,
+.sidebar-title,
+.sidebar-sticky .site-title,
+.sidebar-sticky .tagline,
+.sidebar .site-title,
+.sidebar .tagline {
+  font-family:
+    "MyChineseFont",
+    "Noto Sans TC",
+    "Microsoft JhengHei",
+    sans-serif !important;
+}
+
+/* ===== 側邊欄導覽 ===== */
+.sidebar-nav,
+.sidebar-nav-item,
+.nav-btn,
+.nav-btn-bar,
+.drawer-menu,
+.drawer-menu li,
+.drawer-menu a {
+  font-family:
+    "MyChineseFont",
+    "Noto Sans TC",
+    "Microsoft JhengHei",
+    sans-serif !important;
+}
+
+/* ===== 首頁文章標題 / 文章列表標題 ===== */
+.page-title,
+.post-title,
+.entry-title,
+.list-post-title,
+.home h1,
+.home h2,
+.home h3,
+article h1,
+article h2,
+article h3 {
+  font-family:
+    "MyChineseFont",
+    "Noto Sans TC",
+    "Microsoft JhengHei",
+    sans-serif !important;
+}
+
+/* ===== 副標、描述、meta資訊 ===== */
+.lead,
+.post-date,
+.page-description,
+.sidebar p,
+.site-subtitle,
+.tagline,
+small,
+figcaption {
+  font-family:
+    "MyChineseFont",
+    "Noto Sans TC",
+    "Microsoft JhengHei",
+    sans-serif !important;
+}
+
+/* ===== 英文如果你想另外指定字體，可改這裡 ===== */
+:lang(en) {
+  font-family: "Georgia", "Times New Roman", serif;
+}
+
+/* ===== 程式碼區塊 ===== */
+code, pre, kbd, samp {
+  font-family: "JetBrains Mono", "Consolas", monospace !important;
 }
