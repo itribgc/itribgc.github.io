@@ -4,6 +4,8 @@
   font-display: swap;
 }
 
+body {
+  font-family: "MyChineseFont", "Noto Sans TC", sans-serif;
 /* ===== 全站基本內文 ===== */
 html, body {
   font-family:
@@ -98,35 +100,4 @@ figcaption {
 /* ===== 程式碼區塊 ===== */
 code, pre, kbd, samp {
   font-family: "JetBrains Mono", "Consolas", monospace !important;
-}
-
-/* ===== Sidebar 垂直位置調整 ===== */
-.sidebar-sticky {
-  padding-top: 0 !important;
-}
-
-.sidebar-about {
-  margin-top: -50px !important;
-  padding-top: 0 !important;
-}
-
-/* ===== Logo 調整 ===== */
-.sidebar-about .avatar {
-  width: 120px !important;
-  height: auto !important;
-  margin-top: 0 !important;
-  margin-bottom: 10px !important;
-  display: block;
-}
-
-/* ===== 站名與副標距離 ===== */
-.sidebar-title {
-  margin-top: 8px !important;
-  margin-bottom: 8px !important;
-  display: block;
-}
-
-.sidebar-about p {
-  margin-top: 4px !important;
-  margin-bottom: 14px !important;
 }
