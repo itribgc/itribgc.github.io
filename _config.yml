@@ -65,7 +65,7 @@ theme: jekyll-theme-hydejack
 # Customization
 # ----------------------------------------------------------------------------------------
 
-accent_image: /assets/img/sidebar-bg.jpg
+accent_image: /assets/img/hone_img.png
 accent_color: rgb(79,177,186)
 theme_color: rgb(25,55,71)
 
@@ -246,7 +246,7 @@ jekyll_compose:
         A short ~160 character description of your post for search engines,
         social media previews, etc.
       image:
-        path: /assets/img/sidebar-bg.jpg
+        path: /assets/img/hone_img.png
 
     posts:
       layout: post
@@ -254,7 +254,7 @@ jekyll_compose:
         A short ~160 character description of your post for search engines,
         social media previews, etc.
       image:
-        path: /assets/img/sidebar-bg.jpg
+        path: /assets/img/hone_img.png
 
     projects:
       layout: project
@@ -262,7 +262,7 @@ jekyll_compose:
         A short ~160 character description of your post for search engines,
         social media previews, etc.
       image:
-        path: /assets/img/sidebar-bg.jpg
+        path: /assets/img/hone_img.png
       links:
         - title: Project Link
           url: https://example.com
