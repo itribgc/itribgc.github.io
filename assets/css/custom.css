@@ -1,0 +1,72 @@
+@font-face {
+  font-family: "MyChineseFont";
+  src: url("/assets/fonts/madoufmg.ttf") format("truetype");
+  font-display: swap;
+}
+
+/* 全站 */
+html, body,
+body * {
+  font-family:
+    "MyChineseFont",
+    "Noto Sans TC",
+    "Microsoft JhengHei",
+    sans-serif !important;
+}
+
+/* 主標題、副標題、文章標題 */
+h1, h2, h3, h4, h5, h6,
+.page-title,
+.post-title,
+.entry-title,
+.site-title,
+.sidebar-title,
+.tagline,
+.lead {
+  font-family:
+    "MyChineseFont",
+    "Noto Sans TC",
+    "Microsoft JhengHei",
+    sans-serif !important;
+}
+
+/* 左側欄全部 */
+.sidebar,
+.sidebar * {
+  font-family:
+    "MyChineseFont",
+    "Noto Sans TC",
+    "Microsoft JhengHei",
+    sans-serif !important;
+}
+
+/* 導覽列 */
+.nav-btn,
+.nav-btn-bar,
+.sidebar-nav,
+.sidebar-nav-item,
+.drawer-menu,
+.drawer-menu *,
+.menu,
+.menu * {
+  font-family:
+    "MyChineseFont",
+    "Noto Sans TC",
+    "Microsoft JhengHei",
+    sans-serif !important;
+}
+
+/* 文章內容區 */
+.content,
+.content * {
+  font-family:
+    "MyChineseFont",
+    "Noto Sans TC",
+    "Microsoft JhengHei",
+    sans-serif !important;
+}
+
+/* 程式碼區不要被一起改掉 */
+code, pre, kbd, samp {
+  font-family: "JetBrains Mono", "Consolas", monospace !important;
+}
