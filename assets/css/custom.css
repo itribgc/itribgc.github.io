@@ -1,0 +1,8 @@
+@font-face {
+  font-family: "MyChineseFont";
+  src: url("/assets/fonts/madoufmg.ttf") format("truetype");
+}
+
+body {
+  font-family: "MyChineseFont", "Noto Sans TC", sans-serif;
+}
