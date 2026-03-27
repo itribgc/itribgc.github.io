@@ -99,3 +99,49 @@ figcaption {
 code, pre, kbd, samp {
   font-family: "JetBrains Mono", "Consolas", monospace !important;
 }
+
+/* ===== Sidebar Logo 位置與大小調整 ===== */
+.sidebar .about img,
+.sidebar-about img,
+.sidebar .sidebar-about img,
+.sidebar .about .avatar,
+.sidebar-about .avatar {
+  width: 120px !important;
+  height: auto !important;
+  margin-top: -30px !important;
+  margin-bottom: 10px !important;
+  display: block;
+}
+
+/* ===== Sidebar 上方區塊整體往上收一點 ===== */
+.sidebar .about,
+.sidebar-about {
+  padding-top: 20px !important;
+}
+
+/* ===== 站名與 logo 距離微調 ===== */
+.sidebar .about h1,
+.sidebar .about h2,
+.sidebar .site-title,
+.sidebar-sticky .site-title,
+.sidebar-about .site-title {
+  margin-top: 8px !important;
+  margin-bottom: 8px !important;
+}
+
+/* ===== 副標與站名距離微調 ===== */
+.sidebar .tagline,
+.sidebar-sticky .tagline,
+.sidebar-about .tagline {
+  margin-top: 4px !important;
+  margin-bottom: 12px !important;
+  line-height: 1.6 !important;
+}
+
+/* ===== 側邊欄選單間距微調 ===== */
+.sidebar-nav-item,
+.drawer-menu li,
+.drawer-menu a {
+  margin-top: 4px !important;
+  margin-bottom: 4px !important;
+}
