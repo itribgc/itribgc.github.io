@@ -36,9 +36,11 @@ menu:
   - title: 首頁
     url: /
   - title: 電子報報
-    url: /posts/
+    url: /newsletter/
   - title: 近期活動
     url: /about/
+  - title: 歷史貼文
+    url: /posts/
 
 legal:
   - title: LICENSE
