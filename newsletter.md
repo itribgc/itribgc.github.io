@@ -48,14 +48,14 @@ description: 守夜人桌遊社電子報
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   const pageFlip = new St.PageFlip(document.getElementById("book"), {
-    width: 700,
-    height: 990,
+    width: 1600,
+    height: 2260,
 
     size: "stretch",
-    minWidth: 280,
-    maxWidth: 700,
-    minHeight: 396,
-    maxHeight: 990,
+    minWidth: 300,
+    maxWidth: 1600,
+    minHeight: 400,
+    maxHeight: 2260,
 
     showCover: true,
     usePortrait: true,
