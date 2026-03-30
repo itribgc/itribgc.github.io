@@ -31,18 +31,16 @@ description: 守夜人桌遊社電子報
   }
 
   #flipbook {
-  width: 920px;
-  height: 650px;
+  width: 1200px;
+  height: 850px;
   margin: 0 auto;
-  user-select: none;
-  -webkit-user-select: none;
   }
 
   #flipbook .page {
   background: white;
   overflow: hidden;
-  width: 460px;
-  height: 650px;
+  width: 600px;
+  height: 850px;
   position: relative;
   user-select: none;
   -webkit-user-select: none;
@@ -152,15 +150,15 @@ description: 守夜人桌遊社電子報
       }
 
       $("#flipbook").turn({
-        width: 920,
-        height: 650,
+        width: 1200,
+        height: 850,
         autoCenter: true,
         display: "double",
         gradients: true,
         elevation: 50,
         when: {
           turned: function(event, page) {
-            document.getElementById("page-num").textContent = "第 " + page + " 頁";
+            document.getElementById("page-num").textContent = "第 " + (page - 1) + " 頁";
           }
         }
       });
