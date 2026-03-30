@@ -11,6 +11,17 @@ description: 守夜人桌遊社電子報
     margin-bottom: 1rem;
   }
 
+  .flipbook-controls {
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+
+  .flipbook-controls button {
+    margin: 0 8px;
+    padding: 6px 14px;
+    cursor: pointer;
+  }
+
   .flipbook-wrap {
     width: 100%;
     overflow-x: auto;
@@ -50,6 +61,10 @@ description: 守夜人桌遊社電子報
       display: none;
     }
 
+    .flipbook-controls {
+      display: none;
+    }
+
     .mobile-tip {
       display: block;
     }
@@ -60,6 +75,12 @@ description: 守夜人桌遊社電子報
   <a href="/assets/newsletter/2025_05_08/2025-05~08.pdf" target="_blank" rel="noopener">
     開啟 PDF 原檔
   </a>
+</div>
+
+<div class="flipbook-controls">
+  <button id="prev-page">上一頁</button>
+  <span id="page-num">第 1 頁</span>
+  <button id="next-page">下一頁</button>
 </div>
 
 <div class="mobile-tip">
@@ -90,8 +111,6 @@ description: 守夜人桌遊社電子報
 
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
-
-        // 提高清晰度
         const scale = 2.0;
         const viewport = page.getViewport({ scale: scale });
 
@@ -106,7 +125,6 @@ description: 守夜人桌遊社電子報
           viewport: viewport
         }).promise;
 
-        // 轉成圖片給 turn.js 使用
         const imgData = canvas.toDataURL("image/png");
 
         const pageDiv = document.createElement("div");
@@ -120,7 +138,6 @@ description: 守夜人桌遊社電子報
         flipbook.appendChild(pageDiv);
       }
 
-      // 保險起見，先銷毀舊的
       if ($("#flipbook").data("turn")) {
         $("#flipbook").turn("destroy");
       }
@@ -132,7 +149,19 @@ description: 守夜人桌遊社電子報
         display: "double",
         gradients: true,
         elevation: 50,
-        pages: pdf.numPages
+        when: {
+          turned: function(event, page) {
+            document.getElementById("page-num").textContent = "第 " + page + " 頁";
+          }
+        }
+      });
+
+      document.getElementById("prev-page").addEventListener("click", function() {
+        $("#flipbook").turn("previous");
+      });
+
+      document.getElementById("next-page").addEventListener("click", function() {
+        $("#flipbook").turn("next");
       });
 
     } catch (err) {
