@@ -8,81 +8,108 @@ description: 守夜人桌遊社電子報
 <style>
   .flipbook-wrap {
     width: 100%;
+    overflow-x: auto;
     display: flex;
     justify-content: center;
-    align-items: flex-start;
     padding: 1rem 0 2rem;
-    overflow: hidden;
   }
 
-  #book {
+  #flipbook {
+    width: 900px;
+    height: 650px;
+  }
+
+  #flipbook .page {
+    background: white;
+  }
+
+  #flipbook canvas {
+    display: block;
     width: 100%;
-    max-width: 1000px;
-    margin: 0 auto;
+    height: 100%;
   }
 
-  /* 讓 StPageFlip 產生的父層也能置中 */
-  .stf__parent {
-    margin: 0 auto !important;
-  }
-
-  /* 避免頁面外面那層灰底看起來太擠 */
-  .content .page {
-    overflow: visible;
+  .pdf-actions {
+    text-align: center;
+    margin-bottom: 1rem;
   }
 
   @media (max-width: 768px) {
-    .flipbook-wrap {
-      padding: 0.5rem 0 1.5rem;
+    #flipbook {
+      width: 320px;
+      height: 460px;
     }
   }
 </style>
 
-<div class="flipbook-wrap">
-  <div id="book"></div>
+<div class="pdf-actions">
+  <a href="/assets/newsletter/2025_05_08/2025-05~08.pdf" target="_blank" rel="noopener">
+    開啟 PDF 原檔
+  </a>
 </div>
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/page-flip/dist/css/page-flip.css">
-<script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.min.js"></script>
+<div class="flipbook-wrap">
+  <div id="flipbook"></div>
+</div>
 
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-  const pageFlip = new St.PageFlip(document.getElementById("book"), {
-    width: 1600,
-    height: 2260,
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="/assets/vendor/turn.min.js"></script>
 
-    size: "stretch",
-    minWidth: 300,
-    maxWidth: 1600,
-    minHeight: 400,
-    maxHeight: 2260,
+<script type="module">
+  import * as pdfjsLib from "https://unpkg.com/pdfjs-dist@5.6.205/build/pdf.min.mjs";
 
-    showCover: true,
-    usePortrait: true,
-    autoSize: true,
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    "https://unpkg.com/pdfjs-dist@5.6.205/build/pdf.worker.min.mjs";
 
-    drawShadow: false,
-    maxShadowOpacity: 0.2,
+  const pdfUrl = "/assets/newsletter/2025_05_08/2025-05~08.pdf";
+  const flipbook = document.getElementById("flipbook");
 
-    mobileScrollSupport: false,
-    useMouseEvents: true
-  });
+  async function renderPdfToFlipbook() {
+    const loadingTask = pdfjsLib.getDocument(pdfUrl);
+    const pdf = await loadingTask.promise;
 
-  const pages = [
-    "/assets/newsletter/2025_05_08/p1.png",
-    "/assets/newsletter/2025_05_08/p2.png",
-    "/assets/newsletter/2025_05_08/p3.png",
-    "/assets/newsletter/2025_05_08/p4.png",
-    "/assets/newsletter/2025_05_08/p5.png",
-    "/assets/newsletter/2025_05_08/p6.png",
-    "/assets/newsletter/2025_05_08/p7.png",
-    "/assets/newsletter/2025_05_08/p8.png",
-    "/assets/newsletter/2025_05_08/p9.png",
-    "/assets/newsletter/2025_05_08/p10.png",
-    "/assets/newsletter/2025_05_08/p11.png",
-    "/assets/newsletter/2025_05_08/p12.png"
-  ];
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
 
-  pageFlip.loadFromImages(pages);
-});
+      // 提高 scale，讓文字更清楚
+      const scale = window.innerWidth < 768 ? 1.8 : 2.2;
+      const viewport = page.getViewport({ scale });
+
+      const pageDiv = document.createElement("div");
+      pageDiv.className = "page";
+
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
+
+      // HiDPI 支援
+      const outputScale = window.devicePixelRatio || 1;
+      canvas.width = Math.floor(viewport.width * outputScale);
+      canvas.height = Math.floor(viewport.height * outputScale);
+      canvas.style.width = `${Math.floor(viewport.width)}px`;
+      canvas.style.height = `${Math.floor(viewport.height)}px`;
+
+      const transform =
+        outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
+
+      pageDiv.appendChild(canvas);
+      flipbook.appendChild(pageDiv);
+
+      await page.render({
+        canvasContext: context,
+        viewport,
+        transform
+      }).promise;
+    }
+
+    $("#flipbook").turn({
+      width: window.innerWidth < 768 ? 320 : 900,
+      height: window.innerWidth < 768 ? 460 : 650,
+      autoCenter: true,
+      display: window.innerWidth < 768 ? "single" : "double",
+      gradients: true,
+      acceleration: true
+    });
+  }
+
+  renderPdfToFlipbook();
 </script>
