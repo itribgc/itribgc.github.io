@@ -2,13 +2,19 @@
 layout: page
 title: 電子報
 permalink: /newsletter/
-description: 守夜人桌遊社電子報 2025.05.08
+description: 守夜人桌遊社電子報
 ---
 
 <style>
   .pdf-actions {
     text-align: center;
     margin-bottom: 1rem;
+  }
+
+  .pdf-note {
+    font-size: 0.9rem;
+    color: #aaa;
+    margin-top: 6px;
   }
 
   .flipbook-controls {
@@ -24,7 +30,9 @@ description: 守夜人桌遊社電子報 2025.05.08
 
   .flipbook-wrap {
     width: 100%;
+    max-width: 100%;
     overflow-x: auto;
+    overflow-y: hidden;
     display: flex;
     justify-content: center;
     padding: 0.5rem 0 1.5rem;
@@ -60,12 +68,6 @@ description: 守夜人桌遊社電子報 2025.05.08
     margin: 1rem 0;
   }
 
-  .pdf-note {
-    font-size: 0.9rem;
-    color: #aaa;
-    margin-top: 6px;
-  }
-
   @media (max-width: 768px) {
     .flipbook-wrap {
       display: none;
@@ -86,7 +88,7 @@ description: 守夜人桌遊社電子報 2025.05.08
     開啟 PDF 原檔
   </a>
   <div class="pdf-note">
-    -- 若書本太小，可自行調整瀏覽器縮放大小(Ctrl + 滑鼠滾輪) --
+    -- 若書本太小，可自行調整瀏覽器縮放大小 --
   </div>
 </div>
 
@@ -116,15 +118,22 @@ description: 守夜人桌遊社電子報 2025.05.08
   const PAGE_RATIO = 850 / 600; // 單頁高 / 寬
   let resizeTimer = null;
 
-  function getFlipbookSize() {
+  function getAvailableWidth() {
     const wrap = document.querySelector(".flipbook-wrap");
-    const wrapWidth = wrap ? wrap.clientWidth : window.innerWidth;
+    if (!wrap) return 900;
 
-    // 保留安全邊界，避免整個衝出畫面
-    const safeWidth = Math.max(760, wrapWidth - 80);
+    const wrapRect = wrap.getBoundingClientRect();
+    const wrapWidth = wrapRect.width;
 
-    // 控制整本書寬度上下限
-    const bookWidth = Math.min(Math.max(safeWidth, 760), 1180);
+    // 保留左右安全邊界，避免貼太滿或爆版
+    return Math.max(760, wrapWidth - 40);
+  }
+
+  function getFlipbookSize() {
+    const availableWidth = getAvailableWidth();
+
+    // 整本書寬度：永遠限制在目前頁面可見區域內
+    const bookWidth = Math.min(availableWidth, 1100);
     const pageWidth = Math.floor(bookWidth / 2);
     const pageHeight = Math.floor(pageWidth * PAGE_RATIO);
 
