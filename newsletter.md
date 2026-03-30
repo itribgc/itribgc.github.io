@@ -27,11 +27,12 @@ description: 守夜人桌遊社電子報
     overflow-x: auto;
     display: flex;
     justify-content: center;
-    padding: 1rem 0 2rem;
+    padding: 0.5rem 0 1.5rem;
   }
 
   #flipbook {
     margin: 0 auto;
+    max-width: 100%;
   }
 
   #flipbook .page {
@@ -104,15 +105,51 @@ description: 守夜人桌遊社電子報
 
   const pdfUrl = "/assets/newsletter/2025_05_08/2025-05~08.pdf";
 
-  // 單頁原始比例：600 x 850
+  // 單頁比例：寬 600、高 850
   const PAGE_RATIO = 850 / 600;
 
-  function getFlipbookSize() {
-    // 抓右側主要內容區可用寬度
-    const contentWidth = Math.min(window.innerWidth - 520, 1400);
+  let resizeTimer = null;
 
-    // 設定整本書寬度上下限
-    const bookWidth = Math.max(760, Math.min(contentWidth, 1320));
+  function widenNewsletterLayout() {
+    // 只針對這個頁面把右側內容區撐寬
+    document.body.classList.add("newsletter-page");
+
+    const selectors = [
+      "main#_main",
+      "main.content",
+      "article.page",
+      ".content",
+      ".page-content",
+      ".post-content"
+    ];
+
+    selectors.forEach(selector => {
+      document.querySelectorAll(selector).forEach(el => {
+        el.style.maxWidth = "1700px";
+        el.style.width = "100%";
+      });
+    });
+  }
+
+  function getAvailableWidth() {
+    // 優先抓 flipbook 外層可用寬度
+    const wrap = document.querySelector(".flipbook-wrap");
+    if (wrap) {
+      const rect = wrap.getBoundingClientRect();
+      if (rect.width > 0) {
+        return rect.width - 40;
+      }
+    }
+
+    // 備援：直接用視窗寬度扣 sidebar / 邊界
+    return Math.max(760, window.innerWidth - 520);
+  }
+
+  function getFlipbookSize() {
+    const availableWidth = Math.min(getAvailableWidth(), 1500);
+
+    // 書本寬度上下限
+    const bookWidth = Math.max(760, Math.min(availableWidth, 1450));
     const pageWidth = Math.floor(bookWidth / 2);
     const pageHeight = Math.floor(pageWidth * PAGE_RATIO);
 
@@ -130,11 +167,14 @@ description: 守夜人桌遊社電子報
       const pdf = await loadingTask.promise;
       const flipbook = document.getElementById("flipbook");
 
+      if ($("#flipbook").data("turn")) {
+        $("#flipbook").turn("destroy");
+      }
+
       flipbook.innerHTML = "";
 
       const size = getFlipbookSize();
 
-      // 先把容器尺寸設好
       flipbook.style.width = size.bookWidth + "px";
       flipbook.style.height = size.bookHeight + "px";
 
@@ -171,10 +211,6 @@ description: 守夜人桌遊社電子報
         flipbook.appendChild(pageDiv);
       }
 
-      if ($("#flipbook").data("turn")) {
-        $("#flipbook").turn("destroy");
-      }
-
       $("#flipbook").turn({
         width: size.bookWidth,
         height: size.bookHeight,
@@ -204,9 +240,24 @@ description: 守夜人桌遊社電子報
     }
   }
 
-  document.addEventListener("DOMContentLoaded", function () {
+  function initNewsletter() {
+    widenNewsletterLayout();
+
     if (window.innerWidth > 768) {
       renderPdfToFlipbook();
     }
+  }
+
+  window.addEventListener("resize", function () {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if (window.innerWidth > 768) {
+        renderPdfToFlipbook();
+      }
+    }, 300);
+  });
+
+  document.addEventListener("DOMContentLoaded", function () {
+    initNewsletter();
   });
 </script>
