@@ -37,17 +37,21 @@ description: 守夜人桌遊社電子報
   }
 
   #flipbook .page {
-    background: white;
-    overflow: hidden;
-    width: 460px;
-    height: 650px;
+  background: white;
+  overflow: hidden;
+  width: 460px;
+  height: 650px;
+  position: relative;
   }
 
   #flipbook .page img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
   }
 
   .mobile-tip {
