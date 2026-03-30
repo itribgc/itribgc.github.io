@@ -28,12 +28,15 @@ description: 守夜人桌遊社電子報
   #flipbook .page {
     background: white;
     overflow: hidden;
+    width: 460px;
+    height: 650px;
   }
 
-  #flipbook canvas {
+  #flipbook .page img {
     display: block;
     width: 100%;
     height: 100%;
+    object-fit: contain;
   }
 
   .mobile-tip {
@@ -60,7 +63,7 @@ description: 守夜人桌遊社電子報
 </div>
 
 <div class="mobile-tip">
-  手機閱讀建議直接開啟上方 PDF，可放大查看內容。
+  手機閱讀建議直接點上方 PDF，可放大查看內容。
 </div>
 
 <div class="flipbook-wrap">
@@ -83,19 +86,14 @@ description: 守夜人桌遊社電子報
       const pdf = await loadingTask.promise;
       const flipbook = document.getElementById("flipbook");
 
-      // 先清空
       flipbook.innerHTML = "";
 
-      // 先 render 所有頁
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
 
-        // 桌機顯示比例
-        const scale = 1.5;
+        // 提高清晰度
+        const scale = 2.0;
         const viewport = page.getViewport({ scale: scale });
-
-        const pageDiv = document.createElement("div");
-        pageDiv.className = "page";
 
         const canvas = document.createElement("canvas");
         const context = canvas.getContext("2d");
@@ -103,26 +101,38 @@ description: 守夜人桌遊社電子報
         canvas.width = viewport.width;
         canvas.height = viewport.height;
 
-        pageDiv.style.width = "460px";
-        pageDiv.style.height = "650px";
-
-        pageDiv.appendChild(canvas);
-        flipbook.appendChild(pageDiv);
-
         await page.render({
           canvasContext: context,
           viewport: viewport
         }).promise;
+
+        // 轉成圖片給 turn.js 使用
+        const imgData = canvas.toDataURL("image/png");
+
+        const pageDiv = document.createElement("div");
+        pageDiv.className = "page";
+
+        const img = document.createElement("img");
+        img.src = imgData;
+        img.alt = "電子報第 " + i + " 頁";
+
+        pageDiv.appendChild(img);
+        flipbook.appendChild(pageDiv);
       }
 
-      // 所有頁畫完之後再初始化 turn.js
+      // 保險起見，先銷毀舊的
+      if ($("#flipbook").data("turn")) {
+        $("#flipbook").turn("destroy");
+      }
+
       $("#flipbook").turn({
         width: 920,
         height: 650,
         autoCenter: true,
         display: "double",
         gradients: true,
-        elevation: 50
+        elevation: 50,
+        pages: pdf.numPages
       });
 
     } catch (err) {
