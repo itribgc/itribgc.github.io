@@ -23,17 +23,19 @@ description: 守夜人桌遊社電子報
   }
 
   .flipbook-wrap {
-    width: 100%;
-    overflow-x: auto;
-    display: flex;
-    justify-content: center;
-    padding: 1rem 0 2rem;
+  width: 100%;
+  overflow: visible;
+  display: flex;
+  justify-content: center;
+  padding: 1rem 0 2rem;
   }
 
   #flipbook {
-    width: 920px;
-    height: 650px;
-    margin: 0 auto;
+  width: 920px;
+  height: 650px;
+  margin: 0 auto;
+  user-select: none;
+  -webkit-user-select: none;
   }
 
   #flipbook .page {
@@ -42,6 +44,8 @@ description: 守夜人桌遊社電子報
   width: 460px;
   height: 650px;
   position: relative;
+  user-select: none;
+  -webkit-user-select: none;
   }
 
   #flipbook .page img {
@@ -51,6 +55,7 @@ description: 守夜人桌遊社電子報
   object-fit: contain;
   pointer-events: none;
   user-select: none;
+  -webkit-user-select: none;
   -webkit-user-drag: none;
   }
 
