@@ -64,23 +64,23 @@ document.addEventListener("DOMContentLoaded", function () {
     drawShadow: false,
     maxShadowOpacity: 0.2,
 
-    mobileScrollSupport: true,
+    mobileScrollSupport: false,
     useMouseEvents: true
   });
 
   const pages = [
-    "/assets/newsletter/2025_05_08/p1.jpg",
-    "/assets/newsletter/2025_05_08/p2.jpg",
-    "/assets/newsletter/2025_05_08/p3.jpg",
-    "/assets/newsletter/2025_05_08/p4.jpg",
-    "/assets/newsletter/2025_05_08/p5.jpg",
-    "/assets/newsletter/2025_05_08/p6.jpg",
-    "/assets/newsletter/2025_05_08/p7.jpg",
-    "/assets/newsletter/2025_05_08/p8.jpg",
-    "/assets/newsletter/2025_05_08/p9.jpg",
-    "/assets/newsletter/2025_05_08/p10.jpg",
-    "/assets/newsletter/2025_05_08/p11.jpg",
-    "/assets/newsletter/2025_05_08/p12.jpg"
+    "/assets/newsletter/2025_05_08/p1.png",
+    "/assets/newsletter/2025_05_08/p2.png",
+    "/assets/newsletter/2025_05_08/p3.png",
+    "/assets/newsletter/2025_05_08/p4.png",
+    "/assets/newsletter/2025_05_08/p5.png",
+    "/assets/newsletter/2025_05_08/p6.png",
+    "/assets/newsletter/2025_05_08/p7.png",
+    "/assets/newsletter/2025_05_08/p8.png",
+    "/assets/newsletter/2025_05_08/p9.png",
+    "/assets/newsletter/2025_05_08/p10.png",
+    "/assets/newsletter/2025_05_08/p11.png",
+    "/assets/newsletter/2025_05_08/p12.png"
   ];
 
   pageFlip.loadFromImages(pages);
