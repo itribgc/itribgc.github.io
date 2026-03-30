@@ -2,7 +2,7 @@
 layout: page
 title: 電子報
 permalink: /newsletter/
-description: 守夜人桌遊社電子報
+description: 守夜人桌遊社電子報 2025.05.08
 ---
 
 <style>
@@ -60,6 +60,12 @@ description: 守夜人桌遊社電子報
     margin: 1rem 0;
   }
 
+  .pdf-note {
+    font-size: 0.9rem;
+    color: #aaa;
+    margin-top: 6px;
+  }
+
   @media (max-width: 768px) {
     .flipbook-wrap {
       display: none;
@@ -79,6 +85,9 @@ description: 守夜人桌遊社電子報
   <a href="/assets/newsletter/2025_05_08/2025-05~08.pdf" target="_blank" rel="noopener">
     開啟 PDF 原檔
   </a>
+  <div class="pdf-note">
+    -- 若書本太小，可自行調整瀏覽器縮放大小(Ctrl + 滑鼠滾輪) --
+  </div>
 </div>
 
 <div class="flipbook-controls">
