@@ -28,11 +28,11 @@ description: 守夜人桌遊社電子報
     display: flex;
     justify-content: center;
     padding: 0.5rem 0 1.5rem;
+    box-sizing: border-box;
   }
 
   #flipbook {
     margin: 0 auto;
-    max-width: 100%;
   }
 
   #flipbook .page {
@@ -104,52 +104,18 @@ description: 守夜人桌遊社電子報
     "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
 
   const pdfUrl = "/assets/newsletter/2025_05_08/2025-05~08.pdf";
-
-  // 單頁比例：寬 600、高 850
-  const PAGE_RATIO = 850 / 600;
-
+  const PAGE_RATIO = 850 / 600; // 單頁高 / 寬
   let resizeTimer = null;
 
-  function widenNewsletterLayout() {
-    // 只針對這個頁面把右側內容區撐寬
-    document.body.classList.add("newsletter-page");
-
-    const selectors = [
-      "main#_main",
-      "main.content",
-      "article.page",
-      ".content",
-      ".page-content",
-      ".post-content"
-    ];
-
-    selectors.forEach(selector => {
-      document.querySelectorAll(selector).forEach(el => {
-        el.style.maxWidth = "1700px";
-        el.style.width = "100%";
-      });
-    });
-  }
-
-  function getAvailableWidth() {
-    // 優先抓 flipbook 外層可用寬度
-    const wrap = document.querySelector(".flipbook-wrap");
-    if (wrap) {
-      const rect = wrap.getBoundingClientRect();
-      if (rect.width > 0) {
-        return rect.width - 40;
-      }
-    }
-
-    // 備援：直接用視窗寬度扣 sidebar / 邊界
-    return Math.max(760, window.innerWidth - 520);
-  }
-
   function getFlipbookSize() {
-    const availableWidth = Math.min(getAvailableWidth(), 1500);
+    const wrap = document.querySelector(".flipbook-wrap");
+    const wrapWidth = wrap ? wrap.clientWidth : window.innerWidth;
 
-    // 書本寬度上下限
-    const bookWidth = Math.max(760, Math.min(availableWidth, 1450));
+    // 保留安全邊界，避免整個衝出畫面
+    const safeWidth = Math.max(760, wrapWidth - 80);
+
+    // 控制整本書寬度上下限
+    const bookWidth = Math.min(Math.max(safeWidth, 760), 1180);
     const pageWidth = Math.floor(bookWidth / 2);
     const pageHeight = Math.floor(pageWidth * PAGE_RATIO);
 
@@ -180,9 +146,8 @@ description: 守夜人桌遊社電子報
 
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
-
         const scale = 2.0;
-        const viewport = page.getViewport({ scale: scale });
+        const viewport = page.getViewport({ scale });
 
         const canvas = document.createElement("canvas");
         const context = canvas.getContext("2d");
@@ -241,8 +206,6 @@ description: 守夜人桌遊社電子報
   }
 
   function initNewsletter() {
-    widenNewsletterLayout();
-
     if (window.innerWidth > 768) {
       renderPdfToFlipbook();
     }
