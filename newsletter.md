@@ -20,33 +20,36 @@ description: 守夜人桌遊社電子報
 
   const pdfUrl = "/assets/newsletter/2025_05_08/2025-05~08.pdf";
 
-  async function renderFirstPage() {
+  async function renderAllPages() {
     try {
       const loadingTask = pdfjsLib.getDocument(pdfUrl);
       const pdf = await loadingTask.promise;
-      const page = await pdf.getPage(1);
+      const container = document.getElementById("pdf-test");
 
-      const scale = 1.8;
-      const viewport = page.getViewport({ scale: scale });
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const scale = 1.6;
+        const viewport = page.getViewport({ scale: scale });
 
-      const canvas = document.createElement("canvas");
-      const context = canvas.getContext("2d");
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
 
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-      canvas.style.maxWidth = "100%";
-      canvas.style.height = "auto";
-      canvas.style.display = "block";
-      canvas.style.margin = "0 auto";
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        canvas.style.maxWidth = "100%";
+        canvas.style.height = "auto";
+        canvas.style.display = "block";
+        canvas.style.margin = "0 auto 24px";
 
-      document.getElementById("pdf-test").appendChild(canvas);
+        container.appendChild(canvas);
 
-      const renderContext = {
-        canvasContext: context,
-        viewport: viewport
-      };
+        const renderContext = {
+          canvasContext: context,
+          viewport: viewport
+        };
 
-      await page.render(renderContext).promise;
+        await page.render(renderContext).promise;
+      }
     } catch (err) {
       console.error("PDF render failed:", err);
       document.getElementById("pdf-test").innerHTML =
@@ -54,5 +57,5 @@ description: 守夜人桌遊社電子報
     }
   }
 
-  renderFirstPage();
+  renderAllPages();
 </script>
