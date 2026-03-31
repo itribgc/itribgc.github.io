@@ -35,7 +35,7 @@ description: 守夜人桌遊社電子報
     overflow-y: hidden;
     display: flex;
     justify-content: flex-start;
-    padding: 0.5rem 0 1.5rem 150px;
+    padding: 0.5rem 0 1.5rem 200px;
     box-sizing: border-box;
   }
 
