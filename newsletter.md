@@ -188,7 +188,7 @@ description: 守夜人桌遊社電子報 2025-05~08
         elevation: 50,
         when: {
           turned: function(event, page) {
-            document.getElementById("page-num").textContent = "第 " + page - 1 + " 頁";
+            document.getElementById("page-num").textContent = "第 " + (page - 1) + " 頁";
           }
         }
       });
