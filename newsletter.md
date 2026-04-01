@@ -79,6 +79,9 @@ description: 守夜人桌遊社電子報
   <a href="/assets/newsletter/2025_05_08/2025-05~08.pdf" target="_blank" rel="noopener">
     開啟 PDF 原檔
   </a>
+  <div class="pdf-note">
+    -- 若書本太小，可自行調整瀏覽器縮放大小 --
+  </div>
 </div>
 
 <div class="flipbook-controls">
@@ -185,7 +188,7 @@ description: 守夜人桌遊社電子報
         elevation: 50,
         when: {
           turned: function(event, page) {
-            document.getElementById("page-num").textContent = "第 " + page + " 頁";
+            document.getElementById("page-num").textContent = "第 " + page - 1 + " 頁";
           }
         }
       });
@@ -201,7 +204,7 @@ description: 守夜人桌遊社電子報
     } catch (err) {
       console.error("PDF render failed:", err);
       document.getElementById("flipbook").innerHTML =
-        "<p style='color:red; text-align:center;'>電子報載入失敗，請查看 Console。</p>";
+        "<p style='color:red; text-align:center;'>電子報載入失敗，請嘗試重新整理。</p>";
     }
   }
 
