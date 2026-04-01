@@ -2,7 +2,7 @@
 layout: page
 title: 電子報
 permalink: /newsletter/
-description: 守夜人桌遊社電子報
+description: 守夜人桌遊社電子報 2025-05~08
 ---
 
 <style>
