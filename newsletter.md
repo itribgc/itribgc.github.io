@@ -8,18 +8,12 @@ description: 守夜人桌遊社電子報
 <style>
   .pdf-actions {
     text-align: center;
-    margin: 0 0 0.5rem 0;
-  }
-
-  .pdf-note {
-    font-size: 0.9rem;
-    color: #aaa;
-    margin-top: 6px;
+    margin-bottom: 1rem;
   }
 
   .flipbook-controls {
     text-align: center;
-    margin: 0 0 1rem 0;
+    margin-bottom: 1rem;
   }
 
   .flipbook-controls button {
@@ -28,20 +22,17 @@ description: 守夜人桌遊社電子報
     cursor: pointer;
   }
 
-  /* 不要再用 padding-top 撐出大空白，只做水平微調 */
   .flipbook-wrap {
     width: 100%;
     overflow-x: auto;
-    overflow-y: hidden;
-    display: block;
-    padding: 0 0 1.5rem 0;
+    display: flex;
+    justify-content: center;
+    padding: 0.5rem 0 1.5rem;
     box-sizing: border-box;
   }
 
-  /* 整本書只往右微調，避開左側列表 */
   #flipbook {
-    margin: 0 0 0 48px;
-    max-width: none;
+    margin: 0 auto;
   }
 
   #flipbook .page {
@@ -81,10 +72,6 @@ description: 守夜人桌遊社電子報
     .mobile-tip {
       display: block;
     }
-
-    #flipbook {
-      margin-left: 0;
-    }
   }
 </style>
 
@@ -92,9 +79,6 @@ description: 守夜人桌遊社電子報
   <a href="/assets/newsletter/2025_05_08/2025-05~08.pdf" target="_blank" rel="noopener">
     開啟 PDF 原檔
   </a>
-  <div class="pdf-note">
-    -- 若書本太小，可自行調整瀏覽器縮放大小 --
-  </div>
 </div>
 
 <div class="flipbook-controls">
@@ -120,44 +104,18 @@ description: 守夜人桌遊社電子報
     "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
 
   const pdfUrl = "/assets/newsletter/2025_05_08/2025-05~08.pdf";
-  const PAGE_RATIO = 850 / 600;
+  const PAGE_RATIO = 850 / 600; // 單頁高 / 寬
   let resizeTimer = null;
 
-  function widenNewsletterLayout() {
-    document.body.classList.add("newsletter-page");
-
-    const selectors = [
-      "main#_main",
-      "main.content",
-      "article.page",
-      ".content",
-      ".page-content",
-      ".post-content"
-    ];
-
-    selectors.forEach(selector => {
-      document.querySelectorAll(selector).forEach(el => {
-        el.style.maxWidth = "1700px";
-        el.style.width = "100%";
-      });
-    });
-  }
-
-  function getAvailableWidth() {
-    const wrap = document.querySelector(".flipbook-wrap");
-    if (wrap) {
-      const rect = wrap.getBoundingClientRect();
-      if (rect.width > 0) {
-        return rect.width - 120;
-      }
-    }
-
-    return Math.max(760, window.innerWidth - 600);
-  }
-
   function getFlipbookSize() {
-    const availableWidth = Math.min(getAvailableWidth(), 1500);
-    const bookWidth = Math.max(760, Math.min(availableWidth, 1300));
+    const wrap = document.querySelector(".flipbook-wrap");
+    const wrapWidth = wrap ? wrap.clientWidth : window.innerWidth;
+
+    // 保留安全邊界，避免整個衝出畫面
+    const safeWidth = Math.max(760, wrapWidth - 80);
+
+    // 控制整本書寬度上下限
+    const bookWidth = Math.min(Math.max(safeWidth, 760), 1180);
     const pageWidth = Math.floor(bookWidth / 2);
     const pageHeight = Math.floor(pageWidth * PAGE_RATIO);
 
@@ -189,7 +147,7 @@ description: 守夜人桌遊社電子報
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const scale = 2.0;
-        const viewport = page.getViewport({ scale: scale });
+        const viewport = page.getViewport({ scale });
 
         const canvas = document.createElement("canvas");
         const context = canvas.getContext("2d");
@@ -207,7 +165,7 @@ description: 守夜人桌遊社電子報
         const pageDiv = document.createElement("div");
         pageDiv.className = "page";
         pageDiv.style.width = size.pageWidth + "px";
-        pageDiv.style.height = size.bookHeight + "px";
+        pageDiv.style.height = size.pageHeight + "px";
 
         const img = document.createElement("img");
         img.src = imgData;
@@ -221,7 +179,7 @@ description: 守夜人桌遊社電子報
       $("#flipbook").turn({
         width: size.bookWidth,
         height: size.bookHeight,
-        autoCenter: false,
+        autoCenter: true,
         display: "double",
         gradients: true,
         elevation: 50,
@@ -248,8 +206,6 @@ description: 守夜人桌遊社電子報
   }
 
   function initNewsletter() {
-    widenNewsletterLayout();
-
     if (window.innerWidth > 768) {
       renderPdfToFlipbook();
     }
