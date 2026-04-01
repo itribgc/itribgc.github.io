@@ -8,7 +8,7 @@ description: 守夜人桌遊社電子報
 <style>
   .pdf-actions {
     text-align: center;
-    margin-bottom: 1rem;
+    margin: 0 0 0.5rem 0;
   }
 
   .pdf-note {
@@ -19,7 +19,7 @@ description: 守夜人桌遊社電子報
 
   .flipbook-controls {
     text-align: center;
-    margin-bottom: 1rem;
+    margin: 0 0 1rem 0;
   }
 
   .flipbook-controls button {
@@ -28,20 +28,20 @@ description: 守夜人桌遊社電子報
     cursor: pointer;
   }
 
-  /* 保留原本可橫向捲動，但把書本起始位置往右挪 */
+  /* 不要再用 padding-top 撐出大空白，只做水平微調 */
   .flipbook-wrap {
     width: 100%;
     overflow-x: auto;
     overflow-y: hidden;
-    display: flex;
-    justify-content: flex-start;
-    padding: 0.5rem 0 1.5rem 350px;
+    display: block;
+    padding: 0 0 1.5rem 0;
     box-sizing: border-box;
   }
 
+  /* 整本書只往右微調，避開左側列表 */
   #flipbook {
-    margin: 0;
-    max-width: 100%;
+    margin: 0 0 0 48px;
+    max-width: none;
   }
 
   #flipbook .page {
@@ -81,6 +81,10 @@ description: 守夜人桌遊社電子報
     .mobile-tip {
       display: block;
     }
+
+    #flipbook {
+      margin-left: 0;
+    }
   }
 </style>
 
@@ -116,14 +120,10 @@ description: 守夜人桌遊社電子報
     "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
 
   const pdfUrl = "/assets/newsletter/2025_05_08/2025-05~08.pdf";
-
-  // 單頁比例：寬 600、高 850
   const PAGE_RATIO = 850 / 600;
-
   let resizeTimer = null;
 
   function widenNewsletterLayout() {
-    // 保留你原本的架構：只針對這個頁面把右側內容區撐寬
     document.body.classList.add("newsletter-page");
 
     const selectors = [
@@ -148,20 +148,16 @@ description: 守夜人桌遊社電子報
     if (wrap) {
       const rect = wrap.getBoundingClientRect();
       if (rect.width > 0) {
-        // 扣掉左側 padding，避免書本算太大後又壓回 sidebar
         return rect.width - 120;
       }
     }
 
-    // 備援：直接用視窗寬度扣 sidebar / 邊界
     return Math.max(760, window.innerWidth - 600);
   }
 
   function getFlipbookSize() {
     const availableWidth = Math.min(getAvailableWidth(), 1500);
-
-    // 書本寬度上下限
-    const bookWidth = Math.max(760, Math.min(availableWidth, 1350));
+    const bookWidth = Math.max(760, Math.min(availableWidth, 1300));
     const pageWidth = Math.floor(bookWidth / 2);
     const pageHeight = Math.floor(pageWidth * PAGE_RATIO);
 
@@ -192,7 +188,6 @@ description: 守夜人桌遊社電子報
 
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
-
         const scale = 2.0;
         const viewport = page.getViewport({ scale: scale });
 
@@ -212,7 +207,7 @@ description: 守夜人桌遊社電子報
         const pageDiv = document.createElement("div");
         pageDiv.className = "page";
         pageDiv.style.width = size.pageWidth + "px";
-        pageDiv.style.height = size.pageHeight + "px";
+        pageDiv.style.height = size.bookHeight + "px";
 
         const img = document.createElement("img");
         img.src = imgData;
