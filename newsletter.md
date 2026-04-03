@@ -2,13 +2,19 @@
 layout: page
 title: 電子報
 permalink: /newsletter/
-description: 守夜人桌遊社電子報 2025-05~08
+description: 守夜人桌遊社電子報
 ---
 
 <style>
   .pdf-actions {
     text-align: center;
     margin-bottom: 1rem;
+  }
+
+  .pdf-note {
+    font-size: 0.9rem;
+    color: #aaa;
+    margin-top: 6px;
   }
 
   .flipbook-controls {
@@ -22,17 +28,20 @@ description: 守夜人桌遊社電子報 2025-05~08
     cursor: pointer;
   }
 
+  /* 讓整本書往右移一點，避開左側 sidebar 視覺壓迫 */
   .flipbook-wrap {
     width: 100%;
+    max-width: 100%;
     overflow-x: auto;
+    overflow-y: hidden;
     display: flex;
-    justify-content: center;
-    padding: 0.5rem 0 1.5rem;
+    justify-content: flex-start;
+    padding: 0.5rem 0 1.5rem clamp(24px, 4vw, 72px);
     box-sizing: border-box;
   }
 
   #flipbook {
-    margin: 0 auto;
+    margin: 0;
   }
 
   #flipbook .page {
@@ -110,15 +119,24 @@ description: 守夜人桌遊社電子報 2025-05~08
   const PAGE_RATIO = 850 / 600; // 單頁高 / 寬
   let resizeTimer = null;
 
-  function getFlipbookSize() {
+  function getAvailableWidth() {
     const wrap = document.querySelector(".flipbook-wrap");
-    const wrapWidth = wrap ? wrap.clientWidth : window.innerWidth;
+    if (!wrap) return 900;
 
-    // 保留安全邊界，避免整個衝出畫面
-    const safeWidth = Math.max(760, wrapWidth - 80);
+    const wrapRect = wrap.getBoundingClientRect();
+    const wrapStyle = window.getComputedStyle(wrap);
+    const paddingLeft = parseFloat(wrapStyle.paddingLeft) || 0;
+    const paddingRight = parseFloat(wrapStyle.paddingRight) || 0;
 
-    // 控制整本書寬度上下限
-    const bookWidth = Math.min(Math.max(safeWidth, 760), 1180);
+    // 扣掉左右 padding，避免書本算太大
+    return Math.max(760, wrapRect.width - paddingLeft - paddingRight - 24);
+  }
+
+  function getFlipbookSize() {
+    const availableWidth = getAvailableWidth();
+
+    // 書本寬度限制在可見範圍內，不再硬撐太大
+    const bookWidth = Math.min(availableWidth, 1080);
     const pageWidth = Math.floor(bookWidth / 2);
     const pageHeight = Math.floor(pageWidth * PAGE_RATIO);
 
@@ -182,13 +200,13 @@ description: 守夜人桌遊社電子報 2025-05~08
       $("#flipbook").turn({
         width: size.bookWidth,
         height: size.bookHeight,
-        autoCenter: true,
+        autoCenter: false,
         display: "double",
         gradients: true,
         elevation: 50,
         when: {
           turned: function(event, page) {
-            document.getElementById("page-num").textContent = "第 " + (page - 1) + " 頁";
+            document.getElementById("page-num").textContent = "第 " + page + " 頁";
           }
         }
       });
@@ -204,7 +222,7 @@ description: 守夜人桌遊社電子報 2025-05~08
     } catch (err) {
       console.error("PDF render failed:", err);
       document.getElementById("flipbook").innerHTML =
-        "<p style='color:red; text-align:center;'>電子報載入失敗，請嘗試重新整理。</p>";
+        "<p style='color:red; text-align:center;'>電子報載入失敗，請查看 Console。</p>";
     }
   }
 
