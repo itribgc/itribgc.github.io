@@ -49,7 +49,7 @@ description: 守夜人桌遊社電子報總覽
     <p>活動回顧、桌遊競賽、名人專欄、守夜人天地</p>
   </a>
 
-  <a class="newsletter-card" href="/newsletter-2025-09-12/">
+  <a class="newsletter-card" href="/newsletter-2025-03+04/">
     <h2>2025 年 03+04 月</h2>
     <p>點擊進入閱讀本期電子報</p>
   </a>
