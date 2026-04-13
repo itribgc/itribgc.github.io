@@ -132,6 +132,12 @@ description: 守夜人桌遊社電子報 2025.05.08
     animation: desktopPageFlipPrev 0.55s ease forwards;
   }
 
+  @media (min-width: 769px) {
+    .mobile-controls {
+      display: none;
+    }
+  }
+  
   @keyframes desktopPageFlipNext {
     0% {
       transform: rotateY(0deg);
@@ -347,12 +353,45 @@ description: 守夜人桌遊社電子報 2025.05.08
     return `<img src="${imgSrc}" alt="${altText}">`;
   }
 
-  function updateDesktopPageText(startPage) {
-    document.getElementById("page-num-desktop").textContent = "第 " + (startPage - 1) + " 頁";
+  async function updateDesktopPageText(startPage) {
+    const pdf = await getPdfDoc();
+
+    if (startPage === 1) {
+      document.getElementById("page-num-desktop").textContent = "第 0 頁";
+      return;
+    }
+
+    const left = startPage;
+    const right = startPage + 1;
+
+    if (right > pdf.numPages) {
+      document.getElementById("page-num-desktop").textContent =
+        "第 " + left + " 頁";
+    } else {
+      document.getElementById("page-num-desktop").textContent =
+        "第 " + left + "–" + right + " 頁";
+    }
   }
 
-  function updateMobilePageText(pageNumber) {
-    document.getElementById("page-num-mobile").textContent = "第 " + (pageNumber - 1) + " 頁";
+  async function updateMobilePageText(pageNumber) {
+    const pdf = await getPdfDoc();
+    const pageText = document.getElementById("page-num-mobile");
+
+    // 封面（第1頁）
+    if (pageNumber === 1) {
+      pageText.textContent = "第 0 頁";
+      return;
+    }
+
+    const left = pageNumber;
+    const right = pageNumber + 1;
+
+    // 最後一頁（避免超過總頁數）
+    if (right > pdf.numPages) {
+      pageText.textContent = "第 " + left + " 頁";
+    } else {
+      pageText.textContent = "第 " + left + "–" + right + " 頁";
+    }
   }
 
   async function getDesktopSpreadImages(startPage) {
@@ -538,7 +577,7 @@ description: 守夜人桌遊社電子報 2025.05.08
     if (pageNumber < 1 || pageNumber > pdf.numPages) return;
 
     mobileCurrentPage = pageNumber;
-    updateMobilePageText(pageNumber);
+    await updateMobilePageText(pageNumber);
 
     const stage = document.getElementById("mobile-reader-stage");
     stage.innerHTML = '<div class="mobile-loading">載入中...</div>';
