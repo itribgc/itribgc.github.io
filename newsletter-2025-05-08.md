@@ -137,7 +137,7 @@ description: 守夜人桌遊社電子報 2025.05.08
       display: none;
     }
   }
-  
+
   @keyframes desktopPageFlipNext {
     0% {
       transform: rotateY(0deg);
@@ -298,10 +298,9 @@ description: 守夜人桌遊社電子報 2025.05.08
 
   let mobileCurrentPage = 1;
 
-  // 桌機以「右頁頁碼」為主：
   // 1 => [封面, 空白]
-  // 2 => [2,3]
-  // 4 => [4,5]
+  // 2 => [PDF第2頁, PDF第3頁] => 顯示第1–2頁
+  // 4 => [PDF第4頁, PDF第5頁] => 顯示第3–4頁
   let desktopSpreadStart = 1;
   let desktopAnimating = false;
 
@@ -355,43 +354,32 @@ description: 守夜人桌遊社電子報 2025.05.08
 
   async function updateDesktopPageText(startPage) {
     const pdf = await getPdfDoc();
+    const pageText = document.getElementById("page-num-desktop");
 
+    // 封面
     if (startPage === 1) {
-      document.getElementById("page-num-desktop").textContent = "第 0 頁";
-      return;
-    }
-
-    const left = startPage;
-    const right = startPage + 1;
-
-    if (right > pdf.numPages) {
-      document.getElementById("page-num-desktop").textContent =
-        "第 " + left + " 頁";
-    } else {
-      document.getElementById("page-num-desktop").textContent =
-        "第 " + left + "–" + right + " 頁";
-    }
-  }
-
-  async function updateMobilePageText(pageNumber) {
-    const pdf = await getPdfDoc();
-    const pageText = document.getElementById("page-num-mobile");
-
-    // 封面（第1頁）
-    if (pageNumber === 1) {
       pageText.textContent = "第 0 頁";
       return;
     }
 
-    const left = pageNumber;
-    const right = pageNumber + 1;
+    // 以顯示頁碼 = PDF頁碼 - 1
+    const left = startPage - 1;
+    const rightPdfPage = startPage + 1;
 
-    // 最後一頁（避免超過總頁數）
-    if (right > pdf.numPages) {
+    if (rightPdfPage > pdf.numPages) {
       pageText.textContent = "第 " + left + " 頁";
     } else {
+      const right = rightPdfPage - 1;
       pageText.textContent = "第 " + left + "–" + right + " 頁";
     }
+  }
+
+  async function updateMobilePageText(pageNumber) {
+    const pageText = document.getElementById("page-num-mobile");
+
+    // 手機是單頁，所以只顯示單頁頁碼
+    // 封面 PDF第1頁 => 第0頁
+    pageText.textContent = "第 " + (pageNumber - 1) + " 頁";
   }
 
   async function getDesktopSpreadImages(startPage) {
@@ -440,7 +428,7 @@ description: 守夜人桌遊社電子報 2025.05.08
     );
 
     desktopSpreadStart = startPage;
-    updateDesktopPageText(startPage);
+    await updateDesktopPageText(startPage);
     preloadDesktopNeighbors(startPage);
   }
 
@@ -492,7 +480,6 @@ description: 守夜人桌遊社電子報 2025.05.08
     const currentSpread = await getDesktopSpreadImages(desktopSpreadStart);
     const overlay = document.getElementById("desktop-flip-next");
 
-    // 模擬右頁翻過去
     overlay.innerHTML = buildDesktopPageContent(
       currentSpread.rightImg || currentSpread.leftImg,
       "翻頁動畫"
@@ -527,7 +514,6 @@ description: 守夜人桌遊社電子報 2025.05.08
     const currentSpread = await getDesktopSpreadImages(desktopSpreadStart);
     const overlay = document.getElementById("desktop-flip-prev");
 
-    // 模擬左頁往右翻回去
     overlay.innerHTML = buildDesktopPageContent(
       currentSpread.leftImg,
       "翻頁動畫"
