@@ -1,7 +1,7 @@
 ---
 layout: page
 title: 電子報
-permalink: /newsletter/
+permalink: /newsletter-2025-05-08/
 description: 守夜人桌遊社電子報
 ---
 
