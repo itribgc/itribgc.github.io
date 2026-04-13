@@ -30,81 +30,75 @@ description: 守夜人桌遊社電子報
 
   .flipbook-wrap {
     width: 100%;
-    overflow-x: auto;
     display: flex;
     justify-content: center;
     padding: 1rem 0 2rem;
-    box-sizing: border-box;
   }
 
   #flipbook {
-    margin: 0 auto;
+    width: 920px;
+    height: 650px;
   }
 
   #flipbook .page {
     background: white;
-    overflow: hidden;
+    width: 460px;
+    height: 650px;
   }
 
   #flipbook .page img {
-    display: block;
     width: 100%;
     height: 100%;
     object-fit: contain;
-    pointer-events: none;
-    user-select: none;
-    -webkit-user-select: none;
-    -webkit-user-drag: none;
   }
 
-  .mobile-tip {
+  /* 手機閱讀模式 */
+  .mobile-reader {
     display: none;
-    text-align: center;
-    margin: 1rem 0;
+    padding: 0 10px;
+  }
+
+  .mobile-reader img {
+    width: 100%;
+    height: auto;
+    margin-bottom: 12px;
   }
 
   @media (max-width: 768px) {
-    .flipbook-wrap {
-      padding: 0.5rem 0 1rem;
-    }
 
+    .flipbook-wrap,
     .flipbook-controls {
-      margin-bottom: 0.75rem;
+      display: none;
     }
 
-    .flipbook-controls button {
-      padding: 6px 10px;
-      margin: 0 4px;
-      font-size: 0.95rem;
-    }
-
-    .pdf-note {
-      font-size: 0.8rem;
-      line-height: 1.5;
-      padding: 0 12px;
-    }
-
-    .mobile-tip {
+    .mobile-reader {
       display: block;
     }
   }
 </style>
 
 <div class="pdf-actions">
-  <a href="/assets/newsletter/2025_05_08/2025-05~08.pdf" target="_blank" rel="noopener">
+  <a href="/assets/newsletter/2025_05_08/2025-05~08.pdf" target="_blank">
     開啟 PDF 原檔
   </a>
+  <div class="pdf-note">
+    若電子書文字過小，可自行調整網頁縮放查看
+  </div>
 </div>
 
 <div class="flipbook-controls">
   <button id="prev-page">上一頁</button>
-  <span id="page-num">第 0 頁</span>
+  <span id="page-num">第 1 頁</span>
   <button id="next-page">下一頁</button>
 </div>
 
+<!-- 桌機 flipbook -->
 <div class="flipbook-wrap">
   <div id="flipbook"></div>
 </div>
+
+<!-- 手機閱讀模式 -->
+<div class="mobile-reader" id="mobile-reader"></div>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="/assets/vendor/turn.min.js"></script>
@@ -115,117 +109,88 @@ description: 守夜人桌遊社電子報
     "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
 
   const pdfUrl = "/assets/newsletter/2025_05_08/2025-05~08.pdf";
-  let resizeTimer = null;
 
-  function getBookConfig() {
-    const isMobile = window.innerWidth <= 768;
+  async function renderDesktop(pdf) {
+    const flipbook = document.getElementById("flipbook");
+    flipbook.innerHTML = "";
 
-    if (isMobile) {
-      return {
-        width: 320,
-        height: 453,
-        pageWidth: 320,
-        pageHeight: 453,
-        display: "single"
-      };
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const viewport = page.getViewport({ scale: 2 });
+
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+
+      await page.render({
+        canvasContext: ctx,
+        viewport: viewport
+      }).promise;
+
+      const img = document.createElement("img");
+      img.src = canvas.toDataURL();
+
+      const div = document.createElement("div");
+      div.className = "page";
+      div.appendChild(img);
+
+      flipbook.appendChild(div);
     }
 
-    return {
+    $("#flipbook").turn({
       width: 920,
       height: 650,
-      pageWidth: 460,
-      pageHeight: 650,
-      display: "double"
+      display: "double",
+      autoCenter: true
+    });
+
+    document.getElementById("prev-page").onclick = () => {
+      $("#flipbook").turn("previous");
+    };
+
+    document.getElementById("next-page").onclick = () => {
+      $("#flipbook").turn("next");
     };
   }
 
-  async function renderPdfToFlipbook() {
-    try {
-      const loadingTask = pdfjsLib.getDocument(pdfUrl);
-      const pdf = await loadingTask.promise;
-      const flipbook = document.getElementById("flipbook");
-      const config = getBookConfig();
+  async function renderMobile(pdf) {
+    const container = document.getElementById("mobile-reader");
+    container.innerHTML = "";
 
-      if ($("#flipbook").data("turn")) {
-        $("#flipbook").turn("destroy");
-      }
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const viewport = page.getViewport({ scale: 2 });
 
-      flipbook.innerHTML = "";
-      flipbook.style.width = config.width + "px";
-      flipbook.style.height = config.height + "px";
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
 
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
 
-        const scale = window.innerWidth <= 768 ? 1.5 : 2.0;
-        const viewport = page.getViewport({ scale: scale });
+      await page.render({
+        canvasContext: ctx,
+        viewport: viewport
+      }).promise;
 
-        const canvas = document.createElement("canvas");
-        const context = canvas.getContext("2d");
+      const img = document.createElement("img");
+      img.src = canvas.toDataURL();
 
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-
-        await page.render({
-          canvasContext: context,
-          viewport: viewport
-        }).promise;
-
-        const imgData = canvas.toDataURL("image/png");
-
-        const pageDiv = document.createElement("div");
-        pageDiv.className = "page";
-        pageDiv.style.width = config.pageWidth + "px";
-        pageDiv.style.height = config.pageHeight + "px";
-
-        const img = document.createElement("img");
-        img.src = imgData;
-        img.alt = "電子報第 " + i + " 頁";
-        img.draggable = false;
-
-        pageDiv.appendChild(img);
-        flipbook.appendChild(pageDiv);
-      }
-
-      $("#flipbook").turn({
-        width: config.width,
-        height: config.height,
-        autoCenter: true,
-        display: config.display,
-        gradients: true,
-        elevation: 50,
-        when: {
-          turned: function(event, page) {
-            document.getElementById("page-num").textContent = "第 " + (page - 1) + " 頁";
-          }
-        }
-      });
-
-      document.getElementById("page-num").textContent = "第 0 頁";
-
-      document.getElementById("prev-page").onclick = function() {
-        $("#flipbook").turn("previous");
-      };
-
-      document.getElementById("next-page").onclick = function() {
-        $("#flipbook").turn("next");
-      };
-
-    } catch (err) {
-      console.error("PDF render failed:", err);
-      document.getElementById("flipbook").innerHTML =
-        "<p style='color:red; text-align:center;'>電子報載入失敗，請查看 Console。</p>";
+      container.appendChild(img);
     }
   }
 
-  document.addEventListener("DOMContentLoaded", function () {
-    renderPdfToFlipbook();
-  });
+  async function init() {
+    const loadingTask = pdfjsLib.getDocument(pdfUrl);
+    const pdf = await loadingTask.promise;
 
-  window.addEventListener("resize", function () {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => {
-      renderPdfToFlipbook();
-    }, 300);
-  });
+    if (window.innerWidth <= 768) {
+      renderMobile(pdf);
+    } else {
+      renderDesktop(pdf);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", init);
 </script>
