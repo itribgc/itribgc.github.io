@@ -30,36 +30,131 @@ description: 守夜人桌遊社電子報 2025.05.08
     cursor: pointer;
   }
 
-  .flipbook-wrap {
+  /* ===== 桌機雙頁閱讀器 ===== */
+  .desktop-reader-wrap {
+    display: block;
     width: 100%;
-    overflow-x: auto;
-    display: flex;
-    justify-content: center;
     padding: 1rem 0 2rem;
     box-sizing: border-box;
   }
 
-  #flipbook {
-    width: 920px;
-    height: 650px;
+  .desktop-book {
+    width: min(1100px, 100%);
     margin: 0 auto;
+    display: flex;
+    justify-content: center;
   }
 
-  #flipbook .page {
+  .desktop-book-spread {
+    display: flex;
+    width: min(980px, 100%);
+    aspect-ratio: 2 / 1.42;
+    background: transparent;
+    gap: 0;
+    position: relative;
+    perspective: 1800px;
+  }
+
+  .desktop-page {
+    width: 50%;
+    height: 100%;
     background: white;
     overflow: hidden;
-    width: 460px;
-    height: 650px;
+    position: relative;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.12);
   }
 
-  #flipbook .page img {
+  .desktop-page img {
     display: block;
     width: 100%;
     height: 100%;
     object-fit: contain;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-user-drag: none;
+    pointer-events: none;
   }
 
-  /* 手機單頁閱讀器 */
+  .desktop-page-empty {
+    width: 100%;
+    height: 100%;
+    background: white;
+  }
+
+  .desktop-page.left {
+    border-right: 1px solid rgba(0,0,0,0.08);
+  }
+
+  .desktop-page.right {
+    border-left: 1px solid rgba(0,0,0,0.05);
+  }
+
+  /* 翻頁動畫層 */
+  .desktop-flip-overlay {
+    position: absolute;
+    top: 0;
+    width: 50%;
+    height: 100%;
+    transform-style: preserve-3d;
+    pointer-events: none;
+    z-index: 20;
+    display: none;
+  }
+
+  .desktop-flip-overlay img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: white;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  }
+
+  .desktop-flip-overlay.flip-next {
+    right: 0;
+    transform-origin: left center;
+  }
+
+  .desktop-flip-overlay.flip-prev {
+    left: 0;
+    transform-origin: right center;
+  }
+
+  .desktop-flip-overlay.animating-next {
+    display: block;
+    animation: desktopPageFlipNext 0.55s ease forwards;
+  }
+
+  .desktop-flip-overlay.animating-prev {
+    display: block;
+    animation: desktopPageFlipPrev 0.55s ease forwards;
+  }
+
+  @keyframes desktopPageFlipNext {
+    0% {
+      transform: rotateY(0deg);
+      opacity: 1;
+    }
+    100% {
+      transform: rotateY(-180deg);
+      opacity: 0.98;
+    }
+  }
+
+  @keyframes desktopPageFlipPrev {
+    0% {
+      transform: rotateY(0deg);
+      opacity: 1;
+    }
+    100% {
+      transform: rotateY(180deg);
+      opacity: 0.98;
+    }
+  }
+
+  /* ===== 手機單頁閱讀器 ===== */
   .mobile-reader-wrap {
     display: none;
     width: 100%;
@@ -113,7 +208,7 @@ description: 守夜人桌遊社電子報 2025.05.08
   }
 
   @media (max-width: 768px) {
-    .flipbook-wrap,
+    .desktop-reader-wrap,
     .desktop-controls {
       display: none;
     }
@@ -162,9 +257,17 @@ description: 守夜人桌遊社電子報 2025.05.08
   手機版可左右滑動切頁；若文字過小，可直接使用瀏覽器縮放查看。
 </div>
 
-<!-- 桌機 flipbook -->
-<div class="flipbook-wrap">
-  <div id="flipbook"></div>
+<!-- 桌機雙頁閱讀器 -->
+<div class="desktop-reader-wrap">
+  <div class="desktop-book">
+    <div class="desktop-book-spread" id="desktop-book-spread">
+      <div class="desktop-page left" id="desktop-left-page"></div>
+      <div class="desktop-page right" id="desktop-right-page"></div>
+
+      <div class="desktop-flip-overlay flip-next" id="desktop-flip-next"></div>
+      <div class="desktop-flip-overlay flip-prev" id="desktop-flip-prev"></div>
+    </div>
+  </div>
 </div>
 
 <!-- 手機單頁閱讀器 -->
@@ -176,8 +279,6 @@ description: 守夜人桌遊社電子報 2025.05.08
   </div>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="/assets/vendor/turn.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 
 <script>
@@ -188,8 +289,15 @@ description: 守夜人桌遊社電子報 2025.05.08
 
   let pdfDoc = null;
   let pageCache = new Map();
+
   let mobileCurrentPage = 1;
-  let desktopInitialized = false;
+
+  // 桌機以「右頁頁碼」為主：
+  // 1 => [封面, 空白]
+  // 2 => [2,3]
+  // 4 => [4,5]
+  let desktopSpreadStart = 1;
+  let desktopAnimating = false;
 
   function isMobileView() {
     return window.innerWidth <= 768;
@@ -209,6 +317,10 @@ description: 守夜人桌遊社電子報 2025.05.08
     }
 
     const pdf = await getPdfDoc();
+    if (pageNumber < 1 || pageNumber > pdf.numPages) {
+      return null;
+    }
+
     const page = await pdf.getPage(pageNumber);
     const viewport = page.getViewport({ scale });
 
@@ -228,6 +340,184 @@ description: 守夜人桌遊社電子報 2025.05.08
     return dataUrl;
   }
 
+  function buildDesktopPageContent(imgSrc, altText) {
+    if (!imgSrc) {
+      return '<div class="desktop-page-empty"></div>';
+    }
+    return `<img src="${imgSrc}" alt="${altText}">`;
+  }
+
+  function updateDesktopPageText(startPage) {
+    document.getElementById("page-num-desktop").textContent = "第 " + (startPage - 1) + " 頁";
+  }
+
+  function updateMobilePageText(pageNumber) {
+    document.getElementById("page-num-mobile").textContent = "第 " + (pageNumber - 1) + " 頁";
+  }
+
+  async function getDesktopSpreadImages(startPage) {
+    const pdf = await getPdfDoc();
+
+    if (startPage === 1) {
+      const cover = await renderPageToDataUrl(1, 2.0);
+      return {
+        leftImg: cover,
+        leftPageNum: 1,
+        rightImg: null,
+        rightPageNum: null
+      };
+    }
+
+    const leftPageNum = startPage;
+    const rightPageNum = startPage + 1 <= pdf.numPages ? startPage + 1 : null;
+
+    const [leftImg, rightImg] = await Promise.all([
+      renderPageToDataUrl(leftPageNum, 2.0),
+      rightPageNum ? renderPageToDataUrl(rightPageNum, 2.0) : Promise.resolve(null)
+    ]);
+
+    return {
+      leftImg,
+      leftPageNum,
+      rightImg,
+      rightPageNum
+    };
+  }
+
+  async function renderDesktopSpread(startPage) {
+    const spread = await getDesktopSpreadImages(startPage);
+
+    const left = document.getElementById("desktop-left-page");
+    const right = document.getElementById("desktop-right-page");
+
+    left.innerHTML = buildDesktopPageContent(
+      spread.leftImg,
+      spread.leftPageNum ? `電子報第 ${spread.leftPageNum} 頁` : ""
+    );
+
+    right.innerHTML = buildDesktopPageContent(
+      spread.rightImg,
+      spread.rightPageNum ? `電子報第 ${spread.rightPageNum} 頁` : ""
+    );
+
+    desktopSpreadStart = startPage;
+    updateDesktopPageText(startPage);
+    preloadDesktopNeighbors(startPage);
+  }
+
+  async function preloadDesktopNeighbors(startPage) {
+    const pdf = await getPdfDoc();
+    const targets = [];
+
+    if (startPage === 1) {
+      if (pdf.numPages >= 2) {
+        targets.push(2, 3);
+      }
+    } else {
+      const prevStart = startPage === 2 ? 1 : startPage - 2;
+      const nextStart = startPage + 2;
+
+      targets.push(prevStart);
+      targets.push(prevStart + 1);
+      targets.push(nextStart);
+      targets.push(nextStart + 1);
+    }
+
+    targets.forEach(async (p) => {
+      if (p >= 1 && p <= pdf.numPages) {
+        try {
+          await renderPageToDataUrl(p, 2.0);
+        } catch (e) {
+          console.warn("Desktop preload failed:", p, e);
+        }
+      }
+    });
+  }
+
+  async function goDesktopNext() {
+    if (desktopAnimating) return;
+
+    const pdf = await getPdfDoc();
+    let nextStart;
+
+    if (desktopSpreadStart === 1) {
+      nextStart = 2;
+    } else {
+      nextStart = desktopSpreadStart + 2;
+    }
+
+    if (nextStart > pdf.numPages) return;
+
+    desktopAnimating = true;
+
+    const currentSpread = await getDesktopSpreadImages(desktopSpreadStart);
+    const overlay = document.getElementById("desktop-flip-next");
+
+    // 模擬右頁翻過去
+    overlay.innerHTML = buildDesktopPageContent(
+      currentSpread.rightImg || currentSpread.leftImg,
+      "翻頁動畫"
+    );
+    overlay.classList.remove("animating-prev");
+    overlay.classList.add("animating-next");
+
+    overlay.addEventListener("animationend", async function handler() {
+      overlay.classList.remove("animating-next");
+      overlay.innerHTML = "";
+      overlay.removeEventListener("animationend", handler);
+
+      await renderDesktopSpread(nextStart);
+      desktopAnimating = false;
+    }, { once: true });
+  }
+
+  async function goDesktopPrev() {
+    if (desktopAnimating) return;
+
+    let prevStart;
+
+    if (desktopSpreadStart === 1) return;
+    if (desktopSpreadStart === 2) {
+      prevStart = 1;
+    } else {
+      prevStart = desktopSpreadStart - 2;
+    }
+
+    desktopAnimating = true;
+
+    const currentSpread = await getDesktopSpreadImages(desktopSpreadStart);
+    const overlay = document.getElementById("desktop-flip-prev");
+
+    // 模擬左頁往右翻回去
+    overlay.innerHTML = buildDesktopPageContent(
+      currentSpread.leftImg,
+      "翻頁動畫"
+    );
+    overlay.classList.remove("animating-next");
+    overlay.classList.add("animating-prev");
+
+    overlay.addEventListener("animationend", async function handler() {
+      overlay.classList.remove("animating-prev");
+      overlay.innerHTML = "";
+      overlay.removeEventListener("animationend", handler);
+
+      await renderDesktopSpread(prevStart);
+      desktopAnimating = false;
+    }, { once: true });
+  }
+
+  async function initDesktopReader() {
+    await renderDesktopSpread(1);
+
+    document.getElementById("prev-page-desktop").onclick = function() {
+      goDesktopPrev();
+    };
+
+    document.getElementById("next-page-desktop").onclick = function() {
+      goDesktopNext();
+    };
+  }
+
   async function preloadMobileNeighbors(pageNumber) {
     const pdf = await getPdfDoc();
     const targets = [pageNumber - 1, pageNumber + 1];
@@ -237,18 +527,10 @@ description: 守夜人桌遊社電子報 2025.05.08
         try {
           await renderPageToDataUrl(p, 2.2);
         } catch (e) {
-          console.warn("Preload failed:", p, e);
+          console.warn("Mobile preload failed:", p, e);
         }
       }
     });
-  }
-
-  function updateMobilePageText(pageNumber) {
-    document.getElementById("page-num-mobile").textContent = "第 " + (pageNumber - 1) + " 頁";
-  }
-
-  function updateDesktopPageText(pageNumber) {
-    document.getElementById("page-num-desktop").textContent = "第 " + (pageNumber - 1) + " 頁";
   }
 
   async function renderMobilePage(pageNumber) {
@@ -278,59 +560,9 @@ description: 守夜人桌遊社電子報 2025.05.08
     }
   }
 
-  async function initDesktopFlipbook() {
-    const pdf = await getPdfDoc();
-    const flipbook = document.getElementById("flipbook");
-    flipbook.innerHTML = "";
-
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const imgData = await renderPageToDataUrl(i, 2.0);
-
-      const pageDiv = document.createElement("div");
-      pageDiv.className = "page";
-
-      const img = document.createElement("img");
-      img.src = imgData;
-      img.alt = "電子報第 " + i + " 頁";
-      img.draggable = false;
-
-      pageDiv.appendChild(img);
-      flipbook.appendChild(pageDiv);
-    }
-
-    if ($("#flipbook").data("turn")) {
-      $("#flipbook").turn("destroy");
-    }
-
-    $("#flipbook").turn({
-      width: 920,
-      height: 650,
-      autoCenter: true,
-      display: "double",
-      gradients: true,
-      elevation: 50,
-      when: {
-        turned: function(event, page) {
-          updateDesktopPageText(page);
-        }
-      }
-    });
-
-    updateDesktopPageText(1);
-
-    document.getElementById("prev-page-desktop").onclick = function() {
-      $("#flipbook").turn("previous");
-    };
-
-    document.getElementById("next-page-desktop").onclick = function() {
-      $("#flipbook").turn("next");
-    };
-
-    desktopInitialized = true;
-  }
-
   async function initMobileReader() {
     const pdf = await getPdfDoc();
+
     document.getElementById("prev-page-mobile").onclick = function() {
       if (mobileCurrentPage > 1) {
         renderMobilePage(mobileCurrentPage - 1);
@@ -343,10 +575,8 @@ description: 守夜人桌遊社電子報 2025.05.08
       }
     };
 
-    // 初始顯示第 1 頁（對應顯示第 0 頁）
     renderMobilePage(1);
 
-    // 左右滑動切頁
     const stage = document.getElementById("mobile-reader-stage");
     let touchStartX = 0;
     let touchStartY = 0;
@@ -372,7 +602,6 @@ description: 守夜人桌遊社電子報 2025.05.08
       const diffX = touchEndX - touchStartX;
       const diffY = touchEndY - touchStartY;
 
-      // 水平滑動明顯大於垂直才切頁
       if (Math.abs(diffX) > 50 && Math.abs(diffX) > Math.abs(diffY) * 1.2) {
         if (diffX < 0 && mobileCurrentPage < pdf.numPages) {
           renderMobilePage(mobileCurrentPage + 1);
@@ -390,7 +619,7 @@ description: 守夜人桌遊社電子報 2025.05.08
       if (isMobileView()) {
         await initMobileReader();
       } else {
-        await initDesktopFlipbook();
+        await initDesktopReader();
       }
     } catch (err) {
       console.error("Init failed:", err);
