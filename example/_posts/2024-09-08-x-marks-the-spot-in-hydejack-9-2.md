@@ -1,7 +1,7 @@
 ---
 layout: post
 description: > 
-  This feature release adds new social media icons for 2024 and makes dark mode available to everyone.
+  歷經多方廝殺，參賽者們的努力奮鬥，今日終於有了冠軍的誕生!!過程如何?!誰與爭鋒!
 image: 
   path: /assets/img/home/champion.png
   srcset: 
@@ -13,10 +13,10 @@ excerpt_separator: <!--more-->
 sitemap: false
 ---
 
-# X Marks the Spot in Hydejack 9.2
-## New Social Media Icons
+# 桌遊設第六屆比賽結果!!
+## 花磚物語 AZUL
 
-Lots of things have changed in the world of social media since the last release. To bring Hydejack up to date, the default logo for Twitter has changed:
+為期將近一個月的比賽終於落幕，相信大家都有好好的享受其中，有人勝利，有人含淚飲恨，但仍然會有那幾位手捧獎盃的選手！！一起來看看冠軍之路如何誕生吧!
 
 <span class="icon-twitter-old"></span> → <span class="icon-twitter"></span>
 {:.larger}
