@@ -5,10 +5,10 @@ description: >
 image: 
   path: /assets/img/home/champion.png
   srcset: 
-    1920w: /assets/img/blog/pawel-czerwinski-848z7lbCjoo-unsplash.jpg
-    960w:  /assets/img/blog/pawel-czerwinski-848z7lbCjoo-unsplash@0,5x.jpg
-    480w:  /assets/img/blog/pawel-czerwinski-848z7lbCjoo-unsplash@0,25x.jpg
-accent_image: /assets/img/blog/pawel-czerwinski-848z7lbCjoo-unsplash.jpg
+    1920w: /assets/img/home/champion.png
+    960w:  /assets/img/home/champion.png
+    480w:  /assets/img/home/champion.png
+accent_image: /assets/img/home/champion.png
 excerpt_separator: <!--more-->
 sitemap: false
 ---
