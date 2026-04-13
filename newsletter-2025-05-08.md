@@ -94,19 +94,12 @@ description: 守夜人桌遊社電子報
   <a href="/assets/newsletter/2025_05_08/2025-05~08.pdf" target="_blank" rel="noopener">
     開啟 PDF 原檔
   </a>
-  <div class="pdf-note">
-    若電子書文字過小，可自行調整網頁縮放查看
-  </div>
 </div>
 
 <div class="flipbook-controls">
   <button id="prev-page">上一頁</button>
   <span id="page-num">第 0 頁</span>
   <button id="next-page">下一頁</button>
-</div>
-
-<div class="mobile-tip">
-  手機版為單頁翻頁顯示。
 </div>
 
 <div class="flipbook-wrap">
