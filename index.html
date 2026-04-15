@@ -10,8 +10,43 @@ hide_image: false
 cover: true
 ---
 
-<!-- ===== 首頁輪播開始 ===== -->
 <style>
+/* 先隱藏內容，等 Firebase 驗證通過後再顯示 */
+body {
+  visibility: hidden;
+}
+
+/* 登出區塊 */
+.member-bar {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto 1rem;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+}
+
+.member-email {
+  font-size: 0.95rem;
+  color: #555;
+}
+
+.logout-btn {
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.logout-btn:hover {
+  opacity: 0.92;
+}
+
+/* ===== 首頁輪播開始 ===== */
 .home-carousel {
   position: relative;
   width: 100%;
@@ -72,7 +107,13 @@ cover: true
 .carousel-dots .active {
   background: white;
 }
+/* ===== 首頁輪播結束 ===== */
 </style>
+
+<div class="member-bar">
+  <span class="member-email" id="memberEmail"></span>
+  <button class="logout-btn" onclick="logoutMember()">登出</button>
+</div>
 
 <div class="home-carousel" id="carousel">
   <div class="carousel-track">
@@ -80,21 +121,21 @@ cover: true
     <!-- 第1張 -->
     <div class="carousel-slide">
       <a href="/newsletter/">
-        <img src="/assets/img/home/slide1.jpg">
+        <img src="/assets/img/home/slide1.jpg" alt="電子刊物">
       </a>
     </div>
 
     <!-- 第2張 -->
     <div class="carousel-slide">
       <a href="/about/">
-        <img src="/assets/img/home/slide2.jpg">
+        <img src="/assets/img/home/slide2.jpg" alt="關於我們">
       </a>
     </div>
 
     <!-- 第3張 -->
     <div class="carousel-slide">
       <a href="/newsletter-2025-05-08/">
-        <img src="/assets/img/home/slide3.jpg">
+        <img src="/assets/img/home/slide3.jpg" alt="最新活動">
       </a>
     </div>
 
@@ -126,7 +167,7 @@ const dots = dotsContainer.querySelectorAll("button");
 
 function update() {
   track.style.transform = `translateX(-${index * 100}%)`;
-  dots.forEach((d,i)=>d.classList.toggle("active", i===index));
+  dots.forEach((d, i) => d.classList.toggle("active", i === index));
 }
 
 function goToSlide(i) {
@@ -159,4 +200,48 @@ document.getElementById("carousel").addEventListener("mouseleave", start);
 update();
 start();
 </script>
-<!-- ===== 輪播結束 ===== -->
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+  import {
+    getAuth,
+    onAuthStateChanged,
+    signOut
+  } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyARLnYPUUSVIXiK3UJnlSw93AeAm3_sSz8",
+    authDomain: "itribgc-0.firebaseapp.com",
+    projectId: "itribgc-0",
+    storageBucket: "itribgc-0.firebasestorage.app",
+    messagingSenderId: "535892877472",
+    appId: "1:535892877472:web:2270ac423ffd6f38b1e9c5"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  const memberEmailEl = document.getElementById("memberEmail");
+
+  onAuthStateChanged(auth, (user) => {
+    if (!user) {
+      window.location.href = "/login.html";
+      return;
+    }
+
+    if (memberEmailEl) {
+      memberEmailEl.textContent = user.email;
+    }
+
+    document.body.style.visibility = "visible";
+  });
+
+  window.logoutMember = async function () {
+    try {
+      await signOut(auth);
+      window.location.href = "/login.html";
+    } catch (error) {
+      alert("登出失敗：" + (error.message || error.code));
+    }
+  };
+</script>
