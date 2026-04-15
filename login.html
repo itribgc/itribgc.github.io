@@ -134,7 +134,8 @@
         await signInWithEmailAndPassword(auth, email, password);
         window.location.href = "/";
       } catch (error) {
-        msgEl.textContent = "登入失敗：" + (error.message || error.code);
+          console.error("登入錯誤：", error);
+          msgEl.textContent = `登入失敗：${error.code || ""} ${error.message || ""}`;
       }
     });
   </script>
