@@ -2,7 +2,6 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
-  <meta name="referrer" content="no-referrer-when-downgrade">
   <title>登入</title>
   <style>
     body {
@@ -30,12 +29,10 @@
       background: #3366cc;
       color: white;
       border: none;
-      cursor: pointer;
     }
     #msg {
       color: red;
       margin-top: 10px;
-      font-size: 14px;
     }
   </style>
 </head>
@@ -49,17 +46,18 @@
   <div id="msg"></div>
 </div>
 
+<!-- 🔥 改用非 module（最穩） -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 
 <script>
   const firebaseConfig = {
-    apiKey: "AIzaSyARLnYPUUSVIXiK3UJnlSw93AeAm3_sSz8",
-    authDomain: "itribgc-0.firebaseapp.com",
-    projectId: "itribgc-0",
-    storageBucket: "itribgc-0.firebasestorage.app",
-    messagingSenderId: "535892877472",
-    appId: "1:535892877472:web:2270ac423ffd6f38b1e9c5"
+    apiKey: "你的 apiKey",
+    authDomain: "你的 authDomain",
+    projectId: "你的 projectId",
+    storageBucket: "你的 storageBucket",
+    messagingSenderId: "你的 messagingSenderId",
+    appId: "你的 appId"
   };
 
   firebase.initializeApp(firebaseConfig);
@@ -67,59 +65,20 @@
 
   console.log("Firebase 初始化完成");
 
-  // 🔥 已登入 → 直接進首頁（重點）
-  auth.onAuthStateChanged(function(user) {
-    if (user) {
-      console.log("已登入，自動導向首頁");
-      window.location.href = "/home/";
-    } else {
-      console.log("尚未登入");
-    }
-  });
-
   document.getElementById("loginBtn").addEventListener("click", function () {
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value;
-    const msg = document.getElementById("msg");
-
-    msg.innerText = "";
-
-    if (!email || !password) {
-      msg.innerText = "請輸入帳號與密碼";
-      return;
-    }
 
     console.log("開始登入", email);
 
     auth.signInWithEmailAndPassword(email, password)
       .then(userCredential => {
         console.log("登入成功", userCredential.user);
-        window.location.href = "/home/";
+        window.location.href = "/";
       })
       .catch(error => {
         console.error("登入錯誤", error);
-
-        // 🔥 錯誤轉中文（體驗升級）
-        let message = "";
-
-        switch (error.code) {
-          case "auth/user-not-found":
-            message = "找不到這個帳號";
-            break;
-          case "auth/wrong-password":
-            message = "密碼錯誤";
-            break;
-          case "auth/invalid-email":
-            message = "Email 格式錯誤";
-            break;
-          case "auth/too-many-requests":
-            message = "登入次數過多，請稍後再試";
-            break;
-          default:
-            message = "登入失敗，請確認帳密";
-        }
-
-        msg.innerText = message;
+        document.getElementById("msg").innerText = error.message;
       });
   });
 </script>
