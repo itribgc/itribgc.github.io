@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>桌遊社網站登入入口</title>
+  <meta charset="UTF-8">
+  <title>登入</title>
   <style>
     body {
       font-family: Arial, "Noto Sans TC", sans-serif;
@@ -12,132 +11,77 @@
       justify-content: center;
       align-items: center;
       min-height: 100vh;
-      margin: 0;
     }
     .card {
       background: white;
-      padding: 32px;
-      border-radius: 16px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-      width: 100%;
-      max-width: 380px;
-    }
-    h1 {
-      margin-top: 0;
-      font-size: 24px;
-    }
-    .desc {
-      color: #666;
-      margin-bottom: 20px;
+      padding: 30px;
+      border-radius: 12px;
+      width: 320px;
     }
     input {
       width: 100%;
-      padding: 12px;
-      margin: 8px 0 14px;
-      border: 1px solid #ccc;
-      border-radius: 10px;
-      box-sizing: border-box;
-      font-size: 16px;
+      padding: 10px;
+      margin: 10px 0;
     }
     button {
       width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 10px;
-      background: #2563eb;
+      padding: 10px;
+      background: #3366cc;
       color: white;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    .links {
-      margin-top: 14px;
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    .links a {
-      color: #2563eb;
-      text-decoration: none;
-      font-size: 14px;
+      border: none;
     }
     #msg {
-      margin-top: 14px;
-      font-size: 14px;
-      color: #d93025;
-      min-height: 20px;
+      color: red;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>守夜人桌遊社登入</h1>
-    <div class="desc">請使用已建立的帳號登入</div>
 
-    <input id="email" type="email" placeholder="請輸入 Email" />
-    <input id="password" type="password" placeholder="請輸入密碼" />
+<div class="card">
+  <h2>登入</h2>
+  <input id="email" placeholder="Email">
+  <input id="password" type="password" placeholder="密碼">
+  <button id="loginBtn">登入</button>
+  <div id="msg"></div>
+</div>
 
-    <button id="loginBtn">登入</button>
+<!-- 🔥 改用非 module（最穩） -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 
-    <div class="links">
-      <a href="forgot-password.html">忘記密碼</a>
-    </div>
+<script>
+  const firebaseConfig = {
+    apiKey: "你的 apiKey",
+    authDomain: "你的 authDomain",
+    projectId: "你的 projectId",
+    storageBucket: "你的 storageBucket",
+    messagingSenderId: "你的 messagingSenderId",
+    appId: "你的 appId"
+  };
 
-    <div id="msg"></div>
-  </div>
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-    import {
-      getAuth,
-      setPersistence,
-      browserLocalPersistence,
-      signInWithEmailAndPassword,
-      onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+  console.log("Firebase 初始化完成");
 
-    const firebaseConfig = {
-      apiKey: "你的 apiKey",
-      authDomain: "你的 authDomain",
-      projectId: "你的 projectId",
-      storageBucket: "你的 storageBucket",
-      messagingSenderId: "你的 messagingSenderId",
-      appId: "你的 appId"
-    };
+  document.getElementById("loginBtn").addEventListener("click", function () {
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
+    console.log("開始登入", email);
 
-    const msgEl = document.getElementById("msg");
-    const loginBtn = document.getElementById("loginBtn");
-
-    await setPersistence(auth, browserLocalPersistence);
-
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
+    auth.signInWithEmailAndPassword(email, password)
+      .then(userCredential => {
+        console.log("登入成功", userCredential.user);
         window.location.href = "/";
-      }
-    });
+      })
+      .catch(error => {
+        console.error("登入錯誤", error);
+        document.getElementById("msg").innerText = error.message;
+      });
+  });
+</script>
 
-    loginBtn.addEventListener("click", async () => {
-      msgEl.textContent = "";
-
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
-
-      if (!email || !password) {
-        msgEl.textContent = "請輸入 Email 和密碼";
-        return;
-      }
-
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-        window.location.href = "/";
-      } catch (error) {
-          console.error("登入錯誤：", error);
-          msgEl.textContent = `登入失敗：${error.code || ""} ${error.message || ""}`;
-      }
-    });
-  </script>
 </body>
 </html>
