@@ -1,12 +1,11 @@
 ---
 layout: blog
-title: 守夜人-桌遊社
+title: Blog
 description: >
-  這是工研院院內社團"守夜人-桌遊社"的單一通道網頁，供社員進行電子刊物了解以及最新活動等功能查閱。
+  The official Hydejack blog. Version updates, example content and how-to guides on how to blog with Jekyll.
 last_modified_at: 2018-08-03
-no_link_title: false
-no_excerpt: false
+no_link_title: false 
+no_excerpt: false 
 hide_image: false
 cover: true
-permalink: /home/
 ---
