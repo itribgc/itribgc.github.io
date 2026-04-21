@@ -1,0 +1,74 @@
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+
+<script>
+(function () {
+  const firebaseConfig = {
+    apiKey: "AIzaSyARLnYPUUSVIXiK3UJnlSw93AeAm3_sSz8",
+    authDomain: "itribgc-0.firebaseapp.com",
+    projectId: "itribgc-0",
+    storageBucket: "itribgc-0.firebasestorage.app",
+    messagingSenderId: "535892877472",
+    appId: "1:535892877472:web:2270ac423ffd6f38b1e9c5"
+  };
+
+  // 避免重複初始化
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+
+  const auth = firebase.auth();
+
+  function guardPage() {
+    const path = window.location.pathname;
+
+    // 這些頁面不強制擋
+    const publicPaths = [
+      "/login.html",
+      "/404.html"
+    ];
+
+    if (publicPaths.includes(path)) {
+      document.body.style.visibility = "visible";
+      return;
+    }
+
+    auth.onAuthStateChanged(function(user) {
+      console.log("guard 檢查:", path, user ? user.email : "未登入");
+
+      if (!user) {
+        window.location.replace("/login.html");
+        return;
+      }
+
+      const emailEl = document.getElementById("memberEmail");
+      if (emailEl) {
+        emailEl.textContent = user.email || "";
+      }
+
+      document.body.style.visibility = "visible";
+    });
+  }
+
+  // 首次載入
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", guardPage);
+  } else {
+    guardPage();
+  }
+
+  // Hydejack / hy-push-state 切頁後再檢查一次
+  document.addEventListener("hy-push-state-after", function () {
+    guardPage();
+  });
+
+  // 提供全域登出函式
+  window.logoutMember = function () {
+    auth.signOut().then(function () {
+      window.location.replace("/login.html");
+    }).catch(function (error) {
+      alert("登出失敗：" + (error.message || error.code));
+    });
+  };
+})();
+</script>
