@@ -1,197 +1,96 @@
----
-layout: blog
-title: 守夜人-桌遊社
-description: >
-  這是工研院院內社團"守夜人-桌遊社"的單一通道網頁，供社員進行電子刊物了解以及最新活動等功能查閱。
-last_modified_at: 2018-08-03
-no_link_title: false
-no_excerpt: false
-hide_image: false
-cover: true
----
-
-<style>
-body {
-  visibility: hidden;
-}
-
-.member-bar {
-  width: 100%;
-  max-width: 1100px;
-  margin: 0 auto 1rem;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 12px;
-}
-
-.member-email {
-  font-size: 0.95rem;
-  color: #555;
-}
-
-.logout-btn {
-  background: #ef4444;
-  color: #fff;
-  border: none;
-  padding: 10px 16px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 0.95rem;
-}
-
-.logout-btn:hover {
-  opacity: 0.92;
-}
-
-.home-carousel {
-  position: relative;
-  width: 100%;
-  max-width: 1100px;
-  margin: 0 auto 2rem;
-  overflow: hidden;
-  border-radius: 16px;
-}
-
-.carousel-track {
-  display: flex;
-  transition: transform 0.6s ease;
-}
-
-.carousel-slide {
-  min-width: 100%;
-}
-
-.carousel-slide img {
-  width: 100%;
-  height: 360px;
-  object-fit: cover;
-  display: block;
-}
-
-.carousel-btn {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(0,0,0,0.4);
-  color: white;
-  border: none;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-.prev { left: 10px; }
-.next { right: 10px; }
-
-.carousel-dots {
-  position: absolute;
-  bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.carousel-dots button {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  border: none;
-  margin: 0 4px;
-  background: rgba(255,255,255,0.5);
-}
-
-.carousel-dots .active {
-  background: white;
-}
-</style>
-
-<div class="member-bar">
-  <span class="member-email" id="memberEmail"></span>
-  <button class="logout-btn" onclick="logoutMember()">登出</button>
-</div>
-
-<div class="home-carousel" id="carousel">
-  <div class="carousel-track">
-
-    <div class="carousel-slide">
-      <a href="/newsletter/">
-        <img src="/assets/img/home/slide1.jpg" alt="電子刊物">
-      </a>
-    </div>
-
-    <div class="carousel-slide">
-      <a href="/about/">
-        <img src="/assets/img/home/slide2.jpg" alt="關於我們">
-      </a>
-    </div>
-
-    <div class="carousel-slide">
-      <a href="/newsletter-2025-05-08/">
-        <img src="/assets/img/home/slide3.jpg" alt="最新活動">
-      </a>
-    </div>
-
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="referrer" content="no-referrer-when-downgrade">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>守夜人桌遊社</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, "Noto Sans TC", sans-serif;
+      background: #f5f7fb;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: #333;
+    }
+    .card {
+      background: #fff;
+      padding: 32px;
+      border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+    }
+    h1 {
+      margin: 0 0 12px;
+      font-size: 24px;
+    }
+    p {
+      margin: 0;
+      color: #666;
+      line-height: 1.6;
+    }
+    .loading {
+      margin-top: 18px;
+      font-size: 14px;
+      color: #3366cc;
+    }
+    .btn {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 18px;
+      background: #3366cc;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>守夜人桌遊社</h1>
+    <p>正在檢查登入狀態，請稍候…</p>
+    <div class="loading" id="msg">驗證中</div>
+    <a class="btn" id="loginLink" href="/login.html" style="display:none;">前往登入</a>
   </div>
 
-  <button class="carousel-btn prev">‹</button>
-  <button class="carousel-btn next">›</button>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 
-  <div class="carousel-dots"></div>
-</div>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyARLnYPUUSVIXiK3UJnlSw93AeAm3_sSz8",
+      authDomain: "itribgc-0.firebaseapp.com",
+      projectId: "itribgc-0",
+      storageBucket: "itribgc-0.firebasestorage.app",
+      messagingSenderId: "535892877472",
+      appId: "1:535892877472:web:2270ac423ffd6f38b1e9c5"
+    };
 
-<script>
-const track = document.querySelector(".carousel-track");
-const slides = document.querySelectorAll(".carousel-slide");
-const prevBtn = document.querySelector(".prev");
-const nextBtn = document.querySelector(".next");
-const dotsContainer = document.querySelector(".carousel-dots");
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
 
-let index = 0;
-let timer;
+    const auth = firebase.auth();
+    const msg = document.getElementById("msg");
+    const loginLink = document.getElementById("loginLink");
 
-slides.forEach((_, i) => {
-  const dot = document.createElement("button");
-  dot.addEventListener("click", () => goToSlide(i));
-  dotsContainer.appendChild(dot);
-});
-
-const dots = dotsContainer.querySelectorAll("button");
-
-function update() {
-  track.style.transform = `translateX(-${index * 100}%)`;
-  dots.forEach((d, i) => d.classList.toggle("active", i === index));
-}
-
-function goToSlide(i) {
-  index = (i + slides.length) % slides.length;
-  update();
-}
-
-function next() {
-  goToSlide(index + 1);
-}
-
-function prev() {
-  goToSlide(index - 1);
-}
-
-nextBtn.onclick = next;
-prevBtn.onclick = prev;
-
-function start() {
-  timer = setInterval(next, 3000);
-}
-
-function stop() {
-  clearInterval(timer);
-}
-
-document.getElementById("carousel").addEventListener("mouseenter", stop);
-document.getElementById("carousel").addEventListener("mouseleave", start);
-
-update();
-start();
-</script>
-
-{% include firebase-guard.html %}
+    auth.onAuthStateChanged(function(user) {
+      if (user) {
+        msg.textContent = "已登入，正在前往首頁…";
+        window.location.replace("/home/");
+      } else {
+        msg.textContent = "尚未登入，請先登入";
+        loginLink.style.display = "inline-block";
+        setTimeout(() => {
+          window.location.replace("/login.html");
+        }, 500);
+      }
+    });
+  </script>
+</body>
+</html>
