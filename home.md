@@ -11,6 +11,10 @@ cover: true
 permalink: /home/
 ---
 
+{% assign blog_posts = site.posts | where_exp: "post", "post.name contains '-blog.md'" | sort: "date" | reverse %}
+{% assign newsletter_posts = site.posts | where_exp: "post", "post.name contains 'newsletter'" | sort: "date" | reverse %}
+{% assign latest_newsletter = newsletter_posts | first %}
+
 <style>
 .member-bar {
   width: 100%;
@@ -52,6 +56,7 @@ permalink: /home/
 
 .carousel-slide {
   min-width: 100%;
+  position: relative;
 }
 
 .carousel-slide img {
@@ -59,6 +64,28 @@ permalink: /home/
   height: 360px;
   object-fit: cover;
   display: block;
+}
+
+.carousel-caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 20px 24px;
+  color: white;
+  background: linear-gradient(to top, rgba(0,0,0,0.75), rgba(0,0,0,0));
+}
+
+.carousel-caption span {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.carousel-caption h3 {
+  margin: 6px 0 0;
+  font-size: 24px;
+  line-height: 1.3;
+  color: white;
 }
 
 .carousel-btn {
@@ -72,6 +99,7 @@ permalink: /home/
   height: 40px;
   border-radius: 50%;
   cursor: pointer;
+  z-index: 3;
 }
 
 .prev { left: 10px; }
@@ -80,8 +108,8 @@ permalink: /home/
 .carousel-dots {
   position: absolute;
   bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
+  right: 16px;
+  z-index: 4;
 }
 
 .carousel-dots button {
@@ -106,23 +134,31 @@ permalink: /home/
 <div class="home-carousel" id="carousel">
   <div class="carousel-track">
 
-    <div class="carousel-slide">
-      <a href="/newsletter/">
-        <img src="/assets/img/home/slide1.jpg" alt="電子刊物">
-      </a>
-    </div>
+    {% for post in blog_posts limit:3 %}
+      {% assign filename = post.name | remove: ".md" %}
+      <div class="carousel-slide">
+        <a href="{{ post.url | relative_url }}">
+          <img src="/assets/img/blog/{{ filename }}-titleImg.png" alt="{{ post.title }}">
+          <div class="carousel-caption">
+            <span>最新文章</span>
+            <h3>{{ post.title }}</h3>
+          </div>
+        </a>
+      </div>
+    {% endfor %}
 
-    <div class="carousel-slide">
-      <a href="/about/">
-        <img src="/assets/img/home/slide2.jpg" alt="近期活動">
-      </a>
-    </div>
-
-    <div class="carousel-slide">
-      <a href="/newsletter-2025-05-08/">
-        <img src="/assets/img/home/slide3.jpg" alt="最新內容">
-      </a>
-    </div>
+    {% if latest_newsletter %}
+      {% assign newsletter_filename = latest_newsletter.name | remove: ".md" %}
+      <div class="carousel-slide">
+        <a href="{{ latest_newsletter.url | relative_url }}">
+          <img src="/assets/img/blog/{{ newsletter_filename }}-titleImg.png" alt="{{ latest_newsletter.title }}">
+          <div class="carousel-caption">
+            <span>最新電子報</span>
+            <h3>{{ latest_newsletter.title }}</h3>
+          </div>
+        </a>
+      </div>
+    {% endif %}
 
   </div>
 
@@ -142,48 +178,50 @@ const dotsContainer = document.querySelector(".carousel-dots");
 let index = 0;
 let timer;
 
-slides.forEach((_, i) => {
-  const dot = document.createElement("button");
-  dot.addEventListener("click", () => goToSlide(i));
-  dotsContainer.appendChild(dot);
-});
+if (slides.length > 0) {
+  slides.forEach((_, i) => {
+    const dot = document.createElement("button");
+    dot.addEventListener("click", () => goToSlide(i));
+    dotsContainer.appendChild(dot);
+  });
 
-const dots = dotsContainer.querySelectorAll("button");
+  const dots = dotsContainer.querySelectorAll("button");
 
-function update() {
-  track.style.transform = `translateX(-${index * 100}%)`;
-  dots.forEach((d, i) => d.classList.toggle("active", i === index));
-}
+  function update() {
+    track.style.transform = `translateX(-${index * 100}%)`;
+    dots.forEach((d, i) => d.classList.toggle("active", i === index));
+  }
 
-function goToSlide(i) {
-  index = (i + slides.length) % slides.length;
+  function goToSlide(i) {
+    index = (i + slides.length) % slides.length;
+    update();
+  }
+
+  function next() {
+    goToSlide(index + 1);
+  }
+
+  function prev() {
+    goToSlide(index - 1);
+  }
+
+  nextBtn.onclick = next;
+  prevBtn.onclick = prev;
+
+  function start() {
+    timer = setInterval(next, 3000);
+  }
+
+  function stop() {
+    clearInterval(timer);
+  }
+
+  document.getElementById("carousel").addEventListener("mouseenter", stop);
+  document.getElementById("carousel").addEventListener("mouseleave", start);
+
   update();
+  start();
 }
-
-function next() {
-  goToSlide(index + 1);
-}
-
-function prev() {
-  goToSlide(index - 1);
-}
-
-nextBtn.onclick = next;
-prevBtn.onclick = prev;
-
-function start() {
-  timer = setInterval(next, 3000);
-}
-
-function stop() {
-  clearInterval(timer);
-}
-
-document.getElementById("carousel").addEventListener("mouseenter", stop);
-document.getElementById("carousel").addEventListener("mouseleave", start);
-
-update();
-start();
 </script>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
