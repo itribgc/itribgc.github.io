@@ -34,9 +34,9 @@ author:
 
 menu:
   - title: Home
-    url: /
+    url: /home/
   - title: 近期活動
-    url: /about/
+    url: /
   - title: 電子報報
     url: /newsletter/
   - title: 歷史貼文
