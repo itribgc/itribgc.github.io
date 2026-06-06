@@ -4,10 +4,14 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
-<!-- Site Auth / Profile / Comments -->
+<!-- Site Auth / Profile -->
 <script src="/assets/js/auth-guard.js"></script>
 <script src="/assets/js/profile.js"></script>
+
+{% if page.layout == 'post' %}
+<!-- Blog Comments -->
 <script src="/assets/js/comment-section.js"></script>
+{% endif %}
 {% endunless %}
 
 <!-- Add HTML tags here to be included in the head. You can delete the below: -->
