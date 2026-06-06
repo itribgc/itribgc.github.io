@@ -11,50 +11,71 @@ title: 登入
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
-    body {
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
       font-family: Arial, "Noto Sans TC", sans-serif;
-      background: #f5f7fb;
+      background: #303437;
+    }
+
+    body {
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 100vh;
-      margin: 0;
     }
 
     .card {
-      background: white;
-      padding: 30px;
-      border-radius: 12px;
-      width: 320px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      width: 340px;
+      background: #ffffff;
+      padding: 32px;
+      border-radius: 14px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+      box-sizing: border-box;
     }
 
     h2 {
-      margin-top: 0;
-      margin-bottom: 20px;
+      margin: 0 0 24px 0;
       text-align: center;
+      color: #222;
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      color: #333;
+      font-size: 14px;
     }
 
     input {
       width: 100%;
-      padding: 10px;
-      margin: 10px 0;
+      padding: 11px 12px;
+      margin-bottom: 14px;
       box-sizing: border-box;
-      border: 1px solid #ddd;
-      border-radius: 6px;
+      border: 1px solid #d6d6d6;
+      border-radius: 8px;
       font-size: 15px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #3366cc;
+      box-shadow: 0 0 0 2px rgba(51, 102, 204, 0.15);
     }
 
     button {
       width: 100%;
-      padding: 10px;
+      padding: 12px;
+      margin-top: 4px;
       background: #3366cc;
       color: white;
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
-      font-size: 15px;
-      margin-top: 10px;
+      font-size: 16px;
+      font-weight: 600;
     }
 
     button:hover {
@@ -67,11 +88,19 @@ title: 登入
     }
 
     #msg {
-      color: red;
-      margin-top: 12px;
+      margin-top: 14px;
+      min-height: 20px;
+      color: #d93025;
       font-size: 14px;
       text-align: center;
-      min-height: 20px;
+      line-height: 1.5;
+    }
+
+    .hint {
+      margin-top: 16px;
+      color: #777;
+      font-size: 13px;
+      text-align: center;
     }
   </style>
 </head>
@@ -81,12 +110,16 @@ title: 登入
   <div class="card">
     <h2>登入</h2>
 
-    <input id="email" type="email" placeholder="Email">
-    <input id="password" type="password" placeholder="密碼">
+    <label for="email">Email</label>
+    <input id="email" type="email" placeholder="請輸入 Email" autocomplete="email">
 
-    <button id="loginBtn">登入</button>
+    <label for="password">密碼</label>
+    <input id="password" type="password" placeholder="請輸入密碼" autocomplete="current-password">
+
+    <button id="loginBtn" type="button">登入</button>
 
     <div id="msg"></div>
+    <div class="hint">請使用已建立的 Firebase 帳戶登入</div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -108,55 +141,97 @@ title: 登入
 
     const auth = firebase.auth();
 
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
     const loginBtn = document.getElementById("loginBtn");
     const msg = document.getElementById("msg");
+
+    function showMessage(text) {
+      msg.innerText = text;
+    }
+
+    function setLoading(isLoading) {
+      loginBtn.disabled = isLoading;
+      loginBtn.innerText = isLoading ? "登入中..." : "登入";
+    }
+
+    function getFirebaseErrorMessage(error) {
+      console.error("Firebase 登入錯誤：", error);
+
+      switch (error.code) {
+        case "auth/invalid-email":
+          return "Email 格式不正確，請重新確認。";
+
+        case "auth/user-disabled":
+          return "這個帳號已被停用，請聯絡管理者。";
+
+        case "auth/user-not-found":
+          return "找不到這個帳號，請確認 Email 是否正確。";
+
+        case "auth/wrong-password":
+          return "密碼錯誤，請重新輸入。";
+
+        case "auth/invalid-credential":
+          return "帳號或密碼錯誤，請重新確認。";
+
+        case "auth/too-many-requests":
+          return "登入嘗試次數過多，請稍後再試。";
+
+        case "auth/network-request-failed":
+          return "網路連線異常，請確認網路後再試。";
+
+        default:
+          return "登入失敗，請確認帳號密碼或稍後再試。";
+      }
+    }
+
+    async function login() {
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+
+      showMessage("");
+
+      if (!email) {
+        showMessage("請輸入 Email。");
+        emailInput.focus();
+        return;
+      }
+
+      if (!password) {
+        showMessage("請輸入密碼。");
+        passwordInput.focus();
+        return;
+      }
+
+      try {
+        setLoading(true);
+
+        await auth.signInWithEmailAndPassword(email, password);
+
+        window.location.replace("/");
+      } catch (error) {
+        showMessage(getFirebaseErrorMessage(error));
+        setLoading(false);
+      }
+    }
+
+    loginBtn.addEventListener("click", login);
+
+    passwordInput.addEventListener("keydown", function(event) {
+      if (event.key === "Enter") {
+        login();
+      }
+    });
+
+    emailInput.addEventListener("keydown", function(event) {
+      if (event.key === "Enter") {
+        passwordInput.focus();
+      }
+    });
 
     auth.onAuthStateChanged(function(user) {
       if (user) {
         window.location.replace("/");
-      }
-    });
-
-    loginBtn.addEventListener("click", function () {
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
-
-      if (!email || !password) {
-        msg.innerText = "請輸入 Email 和密碼。";
-        return;
-      }
-
-      loginBtn.disabled = true;
-      loginBtn.innerText = "登入中...";
-      msg.innerText = "";
-
-      auth.signInWithEmailAndPassword(email, password)
-        .then(function(userCredential) {
-          window.location.replace("/");
-        })
-        .catch(function(error) {
-          console.error("登入錯誤：", error);
-
-          if (error.code === "auth/user-not-found") {
-            msg.innerText = "找不到這個帳號。";
-          } else if (error.code === "auth/wrong-password") {
-            msg.innerText = "密碼錯誤。";
-          } else if (error.code === "auth/invalid-email") {
-            msg.innerText = "Email 格式不正確。";
-          } else if (error.code === "auth/invalid-credential") {
-            msg.innerText = "帳號或密碼錯誤。";
-          } else {
-            msg.innerText = "登入失敗，請稍後再試。";
-          }
-
-          loginBtn.disabled = false;
-          loginBtn.innerText = "登入";
-        });
-    });
-
-    document.getElementById("password").addEventListener("keydown", function(event) {
-      if (event.key === "Enter") {
-        loginBtn.click();
       }
     });
   </script>
