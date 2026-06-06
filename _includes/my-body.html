@@ -1,11 +1,18 @@
-{% if page.url == "/" %}
+{% assign carousel_count = 0 %}
+
 <style>
+  .home-carousel-wrap {
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0 auto 2.5rem auto;
+  }
+
   .home-carousel {
     position: relative;
     width: 100%;
     max-width: 1100px;
     height: 360px;
-    margin: 0 auto 2.5rem auto;
+    margin: 0 auto;
     overflow: hidden;
     border-radius: 18px;
     background: #303437;
@@ -136,7 +143,6 @@
     .home-carousel {
       height: 230px;
       border-radius: 14px;
-      margin-bottom: 2rem;
     }
 
     .home-carousel-title {
@@ -168,58 +174,105 @@
   }
 </style>
 
-{% assign carousel_posts = site.posts | where_exp: "post", "post.image.path" | slice: 0, 5 %}
-
-{% if carousel_posts.size > 0 %}
 <div id="homeCarouselTemplate" style="display: none;">
-  <div class="home-carousel" id="homeCarousel">
-    <div class="home-carousel-track">
+  <div class="home-carousel-wrap">
+    <div class="home-carousel" id="homeCarousel">
+      <div class="home-carousel-track">
 
-      {% for post in carousel_posts %}
-      <div class="home-carousel-slide {% if forloop.first %}active{% endif %}">
-        <a href="{{ post.url | relative_url }}" aria-label="{{ post.title | escape }}">
-          <img src="{{ post.image.path | relative_url }}" alt="{{ post.title | escape }}">
+        {% for post in site.posts limit: 10 %}
+          {% if post.image and post.image.path %}
+            {% assign carousel_count = carousel_count | plus: 1 %}
 
-          <div class="home-carousel-overlay">
-            <h2 class="home-carousel-title">{{ post.title }}</h2>
+            <div class="home-carousel-slide {% if carousel_count == 1 %}active{% endif %}">
+              <a href="{{ post.url | relative_url }}" aria-label="{{ post.title | escape }}">
+                <img src="{{ post.image.path | relative_url }}" alt="{{ post.title | escape }}">
 
-            {% if post.description %}
-            <p class="home-carousel-desc">{{ post.description | strip_html | truncate: 90 }}</p>
-            {% elsif post.excerpt %}
-            <p class="home-carousel-desc">{{ post.excerpt | strip_html | truncate: 90 }}</p>
-            {% endif %}
-          </div>
-        </a>
+                <div class="home-carousel-overlay">
+                  <h2 class="home-carousel-title">
+                    {{ post.title }}
+                  </h2>
+
+                  {% if post.description %}
+                    <p class="home-carousel-desc">
+                      {{ post.description | strip_html | truncate: 90 }}
+                    </p>
+                  {% elsif post.excerpt %}
+                    <p class="home-carousel-desc">
+                      {{ post.excerpt | strip_html | truncate: 90 }}
+                    </p>
+                  {% endif %}
+                </div>
+              </a>
+            </div>
+          {% endif %}
+        {% endfor %}
+
       </div>
-      {% endfor %}
 
+      {% if carousel_count > 1 %}
+        <button class="home-carousel-btn prev" type="button" aria-label="上一張">‹</button>
+        <button class="home-carousel-btn next" type="button" aria-label="下一張">›</button>
+
+        <div class="home-carousel-dots">
+          {% assign dot_count = 0 %}
+          {% for post in site.posts limit: 10 %}
+            {% if post.image and post.image.path %}
+              <button
+                class="home-carousel-dot {% if dot_count == 0 %}active{% endif %}"
+                type="button"
+                aria-label="切換輪播圖片"
+                data-index="{{ dot_count }}">
+              </button>
+              {% assign dot_count = dot_count | plus: 1 %}
+            {% endif %}
+          {% endfor %}
+        </div>
+      {% endif %}
     </div>
-
-    {% if carousel_posts.size > 1 %}
-    <button class="home-carousel-btn prev" type="button" aria-label="上一張">‹</button>
-    <button class="home-carousel-btn next" type="button" aria-label="下一張">›</button>
-
-    <div class="home-carousel-dots">
-      {% for post in carousel_posts %}
-      <button
-        class="home-carousel-dot {% if forloop.first %}active{% endif %}"
-        type="button"
-        aria-label="切換到第 {{ forloop.index }} 張"
-        data-index="{{ forloop.index0 }}">
-      </button>
-      {% endfor %}
-    </div>
-    {% endif %}
   </div>
 </div>
 
 <script>
+  console.log("home carousel script loaded");
+
+  function isHomePage() {
+    const path = window.location.pathname;
+    return path === "/" || path === "/index.html";
+  }
+
+  function findCarouselTarget() {
+    const selectors = [
+      "main",
+      "#_main",
+      ".content",
+      ".page",
+      ".page-content",
+      ".markdown-body",
+      "article",
+      "body"
+    ];
+
+    for (const selector of selectors) {
+      const el = document.querySelector(selector);
+      if (el) {
+        console.log("輪播插入位置：", selector);
+        return el;
+      }
+    }
+
+    return document.body;
+  }
+
   function insertHomeCarousel() {
-    if (window.location.pathname !== "/") {
+    console.log("嘗試插入輪播，目前路徑：", window.location.pathname);
+
+    if (!isHomePage()) {
+      console.log("不是首頁，不插入輪播");
       return;
     }
 
     if (document.getElementById("homeCarousel")) {
+      console.log("輪播已存在，不重複插入");
       return;
     }
 
@@ -230,26 +283,17 @@
       return;
     }
 
-    const carouselHTML = template.innerHTML;
+    const html = template.innerHTML.trim();
 
-    const possibleTargets = [
-      document.querySelector("main"),
-      document.querySelector(".content"),
-      document.querySelector(".page"),
-      document.querySelector(".markdown-body"),
-      document.querySelector("article")
-    ];
-
-    const target = possibleTargets.find(function (el) {
-      return el;
-    });
-
-    if (!target) {
-      console.warn("找不到可以插入輪播的位置");
+    if (!html) {
+      console.warn("homeCarouselTemplate 是空的，可能沒有抓到任何 post.image.path");
       return;
     }
 
-    target.insertAdjacentHTML("afterbegin", carouselHTML);
+    const target = findCarouselTarget();
+
+    target.insertAdjacentHTML("afterbegin", html);
+
     initHomeCarousel();
   }
 
@@ -257,6 +301,7 @@
     const carousel = document.getElementById("homeCarousel");
 
     if (!carousel) {
+      console.warn("找不到 homeCarousel");
       return;
     }
 
@@ -264,6 +309,8 @@
     const dots = carousel.querySelectorAll(".home-carousel-dot");
     const prevBtn = carousel.querySelector(".home-carousel-btn.prev");
     const nextBtn = carousel.querySelector(".home-carousel-btn.next");
+
+    console.log("輪播圖片數量：", slides.length);
 
     if (slides.length <= 1) {
       return;
@@ -347,17 +394,26 @@
     startAutoPlay();
   }
 
-  document.addEventListener("DOMContentLoaded", insertHomeCarousel);
+  document.addEventListener("DOMContentLoaded", function () {
+    setTimeout(insertHomeCarousel, 300);
+  });
+
+  window.addEventListener("load", function () {
+    setTimeout(insertHomeCarousel, 300);
+  });
 
   const pushStateEl = document.getElementById("_pushState") || document.querySelector("hy-push-state");
 
   if (pushStateEl) {
-    pushStateEl.addEventListener("hy-push-state-after", insertHomeCarousel);
-    pushStateEl.addEventListener("load", insertHomeCarousel);
+    pushStateEl.addEventListener("hy-push-state-after", function () {
+      setTimeout(insertHomeCarousel, 300);
+    });
+
+    pushStateEl.addEventListener("load", function () {
+      setTimeout(insertHomeCarousel, 300);
+    });
   }
 </script>
-{% endif %}
-{% endif %}
 
 <!--
 Code for integrating CloudFlare's email protection with Hydejack's single page app loading.
