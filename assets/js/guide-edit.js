@@ -94,9 +94,9 @@ console.log("guide-edit.js 已載入");
   function validateGuide() {
     const title = titleInput.value.trim();
     const gameName = gameInput.value.trim();
+    const coverImage = coverInput.value.trim();
     const summary = summaryInput.value.trim();
     const content = contentInput.value.trim();
-    const coverImage = coverInput.value.trim();
 
     if (!currentUser) return "請先登入。";
     if (!guideData) return "找不到文章資料。";
@@ -137,6 +137,19 @@ console.log("guide-edit.js 已載入");
     previewContent.innerHTML = safeHtml;
     previewBox.style.display = "block";
     setMsg("");
+  }
+
+  function updateCoverPreview(url) {
+    const value = String(url || "").trim();
+
+    if (!value || !isValidImageUrl(value)) {
+      coverPreviewWrap.style.display = "none";
+      coverPreview.src = "";
+      return;
+    }
+
+    coverPreview.src = value;
+    coverPreviewWrap.style.display = "block";
   }
 
   async function loadGuide() {
@@ -181,10 +194,7 @@ console.log("guide-edit.js 已載入");
         currentCoverWrap.style.display = "none";
       }
 
-      if (guideData.coverImage && isValidImageUrl(guideData.coverImage)) {
-        coverPreview.src = guideData.coverImage;
-        coverPreviewWrap.style.display = "block";
-      }
+      updateCoverPreview(guideData.coverImage);
 
       backLink.href = "/guides/post/?id=" + encodeURIComponent(guideId);
 
@@ -242,22 +252,15 @@ console.log("guide-edit.js 已載入");
     if (!coverInput) return;
 
     coverInput.addEventListener("input", function () {
-      const url = coverInput.value.trim();
-
-      if (!url || !isValidImageUrl(url)) {
-        coverPreviewWrap.style.display = "none";
-        coverPreview.src = "";
-        return;
-      }
-
-      coverPreview.src = url;
-      coverPreviewWrap.style.display = "block";
+      updateCoverPreview(coverInput.value);
     });
 
     if (coverPreview) {
       coverPreview.addEventListener("error", function () {
         coverPreviewWrap.style.display = "none";
-        setMsg("圖片預覽失敗，請確認是否為可公開瀏覽的圖片直接連結。");
+        if (coverInput.value.trim()) {
+          setMsg("圖片預覽失敗，請確認是否為可公開瀏覽的圖片直接連結。");
+        }
       });
 
       coverPreview.addEventListener("load", function () {
