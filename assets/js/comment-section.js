@@ -28,7 +28,21 @@ console.log("comment-section.js 已載入");
     return path;
   }
 
+  function getGuideIdFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("id") || "";
+  }
+
+  function isGuidePostPage() {
+    return window.location.pathname === "/guides/post/" || window.location.pathname === "/guides/post/index.html";
+  }
+
   function getPostPath() {
+    if (isGuidePostPage()) {
+      const guideId = getGuideIdFromUrl();
+      return guideId ? "guide:" + guideId : normalizePath(window.location.pathname);
+    }
+
     return normalizePath(window.location.pathname);
   }
 
@@ -80,15 +94,27 @@ console.log("comment-section.js 已載入");
     }
   }
 
+  function getCommentMountTarget() {
+    if (isGuidePostPage()) {
+      const mount = document.getElementById("guideCommentMount");
+      if (mount) return mount;
+    }
+
+    const article = document.querySelector("article");
+    if (article) return article;
+
+    return null;
+  }
+
   function createCommentSection() {
     if (document.getElementById("firebaseCommentSection")) {
       return;
     }
 
-    const article = document.querySelector("article");
+    const target = getCommentMountTarget();
 
-    if (!article) {
-      console.warn("找不到 article，無法插入留言區");
+    if (!target) {
+      console.warn("找不到留言區插入位置");
       return;
     }
 
@@ -492,15 +518,13 @@ console.log("comment-section.js 已載入");
       </div>
     `;
 
-    article.appendChild(section);
+    target.appendChild(section);
   }
 
   function setMessage(text, type) {
     const commentMessage = document.getElementById("commentMessage");
 
-    if (!commentMessage) {
-      return;
-    }
+    if (!commentMessage) return;
 
     commentMessage.innerText = text || "";
     commentMessage.className = type === "success"
@@ -514,9 +538,7 @@ console.log("comment-section.js 已載入");
     const commentSubmitBtn = document.getElementById("commentSubmitBtn");
     const warning = document.getElementById("commentProfileWarning");
 
-    if (!commentUser || !commentInput || !commentSubmitBtn || !warning) {
-      return;
-    }
+    if (!commentUser || !commentInput || !commentSubmitBtn || !warning) return;
 
     if (!currentUser) {
       commentUser.innerText = "請先登入後再留言。";
@@ -543,9 +565,7 @@ console.log("comment-section.js 已載入");
   function renderComments(snapshot) {
     const commentList = document.getElementById("commentList");
 
-    if (!commentList) {
-      return;
-    }
+    if (!commentList) return;
 
     if (snapshot.empty) {
       commentList.innerHTML = `<div class="firebase-comment-empty">目前還沒有留言，快來當第一個留言的人吧！</div>`;
@@ -660,9 +680,7 @@ console.log("comment-section.js 已載入");
     const commentInput = document.getElementById("commentInput");
     const commentSubmitBtn = document.getElementById("commentSubmitBtn");
 
-    if (!commentInput || !commentSubmitBtn) {
-      return;
-    }
+    if (!commentInput || !commentSubmitBtn) return;
 
     setMessage("");
 
@@ -722,9 +740,7 @@ console.log("comment-section.js 已載入");
       return;
     }
 
-    if (!commentId) {
-      return;
-    }
+    if (!commentId) return;
 
     const ref = db.collection("comments").doc(commentId);
 
@@ -732,9 +748,7 @@ console.log("comment-section.js 已載入");
       await db.runTransaction(async function (transaction) {
         const snap = await transaction.get(ref);
 
-        if (!snap.exists) {
-          return;
-        }
+        if (!snap.exists) return;
 
         const data = snap.data();
         const likedBy = data.likedBy || {};
@@ -771,9 +785,7 @@ console.log("comment-section.js 已載入");
     const msg = document.getElementById("editCommentMsg");
     const saveBtn = document.getElementById("editCommentSaveBtn");
 
-    if (!modal || !input || !saveBtn) {
-      return;
-    }
+    if (!modal || !input || !saveBtn) return;
 
     modal.dataset.commentId = commentId;
     input.value = content;
@@ -805,9 +817,7 @@ console.log("comment-section.js 已載入");
     const msg = document.getElementById("editCommentMsg");
     const saveBtn = document.getElementById("editCommentSaveBtn");
 
-    if (!modal || !input || !saveBtn || !currentUser) {
-      return;
-    }
+    if (!modal || !input || !saveBtn || !currentUser) return;
 
     const commentId = modal.dataset.commentId;
     const newContent = input.value.trim();
@@ -870,9 +880,7 @@ console.log("comment-section.js 已載入");
     const input = document.getElementById("editCommentInput");
     const count = document.getElementById("editCommentCount");
 
-    if (!input || !count) {
-      return;
-    }
+    if (!input || !count) return;
 
     count.innerText = input.value.length + " / 500";
   }
@@ -882,9 +890,7 @@ console.log("comment-section.js 已載入");
     const msg = document.getElementById("deleteCommentMsg");
     const confirmBtn = document.getElementById("deleteCommentConfirmBtn");
 
-    if (!modal || !confirmBtn) {
-      return;
-    }
+    if (!modal || !confirmBtn) return;
 
     modal.dataset.commentId = commentId;
     msg.innerText = "";
@@ -908,9 +914,7 @@ console.log("comment-section.js 已載入");
     const msg = document.getElementById("deleteCommentMsg");
     const confirmBtn = document.getElementById("deleteCommentConfirmBtn");
 
-    if (!modal || !confirmBtn || !currentUser) {
-      return;
-    }
+    if (!modal || !confirmBtn || !currentUser) return;
 
     const commentId = modal.dataset.commentId;
 
@@ -953,9 +957,7 @@ console.log("comment-section.js 已載入");
     const commentInput = document.getElementById("commentInput");
     const commentCount = document.getElementById("commentCount");
 
-    if (!commentInput || !commentCount) {
-      return;
-    }
+    if (!commentInput || !commentCount) return;
 
     commentCount.innerText = commentInput.value.length + " / 500";
   }
@@ -1028,6 +1030,12 @@ console.log("comment-section.js 已載入");
 
   function initCommentSection() {
     createCommentSection();
+
+    if (!document.getElementById("firebaseCommentSection")) {
+      console.warn("留言區尚未建立完成");
+      return;
+    }
+
     bindEvents();
     listenComments();
 
@@ -1048,6 +1056,6 @@ console.log("comment-section.js 已載入");
   }
 
   document.addEventListener("DOMContentLoaded", function () {
-    setTimeout(initCommentSection, 300);
+    setTimeout(initCommentSection, 500);
   });
 })();
