@@ -23,6 +23,8 @@ console.log("guide-editor.js 已載入");
   const titleInput = document.getElementById("guideTitle");
   const gameInput = document.getElementById("guideGameName");
   const coverInput = document.getElementById("guideCoverImage");
+  const coverPreviewWrap = document.getElementById("guideCoverPreviewWrap");
+  const coverPreview = document.getElementById("guideCoverPreview");
   const summaryInput = document.getElementById("guideSummary");
   const contentInput = document.getElementById("guideContent");
   const previewBtn = document.getElementById("guidePreviewBtn");
@@ -47,6 +49,39 @@ console.log("guide-editor.js 已載入");
       .replaceAll("'", "&#039;");
   }
 
+  function normalizeImageUrl(url) {
+    const value = String(url || "").trim();
+
+    if (!value) {
+      return "";
+    }
+
+    if (value.startsWith("/")) {
+      return value;
+    }
+
+    return value;
+  }
+
+  function isValidImageUrl(url) {
+    const value = String(url || "").trim();
+
+    if (!value) {
+      return true;
+    }
+
+    if (value.startsWith("/")) {
+      return true;
+    }
+
+    try {
+      const parsed = new URL(value);
+      return parsed.protocol === "https:" || parsed.protocol === "http:";
+    } catch (error) {
+      return false;
+    }
+  }
+
   async function getDisplayName(user) {
     const userDoc = await db.collection("users").doc(user.uid).get();
 
@@ -60,6 +95,7 @@ console.log("guide-editor.js 已載入");
   function validateGuide() {
     const title = titleInput.value.trim();
     const gameName = gameInput.value.trim();
+    const coverImage = coverInput.value.trim();
     const summary = summaryInput.value.trim();
     const content = contentInput.value.trim();
 
@@ -73,6 +109,7 @@ console.log("guide-editor.js 已載入");
     if (summary.length > 180) return "文章摘要請控制在 180 字以內。";
     if (!content) return "請輸入攻略內容。";
     if (content.length > 10000) return "攻略內容請控制在 10000 字以內。";
+    if (coverImage && !isValidImageUrl(coverImage)) return "封面圖片網址格式不正確。";
 
     return "";
   }
@@ -112,13 +149,14 @@ console.log("guide-editor.js 已載入");
 
     try {
       publishBtn.disabled = true;
+      previewBtn.disabled = true;
       publishBtn.innerText = "發布中...";
-      setMsg("");
+      setMsg("正在儲存文章...");
 
       const payload = {
         title: titleInput.value.trim(),
         gameName: gameInput.value.trim(),
-        coverImage: coverInput.value.trim(),
+        coverImage: normalizeImageUrl(coverInput.value),
         summary: summaryInput.value.trim(),
         contentMarkdown: contentInput.value.trim(),
         authorUid: currentUser.uid,
@@ -140,7 +178,38 @@ console.log("guide-editor.js 已載入");
       console.error("發布攻略失敗：", error);
       setMsg("發布失敗，請稍後再試。");
       publishBtn.disabled = false;
+      previewBtn.disabled = false;
       publishBtn.innerText = "發布文章";
+    }
+  }
+
+  function bindCoverPreview() {
+    if (!coverInput) return;
+
+    coverInput.addEventListener("input", function () {
+      const url = coverInput.value.trim();
+
+      if (!url || !isValidImageUrl(url)) {
+        coverPreviewWrap.style.display = "none";
+        coverPreview.src = "";
+        return;
+      }
+
+      coverPreview.src = url;
+      coverPreviewWrap.style.display = "block";
+    });
+
+    if (coverPreview) {
+      coverPreview.addEventListener("error", function () {
+        coverPreviewWrap.style.display = "none";
+        setMsg("圖片預覽失敗，請確認是否為可公開瀏覽的圖片直接連結。");
+      });
+
+      coverPreview.addEventListener("load", function () {
+        if (coverInput.value.trim()) {
+          setMsg("");
+        }
+      });
     }
   }
 
@@ -169,6 +238,7 @@ console.log("guide-editor.js 已載入");
     previewBtn.disabled = false;
   });
 
+  bindCoverPreview();
   previewBtn.addEventListener("click", renderPreview);
   publishBtn.addEventListener("click", publishGuide);
 })();
