@@ -1,21 +1,45 @@
 {% unless page.url contains '/login/' %}
-<!-- Firebase Auth Guard -->
+<!-- Firebase Auth / Firestore -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<!-- Site Auth / Profile / Comments -->
 <script src="/assets/js/auth-guard.js"></script>
+<script src="/assets/js/profile.js"></script>
+<script src="/assets/js/comment-section.js"></script>
 {% endunless %}
 
 <!-- Add HTML tags here to be included in the head. You can delete the below: -->
 <link rel="dns-prefetch" href="https://assets.gumroad.com">
 
 <script type="module">
-  const loadJS = x => new Promise(r => window.loadJS(x).addEventListener('load', r));
+  const loadJS = x => new Promise(r => {
+    if (!window.loadJS) {
+      console.warn("window.loadJS 尚未載入，略過外部 JS 載入");
+      r();
+      return;
+    }
+
+    const script = window.loadJS(x);
+
+    if (script && script.addEventListener) {
+      script.addEventListener('load', r);
+    } else {
+      r();
+    }
+  });
 
   let p1, p2, io1, io2, embedCreated, overlayCreated;
 
   function initGumroad() {
     if (!window.loadJS) {
       console.warn("window.loadJS 尚未載入，略過 Gumroad 初始化");
+      return;
+    }
+
+    if (!("IntersectionObserver" in window)) {
+      console.warn("瀏覽器不支援 IntersectionObserver，略過 Gumroad 初始化");
       return;
     }
 
