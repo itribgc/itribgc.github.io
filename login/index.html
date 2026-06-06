@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
-  <title>登入</title>
+  <title>守夜人-桌遊社｜登入</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
@@ -21,7 +21,7 @@
     }
 
     .card {
-      width: 340px;
+      width: 360px;
       background: #ffffff;
       padding: 32px;
       border-radius: 14px;
@@ -82,6 +82,30 @@
       cursor: not-allowed;
     }
 
+    .link-button {
+      width: 100%;
+      margin-top: 12px;
+      padding: 0;
+      background: transparent;
+      color: #3366cc;
+      border: none;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    .link-button:hover {
+      background: transparent;
+      color: #224a99;
+    }
+
+    .link-button:disabled {
+      background: transparent;
+      color: #999;
+      cursor: not-allowed;
+    }
+
     #msg {
       margin-top: 14px;
       min-height: 20px;
@@ -89,6 +113,11 @@
       font-size: 14px;
       text-align: center;
       line-height: 1.5;
+      word-break: break-word;
+    }
+
+    #msg.success {
+      color: #188038;
     }
 
     .hint {
@@ -96,6 +125,7 @@
       color: #777;
       font-size: 13px;
       text-align: center;
+      line-height: 1.6;
     }
   </style>
 </head>
@@ -111,10 +141,15 @@
     <label for="password">密碼</label>
     <input id="password" type="password" placeholder="請輸入密碼" autocomplete="current-password">
 
-    <button id="loginBtn" type="button" onclick="doLogin()">登入</button>
+    <button id="loginBtn" type="button">登入</button>
+
+    <button id="forgotBtn" class="link-button" type="button">忘記密碼？</button>
 
     <div id="msg"></div>
-    <div class="hint">請使用已建立的 Firebase 帳戶登入</div>
+
+    <div class="hint">
+      請使用提供給 守夜人-桌遊社 之電子信箱作為帳號登入
+    </div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -137,22 +172,31 @@
     const emailInput = document.getElementById("email");
     const passwordInput = document.getElementById("password");
     const loginBtn = document.getElementById("loginBtn");
+    const forgotBtn = document.getElementById("forgotBtn");
     const msg = document.getElementById("msg");
 
-    function showMessage(text) {
+    function showMessage(text, type) {
       msg.innerText = text;
+      msg.className = type === "success" ? "success" : "";
     }
 
-    function setLoading(isLoading) {
+    function setLoginLoading(isLoading) {
       loginBtn.disabled = isLoading;
       loginBtn.innerText = isLoading ? "登入中..." : "登入";
+      forgotBtn.disabled = isLoading;
+    }
+
+    function setForgotLoading(isLoading) {
+      forgotBtn.disabled = isLoading;
+      forgotBtn.innerText = isLoading ? "寄送中..." : "忘記密碼？";
+      loginBtn.disabled = isLoading;
     }
 
     function getFirebaseErrorMessage(error) {
-      console.error("Firebase 登入錯誤：", error);
+      console.error("Firebase 錯誤：", error);
 
       if (!error || !error.code) {
-        return "登入失敗，請稍後再試。";
+        return "操作失敗，請稍後再試。";
       }
 
       switch (error.code) {
@@ -171,6 +215,9 @@
         case "auth/invalid-credential":
           return "帳號或密碼錯誤，請重新確認。";
 
+        case "auth/missing-password":
+          return "請輸入密碼。";
+
         case "auth/too-many-requests":
           return "登入嘗試次數過多，請稍後再試。";
 
@@ -178,7 +225,7 @@
           return "網路連線異常，請確認網路後再試。";
 
         default:
-          return "登入失敗：" + error.message;
+          return "操作失敗：" + error.message;
       }
     }
 
@@ -195,9 +242,9 @@
         }
 
         auth = firebase.auth();
+        auth.languageCode = "zh-TW";
 
         console.log("Firebase 初始化成功");
-
       } catch (error) {
         console.error("Firebase 初始化失敗：", error);
         showMessage("Firebase 初始化失敗，請查看 Console。");
@@ -230,7 +277,7 @@
       }
 
       try {
-        setLoading(true);
+        setLoginLoading(true);
 
         console.log("開始登入：", email);
 
@@ -239,12 +286,45 @@
         console.log("登入成功");
 
         window.location.replace("/");
-
       } catch (error) {
         showMessage(getFirebaseErrorMessage(error));
-        setLoading(false);
+        setLoginLoading(false);
       }
     }
+
+    async function sendResetPasswordEmail() {
+      console.log("忘記密碼按鈕被點擊");
+
+      if (!auth) {
+        showMessage("Firebase 尚未初始化完成，請重新整理頁面。");
+        return;
+      }
+
+      const email = emailInput.value.trim();
+
+      showMessage("");
+
+      if (!email) {
+        showMessage("請先輸入您的 Email，再點選忘記密碼。");
+        emailInput.focus();
+        return;
+      }
+
+      try {
+        setForgotLoading(true);
+
+        await auth.sendPasswordResetEmail(email);
+
+        showMessage("密碼重設信已寄出，請至您的信箱收信並重新設定密碼。", "success");
+        setForgotLoading(false);
+      } catch (error) {
+        showMessage(getFirebaseErrorMessage(error));
+        setForgotLoading(false);
+      }
+    }
+
+    loginBtn.addEventListener("click", doLogin);
+    forgotBtn.addEventListener("click", sendResetPasswordEmail);
 
     passwordInput.addEventListener("keydown", function(event) {
       if (event.key === "Enter") {
