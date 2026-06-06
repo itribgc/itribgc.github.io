@@ -44,11 +44,11 @@ author:
 # Add links to the sidebar.
 menu:
   - title:             電子報報
-    url:               /about/
+    url:               /example/
   - title:             桌遊攻略
     url:               /guides/
   - title:             文章列表
-    url:               /example/
+    url:               /about/
 
 # Add links to the footer.
 legal:
