@@ -1,7 +1,9 @@
+{% unless page.url contains '/login/' %}
 <!-- Firebase Auth Guard -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="/assets/js/auth-guard.js"></script>
+{% endunless %}
 
 <!-- Add HTML tags here to be included in the head. You can delete the below: -->
 <link rel="dns-prefetch" href="https://assets.gumroad.com">
@@ -12,6 +14,11 @@
   let p1, p2, io1, io2, embedCreated, overlayCreated;
 
   function initGumroad() {
+    if (!window.loadJS) {
+      console.warn("window.loadJS 尚未載入，略過 Gumroad 初始化");
+      return;
+    }
+
     io1 ||= new IntersectionObserver(async (entries) => {
       if (entries.some(x => x.isIntersecting)) {
         p1 = p1 || loadJS('https://gumroad.com/js/gumroad-embed.js');
