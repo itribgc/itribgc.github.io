@@ -1,11 +1,427 @@
 ---
-layout: blog
-title: Blog
+layout: page
+title: 守夜人-桌遊社
 description: >
-  The official Hydejack blog. Version updates, example content and how-to guides on how to blog with Jekyll.
-last_modified_at: 2018-08-03
-no_link_title: false 
-no_excerpt: false 
-hide_image: false
-cover: true
+  守夜人-桌遊社文章與活動資訊
+hide_description: true
+sitemap: true
 ---
+
+<style>
+  .home-carousel {
+    position: relative;
+    width: 100%;
+    max-width: 1100px;
+    height: 360px;
+    margin: 0 auto 2.5rem auto;
+    overflow: hidden;
+    border-radius: 18px;
+    background: #303437;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.25);
+  }
+
+  .home-carousel-track {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  .home-carousel-slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.8s ease;
+    pointer-events: none;
+  }
+
+  .home-carousel-slide.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .home-carousel-slide a {
+    display: block;
+    width: 100%;
+    height: 100%;
+    text-decoration: none;
+  }
+
+  .home-carousel-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .home-carousel-overlay {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 52px 28px 26px 28px;
+    background: linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.78),
+      rgba(0, 0, 0, 0.36),
+      rgba(0, 0, 0, 0)
+    );
+    color: #fff;
+    box-sizing: border-box;
+  }
+
+  .home-carousel-title {
+    margin: 0;
+    color: #fff;
+    font-size: 1.65rem;
+    font-weight: 700;
+    line-height: 1.35;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+  }
+
+  .home-carousel-desc {
+    margin: 8px 0 0 0;
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    max-width: 760px;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+  }
+
+  .home-carousel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
+    width: 42px;
+    height: 42px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.45);
+    color: #fff;
+    font-size: 26px;
+    line-height: 42px;
+    text-align: center;
+    cursor: pointer;
+  }
+
+  .home-carousel-btn:hover {
+    background: rgba(0, 0, 0, 0.65);
+  }
+
+  .home-carousel-btn.prev {
+    left: 16px;
+  }
+
+  .home-carousel-btn.next {
+    right: 16px;
+  }
+
+  .home-carousel-dots {
+    position: absolute;
+    z-index: 4;
+    left: 50%;
+    bottom: 14px;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+  }
+
+  .home-carousel-dot {
+    width: 9px;
+    height: 9px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.45);
+    cursor: pointer;
+  }
+
+  .home-carousel-dot.active {
+    background: #fff;
+  }
+
+  .home-post-section {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .home-post-section-title {
+    margin: 0 0 1.25rem 0;
+    font-size: 1.6rem;
+    font-weight: 700;
+  }
+
+  .home-post-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+  }
+
+  .home-post-card {
+    display: block;
+    overflow: hidden;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.04);
+    text-decoration: none;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .home-post-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+    text-decoration: none;
+  }
+
+  .home-post-card-img {
+    width: 100%;
+    height: 190px;
+    object-fit: cover;
+    display: block;
+    background: #303437;
+  }
+
+  .home-post-card-body {
+    padding: 18px;
+  }
+
+  .home-post-card-title {
+    margin: 0 0 8px 0;
+    font-size: 1.2rem;
+    line-height: 1.4;
+  }
+
+  .home-post-card-desc {
+    margin: 0;
+    font-size: 0.92rem;
+    line-height: 1.6;
+    opacity: 0.78;
+  }
+
+  .home-empty {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  @media (max-width: 768px) {
+    .home-carousel {
+      height: 230px;
+      border-radius: 14px;
+      margin-bottom: 2rem;
+    }
+
+    .home-carousel-title {
+      font-size: 1.15rem;
+    }
+
+    .home-carousel-desc {
+      display: none;
+    }
+
+    .home-carousel-overlay {
+      padding: 42px 18px 24px 18px;
+    }
+
+    .home-carousel-btn {
+      width: 34px;
+      height: 34px;
+      font-size: 22px;
+      line-height: 34px;
+    }
+
+    .home-carousel-btn.prev {
+      left: 10px;
+    }
+
+    .home-carousel-btn.next {
+      right: 10px;
+    }
+
+    .home-post-list {
+      grid-template-columns: 1fr;
+    }
+
+    .home-post-card-img {
+      height: 170px;
+    }
+  }
+</style>
+
+{% assign carousel_count = 0 %}
+
+<div class="home-carousel" id="homeCarousel">
+  <div class="home-carousel-track">
+
+    {% for post in site.posts limit: 10 %}
+      {% if post.image and post.image.path %}
+        {% assign carousel_count = carousel_count | plus: 1 %}
+
+        <div class="home-carousel-slide {% if carousel_count == 1 %}active{% endif %}">
+          <a href="{{ post.url | relative_url }}" aria-label="{{ post.title | escape }}">
+            <img src="{{ post.image.path | relative_url }}" alt="{{ post.title | escape }}">
+
+            <div class="home-carousel-overlay">
+              <h2 class="home-carousel-title">{{ post.title }}</h2>
+
+              {% if post.description %}
+                <p class="home-carousel-desc">{{ post.description | strip_html | truncate: 90 }}</p>
+              {% elsif post.excerpt %}
+                <p class="home-carousel-desc">{{ post.excerpt | strip_html | truncate: 90 }}</p>
+              {% endif %}
+            </div>
+          </a>
+        </div>
+      {% endif %}
+    {% endfor %}
+
+  </div>
+
+  {% if carousel_count > 1 %}
+    <button class="home-carousel-btn prev" type="button" aria-label="上一張">‹</button>
+    <button class="home-carousel-btn next" type="button" aria-label="下一張">›</button>
+
+    <div class="home-carousel-dots">
+      {% assign dot_count = 0 %}
+      {% for post in site.posts limit: 10 %}
+        {% if post.image and post.image.path %}
+          <button
+            class="home-carousel-dot {% if dot_count == 0 %}active{% endif %}"
+            type="button"
+            aria-label="切換輪播圖片"
+            data-index="{{ dot_count }}">
+          </button>
+          {% assign dot_count = dot_count | plus: 1 %}
+        {% endif %}
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>
+
+{% if carousel_count == 0 %}
+  <div class="home-empty">
+    目前沒有可顯示於輪播的文章圖片。請確認文章 front matter 有設定 <code>image.path</code>。
+  </div>
+{% endif %}
+
+<div class="home-post-section">
+  <h2 class="home-post-section-title">最新文章</h2>
+
+  <div class="home-post-list">
+    {% for post in site.posts limit: 12 %}
+      <a class="home-post-card" href="{{ post.url | relative_url }}">
+        {% if post.image and post.image.path %}
+          <img class="home-post-card-img" src="{{ post.image.path | relative_url }}" alt="{{ post.title | escape }}">
+        {% endif %}
+
+        <div class="home-post-card-body">
+          <h3 class="home-post-card-title">{{ post.title }}</h3>
+
+          {% if post.description %}
+            <p class="home-post-card-desc">{{ post.description | strip_html | truncate: 90 }}</p>
+          {% elsif post.excerpt %}
+            <p class="home-post-card-desc">{{ post.excerpt | strip_html | truncate: 90 }}</p>
+          {% endif %}
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const carousel = document.getElementById("homeCarousel");
+
+    if (!carousel) {
+      return;
+    }
+
+    const slides = carousel.querySelectorAll(".home-carousel-slide");
+    const dots = carousel.querySelectorAll(".home-carousel-dot");
+    const prevBtn = carousel.querySelector(".home-carousel-btn.prev");
+    const nextBtn = carousel.querySelector(".home-carousel-btn.next");
+
+    if (slides.length <= 1) {
+      return;
+    }
+
+    let currentIndex = 0;
+    let timer = null;
+
+    function showSlide(index) {
+      if (index < 0) {
+        index = slides.length - 1;
+      }
+
+      if (index >= slides.length) {
+        index = 0;
+      }
+
+      slides[currentIndex].classList.remove("active");
+
+      if (dots[currentIndex]) {
+        dots[currentIndex].classList.remove("active");
+      }
+
+      currentIndex = index;
+
+      slides[currentIndex].classList.add("active");
+
+      if (dots[currentIndex]) {
+        dots[currentIndex].classList.add("active");
+      }
+    }
+
+    function nextSlide() {
+      showSlide(currentIndex + 1);
+    }
+
+    function prevSlide() {
+      showSlide(currentIndex - 1);
+    }
+
+    function startAutoPlay() {
+      stopAutoPlay();
+      timer = setInterval(nextSlide, 3500);
+    }
+
+    function stopAutoPlay() {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+    }
+
+    if (nextBtn) {
+      nextBtn.addEventListener("click", function (event) {
+        event.preventDefault();
+        nextSlide();
+        startAutoPlay();
+      });
+    }
+
+    if (prevBtn) {
+      prevBtn.addEventListener("click", function (event) {
+        event.preventDefault();
+        prevSlide();
+        startAutoPlay();
+      });
+    }
+
+    dots.forEach(function (dot) {
+      dot.addEventListener("click", function (event) {
+        event.preventDefault();
+        const index = Number(dot.dataset.index);
+        showSlide(index);
+        startAutoPlay();
+      });
+    });
+
+    carousel.addEventListener("mouseenter", stopAutoPlay);
+    carousel.addEventListener("mouseleave", startAutoPlay);
+
+    startAutoPlay();
+  });
+</script>
