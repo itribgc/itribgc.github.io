@@ -1,0 +1,168 @@
+---
+layout: page
+title: 撰寫桌遊攻略
+description: >
+  撰寫並發布桌遊攻略文章。
+---
+
+<style>
+  .guide-editor {
+    max-width: 980px;
+  }
+
+  .guide-editor label {
+    display: block;
+    margin: 1rem 0 0.35rem 0;
+    font-weight: 700;
+  }
+
+  .guide-editor input,
+  .guide-editor textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.06);
+    color: inherit;
+    font: inherit;
+    outline: none;
+  }
+
+  .guide-editor input:focus,
+  .guide-editor textarea:focus {
+    border-color: rgb(79,177,186);
+    box-shadow: 0 0 0 2px rgba(79,177,186,0.2);
+  }
+
+  .guide-editor textarea {
+    min-height: 360px;
+    resize: vertical;
+    line-height: 1.65;
+  }
+
+  .guide-editor-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .guide-publish-btn,
+  .guide-preview-btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 700;
+  }
+
+  .guide-publish-btn {
+    background: rgb(79,177,186);
+    color: #fff;
+  }
+
+  .guide-preview-btn {
+    background: rgba(255,255,255,0.12);
+    color: inherit;
+  }
+
+  .guide-publish-btn:disabled,
+  .guide-preview-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  .guide-editor-msg {
+    margin-top: 0.75rem;
+    min-height: 22px;
+    color: #ffb4a9;
+    line-height: 1.5;
+  }
+
+  .guide-editor-msg.success {
+    color: #8fd19e;
+  }
+
+  .guide-preview {
+    margin-top: 2rem;
+    padding: 1.25rem;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.055);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .guide-preview h2 {
+    margin-top: 0;
+  }
+
+  .guide-preview-content {
+    line-height: 1.75;
+  }
+
+  .guide-template-box {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: 12px;
+    background: rgba(79,177,186,0.12);
+    border: 1px solid rgba(79,177,186,0.28);
+    font-size: 0.92rem;
+    line-height: 1.7;
+  }
+
+  code {
+    white-space: pre-wrap;
+  }
+</style>
+
+<div class="guide-editor">
+  <h1>撰寫桌遊攻略</h1>
+  <p>請使用 Markdown 撰寫內容。發布後，文章會出現在「桌遊攻略」頁面。</p>
+
+  <div class="guide-template-box">
+    建議格式：<br>
+    <code>## 遊戲介紹
+簡單介紹這款桌遊。
+
+## 適合人數與時間
+- 人數：
+- 時間：
+
+## 核心玩法
+說明主要機制。
+
+## 攻略心得
+分享策略、注意事項或推薦玩法。</code>
+  </div>
+
+  <label for="guideTitle">文章標題</label>
+  <input id="guideTitle" type="text" maxlength="60" placeholder="例如：阿瓦隆新手攻略｜好人陣營怎麼判斷資訊">
+
+  <label for="guideGameName">桌遊名稱</label>
+  <input id="guideGameName" type="text" maxlength="40" placeholder="例如：阿瓦隆、璀璨寶石、風聲">
+
+  <label for="guideCoverImage">封面圖片網址，選填</label>
+  <input id="guideCoverImage" type="text" placeholder="例如：https://... 或 /assets/img/xxx.jpg">
+
+  <label for="guideSummary">文章摘要</label>
+  <textarea id="guideSummary" maxlength="180" style="min-height: 90px;" placeholder="用一小段話介紹這篇攻略重點。"></textarea>
+
+  <label for="guideContent">Markdown 內容</label>
+  <textarea id="guideContent" maxlength="10000" placeholder="開始撰寫你的攻略..."></textarea>
+
+  <div class="guide-editor-actions">
+    <button id="guidePreviewBtn" class="guide-preview-btn" type="button">預覽</button>
+    <button id="guidePublishBtn" class="guide-publish-btn" type="button">發布文章</button>
+    <a href="/guides/">返回桌遊攻略</a>
+  </div>
+
+  <div id="guideEditorMsg" class="guide-editor-msg"></div>
+
+  <div id="guidePreview" class="guide-preview" style="display:none;">
+    <h2>預覽</h2>
+    <div id="guidePreviewContent" class="guide-preview-content"></div>
+  </div>
+</div>
+
+<script src="/assets/js/guide-editor.js"></script>
