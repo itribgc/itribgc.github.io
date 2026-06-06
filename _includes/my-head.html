@@ -1,8 +1,9 @@
 {% unless page.url contains '/login/' %}
-<!-- Firebase Auth / Firestore -->
+<!-- Firebase Auth / Firestore / Storage -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 
 <!-- Markdown Render -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -57,7 +58,7 @@
         await p1;
 
         !embedCreated && await new Promise(function check1(res) {
-          if (typeof createGumroadEmbed !== 'undefined')  {
+          if (typeof createGumroadEmbed !== 'undefined') {
             embedCreated = 1;
             res(createGumroadEmbed());
           } else {
