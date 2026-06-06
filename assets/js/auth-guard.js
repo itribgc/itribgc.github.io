@@ -17,7 +17,7 @@ const auth = firebase.auth();
 
 function normalizePath(path) {
   if (!path.endsWith("/")) {
-    path = path + "/";
+    return path + "/";
   }
   return path;
 }
@@ -44,25 +44,8 @@ function checkAuth() {
       return;
     }
 
-    if (user && isPublicPage) {
-      console.log("已登入，導向首頁 /");
-      window.location.replace("/");
-      return;
-    }
-
-    console.log("驗證通過，留在目前頁面");
+    console.log("驗證通過");
   });
 }
 
 checkAuth();
-
-document.addEventListener("DOMContentLoaded", function () {
-  const pushStateEl = document.getElementById("_pushState") || document.querySelector("hy-push-state");
-
-  if (pushStateEl) {
-    pushStateEl.addEventListener("hy-push-state-after", function () {
-      console.log("Hydejack 頁面切換後重新檢查登入狀態");
-      checkAuth();
-    });
-  }
-});
