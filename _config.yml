@@ -43,11 +43,11 @@ author:
 
 # Add links to the sidebar.
 menu:
-  - title:             Example
+  - title:             電子報報
     url:               /example/
-  - title:             Documentation
+  - title:             桌遊攻略
     url:               /docs/
-  - title:             About
+  - title:             文章列表
     url:               /about/
 
 # Add links to the footer.
