@@ -1,7 +1,7 @@
 ---
 layout: post
 description: > 
-  This feature release adds new social media icons for 2024 and makes dark mode available to everyone.
+  城市尋寶已完美落下帷幕，快來回味一下當時的冒險與感受吧!
 image: 
   path: /assets/img/blog/pawel-czerwinski-848z7lbCjoo-unsplash.jpg
   srcset: 
@@ -13,7 +13,7 @@ excerpt_separator: <!--more-->
 sitemap: false
 ---
 
-# X Marks the Spot in Hydejack 9.2
+# 2026城市尋寶!!
 ## New Social Media Icons
 
 Lots of things have changed in the world of social media since the last release. To bring Hydejack up to date, the default logo for Twitter has changed:
