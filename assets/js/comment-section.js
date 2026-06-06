@@ -234,6 +234,11 @@ console.log("comment-section.js 已載入");
           opacity: 0.98;
         }
 
+        .firebase-comment-edited {
+          opacity: 0.7;
+          font-size: 0.82rem;
+        }
+
         .firebase-comment-content {
           white-space: pre-wrap;
           line-height: 1.75;
@@ -243,10 +248,22 @@ console.log("comment-section.js 已載入");
         .firebase-comment-footer {
           display: flex;
           align-items: center;
+          justify-content: space-between;
           gap: 0.6rem;
+          flex-wrap: wrap;
         }
 
-        .firebase-like-btn {
+        .firebase-comment-left-actions,
+        .firebase-comment-owner-actions {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          flex-wrap: wrap;
+        }
+
+        .firebase-like-btn,
+        .firebase-edit-btn,
+        .firebase-delete-btn {
           padding: 6px 11px;
           border: 1px solid rgba(255, 255, 255, 0.18);
           border-radius: 999px;
@@ -256,8 +273,14 @@ console.log("comment-section.js 已載入");
           font-size: 0.86rem;
         }
 
-        .firebase-like-btn:hover {
+        .firebase-like-btn:hover,
+        .firebase-edit-btn:hover {
           border-color: rgb(79,177,186);
+        }
+
+        .firebase-delete-btn:hover {
+          border-color: #ff8a80;
+          color: #ffb4a9;
         }
 
         .firebase-like-btn.liked {
@@ -265,7 +288,9 @@ console.log("comment-section.js 已載入");
           border-color: rgb(79,177,186);
         }
 
-        .firebase-like-btn:disabled {
+        .firebase-like-btn:disabled,
+        .firebase-edit-btn:disabled,
+        .firebase-delete-btn:disabled {
           opacity: 0.55;
           cursor: not-allowed;
         }
@@ -279,6 +304,113 @@ console.log("comment-section.js 已載入");
           line-height: 1.6;
         }
 
+        .comment-modal {
+          position: fixed;
+          inset: 0;
+          z-index: 100000;
+          display: none;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
+          background: rgba(0, 0, 0, 0.62);
+          box-sizing: border-box;
+        }
+
+        .comment-modal.show {
+          display: flex;
+        }
+
+        .comment-modal-card {
+          width: 100%;
+          max-width: 460px;
+          background: #fff;
+          color: #222;
+          border-radius: 14px;
+          padding: 24px;
+          box-shadow: 0 16px 40px rgba(0, 0, 0, 0.34);
+          box-sizing: border-box;
+        }
+
+        .comment-modal-card h3 {
+          margin: 0 0 12px 0;
+          font-size: 20px;
+          color: #222;
+        }
+
+        .comment-modal-card p {
+          margin: 0 0 16px 0;
+          color: #555;
+          font-size: 14px;
+          line-height: 1.6;
+        }
+
+        .comment-modal-textarea {
+          width: 100%;
+          min-height: 130px;
+          padding: 12px;
+          box-sizing: border-box;
+          border: 1px solid #d6d6d6;
+          border-radius: 10px;
+          font: inherit;
+          resize: vertical;
+          outline: none;
+        }
+
+        .comment-modal-textarea:focus {
+          border-color: rgb(79,177,186);
+          box-shadow: 0 0 0 2px rgba(79,177,186,0.18);
+        }
+
+        .comment-modal-count {
+          margin-top: 8px;
+          font-size: 13px;
+          color: #777;
+          text-align: right;
+        }
+
+        .comment-modal-msg {
+          min-height: 20px;
+          margin-top: 10px;
+          color: #d93025;
+          font-size: 14px;
+          line-height: 1.5;
+        }
+
+        .comment-modal-actions {
+          display: flex;
+          justify-content: flex-end;
+          gap: 10px;
+          margin-top: 18px;
+        }
+
+        .comment-modal-actions button {
+          padding: 9px 14px;
+          border: none;
+          border-radius: 8px;
+          cursor: pointer;
+          font-weight: 700;
+        }
+
+        .comment-modal-cancel {
+          background: #e8e8e8;
+          color: #333;
+        }
+
+        .comment-modal-save {
+          background: rgb(79,177,186);
+          color: #fff;
+        }
+
+        .comment-modal-delete {
+          background: #d93025;
+          color: #fff;
+        }
+
+        .comment-modal-actions button:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
         @media (max-width: 600px) {
           .firebase-comment-actions-row {
             align-items: stretch;
@@ -286,6 +418,19 @@ console.log("comment-section.js 已載入");
           }
 
           .firebase-comment-submit {
+            width: 100%;
+          }
+
+          .firebase-comment-footer {
+            align-items: flex-start;
+            flex-direction: column;
+          }
+
+          .comment-modal-actions {
+            flex-direction: column-reverse;
+          }
+
+          .comment-modal-actions button {
             width: 100%;
           }
         }
@@ -318,6 +463,32 @@ console.log("comment-section.js 已載入");
 
       <div id="commentList" class="firebase-comment-list">
         <div class="firebase-comment-empty">留言載入中...</div>
+      </div>
+
+      <div id="editCommentModal" class="comment-modal">
+        <div class="comment-modal-card">
+          <h3>編輯留言</h3>
+          <p>修改完成後，請點擊「儲存修改」。</p>
+          <textarea id="editCommentInput" class="comment-modal-textarea" maxlength="500"></textarea>
+          <div id="editCommentCount" class="comment-modal-count">0 / 500</div>
+          <div id="editCommentMsg" class="comment-modal-msg"></div>
+          <div class="comment-modal-actions">
+            <button id="editCommentCancelBtn" class="comment-modal-cancel" type="button">取消</button>
+            <button id="editCommentSaveBtn" class="comment-modal-save" type="button">儲存修改</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="deleteCommentModal" class="comment-modal">
+        <div class="comment-modal-card">
+          <h3>刪除留言</h3>
+          <p>是否確定刪除留言？刪除後將無法復原。</p>
+          <div id="deleteCommentMsg" class="comment-modal-msg"></div>
+          <div class="comment-modal-actions">
+            <button id="deleteCommentCancelBtn" class="comment-modal-cancel" type="button">取消</button>
+            <button id="deleteCommentConfirmBtn" class="comment-modal-delete" type="button">確定</button>
+          </div>
+        </div>
       </div>
     `;
 
@@ -387,8 +558,10 @@ console.log("comment-section.js 已載入");
       const data = doc.data();
       const likedBy = data.likedBy || {};
       const uid = currentUser ? currentUser.uid : "";
+      const isOwner = uid && data.uid === uid;
       const isLiked = uid && likedBy[uid] === true;
       const likeCount = data.likeCount || 0;
+      const editedText = data.editedAt ? `<span class="firebase-comment-edited">已編輯</span>` : "";
 
       html += `
         <div class="firebase-comment-item">
@@ -396,17 +569,43 @@ console.log("comment-section.js 已載入");
             <span class="firebase-comment-name">${escapeHtml(data.displayName || "未命名社員")}</span>
             <span>・</span>
             <span>${escapeHtml(formatTime(data.createdAt))}</span>
+            ${editedText ? `<span>・</span>${editedText}` : ""}
           </div>
 
           <div class="firebase-comment-content">${escapeHtml(data.content)}</div>
 
           <div class="firebase-comment-footer">
-            <button
-              class="firebase-like-btn ${isLiked ? "liked" : ""}"
-              type="button"
-              data-comment-id="${doc.id}">
-              👍 ${likeCount}
-            </button>
+            <div class="firebase-comment-left-actions">
+              <button
+                class="firebase-like-btn ${isLiked ? "liked" : ""}"
+                type="button"
+                data-comment-id="${doc.id}">
+                👍 ${likeCount}
+              </button>
+            </div>
+
+            ${
+              isOwner
+                ? `
+                  <div class="firebase-comment-owner-actions">
+                    <button
+                      class="firebase-edit-btn"
+                      type="button"
+                      data-comment-id="${doc.id}"
+                      data-comment-content="${escapeHtml(data.content)}">
+                      編輯
+                    </button>
+
+                    <button
+                      class="firebase-delete-btn"
+                      type="button"
+                      data-comment-id="${doc.id}">
+                      刪除
+                    </button>
+                  </div>
+                `
+                : ""
+            }
           </div>
         </div>
       `;
@@ -417,6 +616,18 @@ console.log("comment-section.js 已載入");
     commentList.querySelectorAll(".firebase-like-btn").forEach(function (btn) {
       btn.addEventListener("click", function () {
         toggleLike(btn.dataset.commentId);
+      });
+    });
+
+    commentList.querySelectorAll(".firebase-edit-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        openEditModal(btn.dataset.commentId, btn.dataset.commentContent || "");
+      });
+    });
+
+    commentList.querySelectorAll(".firebase-delete-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        openDeleteModal(btn.dataset.commentId);
       });
     });
   }
@@ -554,6 +765,190 @@ console.log("comment-section.js 已載入");
     }
   }
 
+  function openEditModal(commentId, content) {
+    const modal = document.getElementById("editCommentModal");
+    const input = document.getElementById("editCommentInput");
+    const msg = document.getElementById("editCommentMsg");
+    const saveBtn = document.getElementById("editCommentSaveBtn");
+
+    if (!modal || !input || !saveBtn) {
+      return;
+    }
+
+    modal.dataset.commentId = commentId;
+    input.value = content;
+    msg.innerText = "";
+    saveBtn.disabled = false;
+    saveBtn.innerText = "儲存修改";
+
+    updateEditCount();
+    modal.classList.add("show");
+
+    setTimeout(function () {
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length);
+    }, 100);
+  }
+
+  function closeEditModal() {
+    const modal = document.getElementById("editCommentModal");
+
+    if (modal) {
+      modal.classList.remove("show");
+      modal.dataset.commentId = "";
+    }
+  }
+
+  async function saveEditedComment() {
+    const modal = document.getElementById("editCommentModal");
+    const input = document.getElementById("editCommentInput");
+    const msg = document.getElementById("editCommentMsg");
+    const saveBtn = document.getElementById("editCommentSaveBtn");
+
+    if (!modal || !input || !saveBtn || !currentUser) {
+      return;
+    }
+
+    const commentId = modal.dataset.commentId;
+    const newContent = input.value.trim();
+
+    msg.innerText = "";
+
+    if (!commentId) {
+      msg.innerText = "找不到留言資料，請重新整理後再試。";
+      return;
+    }
+
+    if (!newContent) {
+      msg.innerText = "留言內容不能為空。";
+      input.focus();
+      return;
+    }
+
+    if (newContent.length > 500) {
+      msg.innerText = "留言請控制在 500 字以內。";
+      return;
+    }
+
+    try {
+      saveBtn.disabled = true;
+      saveBtn.innerText = "儲存中...";
+
+      const ref = db.collection("comments").doc(commentId);
+      const snap = await ref.get();
+
+      if (!snap.exists) {
+        msg.innerText = "這則留言不存在，可能已被刪除。";
+        saveBtn.disabled = false;
+        saveBtn.innerText = "儲存修改";
+        return;
+      }
+
+      if (snap.data().uid !== currentUser.uid) {
+        msg.innerText = "只能編輯自己的留言。";
+        saveBtn.disabled = false;
+        saveBtn.innerText = "儲存修改";
+        return;
+      }
+
+      await ref.update({
+        content: newContent,
+        editedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      closeEditModal();
+    } catch (error) {
+      console.error("編輯留言失敗：", error);
+      msg.innerText = "編輯失敗，請稍後再試。";
+      saveBtn.disabled = false;
+      saveBtn.innerText = "儲存修改";
+    }
+  }
+
+  function updateEditCount() {
+    const input = document.getElementById("editCommentInput");
+    const count = document.getElementById("editCommentCount");
+
+    if (!input || !count) {
+      return;
+    }
+
+    count.innerText = input.value.length + " / 500";
+  }
+
+  function openDeleteModal(commentId) {
+    const modal = document.getElementById("deleteCommentModal");
+    const msg = document.getElementById("deleteCommentMsg");
+    const confirmBtn = document.getElementById("deleteCommentConfirmBtn");
+
+    if (!modal || !confirmBtn) {
+      return;
+    }
+
+    modal.dataset.commentId = commentId;
+    msg.innerText = "";
+    confirmBtn.disabled = false;
+    confirmBtn.innerText = "確定";
+
+    modal.classList.add("show");
+  }
+
+  function closeDeleteModal() {
+    const modal = document.getElementById("deleteCommentModal");
+
+    if (modal) {
+      modal.classList.remove("show");
+      modal.dataset.commentId = "";
+    }
+  }
+
+  async function confirmDeleteComment() {
+    const modal = document.getElementById("deleteCommentModal");
+    const msg = document.getElementById("deleteCommentMsg");
+    const confirmBtn = document.getElementById("deleteCommentConfirmBtn");
+
+    if (!modal || !confirmBtn || !currentUser) {
+      return;
+    }
+
+    const commentId = modal.dataset.commentId;
+
+    if (!commentId) {
+      msg.innerText = "找不到留言資料，請重新整理後再試。";
+      return;
+    }
+
+    try {
+      confirmBtn.disabled = true;
+      confirmBtn.innerText = "刪除中...";
+
+      const ref = db.collection("comments").doc(commentId);
+      const snap = await ref.get();
+
+      if (!snap.exists) {
+        closeDeleteModal();
+        return;
+      }
+
+      if (snap.data().uid !== currentUser.uid) {
+        msg.innerText = "只能刪除自己的留言。";
+        confirmBtn.disabled = false;
+        confirmBtn.innerText = "確定";
+        return;
+      }
+
+      await ref.delete();
+
+      closeDeleteModal();
+    } catch (error) {
+      console.error("刪除留言失敗：", error);
+      msg.innerText = "刪除失敗，請稍後再試。";
+      confirmBtn.disabled = false;
+      confirmBtn.innerText = "確定";
+    }
+  }
+
   function updateTextCount() {
     const commentInput = document.getElementById("commentInput");
     const commentCount = document.getElementById("commentCount");
@@ -569,6 +964,16 @@ console.log("comment-section.js 已載入");
     const commentInput = document.getElementById("commentInput");
     const commentSubmitBtn = document.getElementById("commentSubmitBtn");
 
+    const editInput = document.getElementById("editCommentInput");
+    const editCancelBtn = document.getElementById("editCommentCancelBtn");
+    const editSaveBtn = document.getElementById("editCommentSaveBtn");
+
+    const deleteCancelBtn = document.getElementById("deleteCommentCancelBtn");
+    const deleteConfirmBtn = document.getElementById("deleteCommentConfirmBtn");
+
+    const editModal = document.getElementById("editCommentModal");
+    const deleteModal = document.getElementById("deleteCommentModal");
+
     if (commentInput) {
       commentInput.addEventListener("input", updateTextCount);
     }
@@ -576,6 +981,49 @@ console.log("comment-section.js 已載入");
     if (commentSubmitBtn) {
       commentSubmitBtn.addEventListener("click", submitComment);
     }
+
+    if (editInput) {
+      editInput.addEventListener("input", updateEditCount);
+    }
+
+    if (editCancelBtn) {
+      editCancelBtn.addEventListener("click", closeEditModal);
+    }
+
+    if (editSaveBtn) {
+      editSaveBtn.addEventListener("click", saveEditedComment);
+    }
+
+    if (deleteCancelBtn) {
+      deleteCancelBtn.addEventListener("click", closeDeleteModal);
+    }
+
+    if (deleteConfirmBtn) {
+      deleteConfirmBtn.addEventListener("click", confirmDeleteComment);
+    }
+
+    if (editModal) {
+      editModal.addEventListener("click", function (event) {
+        if (event.target === editModal) {
+          closeEditModal();
+        }
+      });
+    }
+
+    if (deleteModal) {
+      deleteModal.addEventListener("click", function (event) {
+        if (event.target === deleteModal) {
+          closeDeleteModal();
+        }
+      });
+    }
+
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") {
+        closeEditModal();
+        closeDeleteModal();
+      }
+    });
   }
 
   function initCommentSection() {
