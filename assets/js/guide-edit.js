@@ -16,9 +16,6 @@ console.log("guide-edit.js 已載入");
 
   const auth = firebase.auth();
   const db = firebase.firestore();
-  const storage = firebase.storage();
-
-  const MAX_IMAGE_SIZE = 1 * 1024 * 1024;
 
   let currentUser = null;
   let guideId = "";
@@ -26,7 +23,7 @@ console.log("guide-edit.js 已載入");
 
   const titleInput = document.getElementById("guideTitle");
   const gameInput = document.getElementById("guideGameName");
-  const coverFileInput = document.getElementById("guideCoverFile");
+  const coverInput = document.getElementById("guideCoverImage");
   const currentCoverWrap = document.getElementById("guideCurrentCover");
   const currentCoverImg = document.getElementById("guideCurrentCoverImg");
   const coverPreviewWrap = document.getElementById("guideCoverPreviewWrap");
@@ -61,20 +58,37 @@ console.log("guide-edit.js 已載入");
       .replaceAll("'", "&#039;");
   }
 
-  function validateImageFile(file) {
-    if (!file) return "";
+  function normalizeImageUrl(url) {
+    const value = String(url || "").trim();
 
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-
-    if (!allowedTypes.includes(file.type)) {
-      return "封面圖片只支援 JPG、PNG、WEBP。";
+    if (!value) {
+      return "";
     }
 
-    if (file.size > MAX_IMAGE_SIZE) {
-      return "封面圖片請小於 1MB。";
+    if (value.startsWith("/")) {
+      return value;
     }
 
-    return "";
+    return value;
+  }
+
+  function isValidImageUrl(url) {
+    const value = String(url || "").trim();
+
+    if (!value) {
+      return true;
+    }
+
+    if (value.startsWith("/")) {
+      return true;
+    }
+
+    try {
+      const parsed = new URL(value);
+      return parsed.protocol === "https:" || parsed.protocol === "http:";
+    } catch (error) {
+      return false;
+    }
   }
 
   function validateGuide() {
@@ -82,7 +96,7 @@ console.log("guide-edit.js 已載入");
     const gameName = gameInput.value.trim();
     const summary = summaryInput.value.trim();
     const content = contentInput.value.trim();
-    const file = coverFileInput.files[0];
+    const coverImage = coverInput.value.trim();
 
     if (!currentUser) return "請先登入。";
     if (!guideData) return "找不到文章資料。";
@@ -95,9 +109,7 @@ console.log("guide-edit.js 已載入");
     if (summary.length > 180) return "文章摘要請控制在 180 字以內。";
     if (!content) return "請輸入攻略內容。";
     if (content.length > 10000) return "攻略內容請控制在 10000 字以內。";
-
-    const imageError = validateImageFile(file);
-    if (imageError) return imageError;
+    if (coverImage && !isValidImageUrl(coverImage)) return "封面圖片網址格式不正確。";
 
     return "";
   }
@@ -125,28 +137,6 @@ console.log("guide-edit.js 已載入");
     previewContent.innerHTML = safeHtml;
     previewBox.style.display = "block";
     setMsg("");
-  }
-
-  function getFileExtension(file) {
-    if (file.type === "image/jpeg") return "jpg";
-    if (file.type === "image/png") return "png";
-    if (file.type === "image/webp") return "webp";
-    return "jpg";
-  }
-
-  async function uploadCoverImage(file) {
-    if (!file) return "";
-
-    const ext = getFileExtension(file);
-    const fileName = Date.now() + "-" + Math.random().toString(36).slice(2) + "." + ext;
-    const filePath = "guide-covers/" + currentUser.uid + "/" + fileName;
-    const fileRef = storage.ref().child(filePath);
-
-    await fileRef.put(file, {
-      contentType: file.type
-    });
-
-    return await fileRef.getDownloadURL();
   }
 
   async function loadGuide() {
@@ -180,12 +170,20 @@ console.log("guide-edit.js 已載入");
 
       titleInput.value = guideData.title || "";
       gameInput.value = guideData.gameName || "";
+      coverInput.value = guideData.coverImage || "";
       summaryInput.value = guideData.summary || "";
       contentInput.value = guideData.contentMarkdown || "";
 
       if (guideData.coverImage) {
         currentCoverImg.src = guideData.coverImage;
         currentCoverWrap.style.display = "block";
+      } else {
+        currentCoverWrap.style.display = "none";
+      }
+
+      if (guideData.coverImage && isValidImageUrl(guideData.coverImage)) {
+        coverPreview.src = guideData.coverImage;
+        coverPreviewWrap.style.display = "block";
       }
 
       backLink.href = "/guides/post/?id=" + encodeURIComponent(guideId);
@@ -215,20 +213,12 @@ console.log("guide-edit.js 已載入");
       saveBtn.innerText = "儲存中...";
       setMsg("正在儲存文章...");
 
-      const file = coverFileInput.files[0];
-      let coverImageUrl = guideData.coverImage || "";
-
-      if (file) {
-        setMsg("正在上傳新封面圖片...");
-        coverImageUrl = await uploadCoverImage(file);
-      }
-
       const payload = {
         title: titleInput.value.trim(),
         gameName: gameInput.value.trim(),
         summary: summaryInput.value.trim(),
         contentMarkdown: contentInput.value.trim(),
-        coverImage: coverImageUrl,
+        coverImage: normalizeImageUrl(coverInput.value),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       };
 
@@ -248,32 +238,34 @@ console.log("guide-edit.js 已載入");
     }
   }
 
-  function bindImagePreview() {
-    coverFileInput.addEventListener("change", function () {
-      const file = coverFileInput.files[0];
+  function bindCoverPreview() {
+    if (!coverInput) return;
 
-      if (!file) {
-        coverPreviewWrap.style.display = "none";
-        coverPreview.src = "";
-        setMsg("");
-        return;
-      }
+    coverInput.addEventListener("input", function () {
+      const url = coverInput.value.trim();
 
-      const error = validateImageFile(file);
-
-      if (error) {
-        setMsg(error);
-        coverFileInput.value = "";
+      if (!url || !isValidImageUrl(url)) {
         coverPreviewWrap.style.display = "none";
         coverPreview.src = "";
         return;
       }
 
-      const url = URL.createObjectURL(file);
       coverPreview.src = url;
       coverPreviewWrap.style.display = "block";
-      setMsg("");
     });
+
+    if (coverPreview) {
+      coverPreview.addEventListener("error", function () {
+        coverPreviewWrap.style.display = "none";
+        setMsg("圖片預覽失敗，請確認是否為可公開瀏覽的圖片直接連結。");
+      });
+
+      coverPreview.addEventListener("load", function () {
+        if (coverInput.value.trim()) {
+          setMsg("");
+        }
+      });
+    }
   }
 
   auth.onAuthStateChanged(async function (user) {
@@ -289,7 +281,7 @@ console.log("guide-edit.js 已載入");
     await loadGuide();
   });
 
-  bindImagePreview();
+  bindCoverPreview();
   previewBtn.addEventListener("click", renderPreview);
   saveBtn.addEventListener("click", saveGuide);
 })();
