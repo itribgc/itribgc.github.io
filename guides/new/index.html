@@ -111,6 +111,19 @@ description: >
     line-height: 1.7;
   }
 
+  .guide-help {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    opacity: 0.75;
+  }
+
+  #guideCoverPreview {
+    max-width: 100%;
+    max-height: 260px;
+    border-radius: 12px;
+    object-fit: cover;
+  }
+
   code {
     white-space: pre-wrap;
   }
@@ -143,7 +156,15 @@ description: >
   <input id="guideGameName" type="text" maxlength="40" placeholder="例如：阿瓦隆、璀璨寶石、風聲">
 
   <label for="guideCoverImage">封面圖片網址，選填</label>
-  <input id="guideCoverImage" type="text" placeholder="例如：https://... 或 /assets/img/xxx.jpg">
+  <input id="guideCoverImage" type="text" placeholder="請貼上圖片網址，例如 https://...jpg">
+
+  <div class="guide-help">
+    請先將圖片上傳至 ImgBB、Postimages 等外部圖床，再貼上圖片「直接連結」。建議圖片小於 1MB，寬度約 1200px 以內。
+  </div>
+
+  <div id="guideCoverPreviewWrap" style="display:none; margin-top: 1rem;">
+    <img id="guideCoverPreview" alt="封面圖片預覽">
+  </div>
 
   <label for="guideSummary">文章摘要</label>
   <textarea id="guideSummary" maxlength="180" style="min-height: 90px;" placeholder="用一小段話介紹這篇攻略重點。"></textarea>
