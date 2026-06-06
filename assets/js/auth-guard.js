@@ -24,6 +24,6 @@ const isPublicPage = publicPages.includes(currentPath);
 
 auth.onAuthStateChanged(function(user) {
   if (!user && !isPublicPage) {
-    window.location.href = "/login/";
+    window.location.replace("/login/");
   }
 });
