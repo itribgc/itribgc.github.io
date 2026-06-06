@@ -8,67 +8,84 @@ sitemap: false
 ---
 
 # 2026城市尋寶!!
-## New Social Media Icons
 
-Lots of things have changed in the world of social media since the last release. To bring Hydejack up to date, the default logo for Twitter has changed:
+5 月 16 日，桌遊社走出室內，來到西門、艋舺一帶，舉辦《艋舺生存遊戲》城市尋寶活動。這次大家不再只是坐在桌邊推理，而是把整座城市當成遊戲地圖，在老街巷弄、歷史建築與在地景點之間尋找線索、破解關卡。
+{:.lead}
 
-<span class="icon-twitter-old"></span> → <span class="icon-twitter"></span>
-{:.larger}
+![活動隊伍合照](/assets/img/blog/city-treasure/city-treasure-01.png)
+突破紅塵尋寶藏、解碼紫微見星光：傳說中還在閱讀故事就解出答案的隊伍，榮登第一名當之無愧。
+{:.figcaption}
 
-<!--more-->
-
-* toc
+- Table of Contents
 {:toc .large-only}
 
-If you prefer the old Twitter logo, you can use it through `twitter-old`.
-{:.note.smaller}
+## 把城市變成遊戲地圖
 
-There are also many new social media networks, some of which are now included by default:
+活動當天，各隊伍帶著任務紙與地圖出發，穿梭在西門紅樓、剝皮寮老街、龍山寺周邊等地點。大家一路上都非常投入，仔細觀察街區中的每個細節：從牆上的雕塑、老街建築的裝飾，到龍山寺壁畫與周邊環境，都可能藏著解題的關鍵。
 
-| Name | Icon | Name | Icon |
-|:-----|------|:-----|------|
-| signal | <span class="larger icon-signal"></span> | threads | <span class="larger icon-threads"></span> |
-| playstation | <span class="larger icon-playstation"></span> | messenger | <span class="larger icon-messenger"></span> |
-| stripe | <span class="larger icon-stripe"></span> | slack | <span class="larger icon-slack"></span> |
-| gitlab | <span class="larger icon-gitlab"></span> | line | <span class="larger icon-line"></span> |
-| medium | <span class="larger icon-medium"></span> | xbox | <span class="larger icon-xbox"></span> |
-| wechat | <span class="larger icon-wechat"></span> | discord | <span class="larger icon-discord"></span> |
-| mastodon | <span class="larger icon-mastodon"></span> | twitter | <span class="larger icon-twitter"></span> |
+這次的城市尋寶不只考驗推理能力，也非常考驗大家的細心與觀察力。
 
-If your perferred network is missing, note that you can always [follow the steps to add custom icons](../../docs/advanced.md#adding-a-custom-social-media-icon) from the docs, which is what I did for this release.
+## 緊咬第一名的解謎高手們
 
+![GGGHow 隊伍合照](/assets/img/blog/city-treasure/city-treasure-02.png)
+由冀豪領軍 GGGHow 的隊伍實力堅強，在解謎過程中緊咬第一名、緊追在後！
+{:.figcaption}
 
-## Dark Mode is Now Free
-When I first added dark mode to Hydejack it was still considered a novelty. 
-Unity, a popular game engine, was limiting dark mode to its paid version at the time --- a model that I've adopted for Hydejack. 
-Today, dark mode is considered a minimal requirement for any new theme and to reflect that reality, 
-starting with Hydejack 9.2, dark mode is included in all versions of Hydejack. 
+![西門紅樓小隊解謎過程](/assets/img/blog/city-treasure/city-treasure-03.png)
+![隊伍在戶外討論線索](/assets/img/blog/city-treasure/city-treasure-04.png)
+西門紅樓小隊有位資深大將，不可小覷。
+{:.figcaption}
 
+過程中可以看到每一隊都有自己的合作方式。有人負責閱讀題目，有人負責比對地圖，有人專心觀察周遭環境，也有人不斷提出新的解題方向。
 
-## Updated Docs
-The documentation has been updated with a focus on deployment via GitHub Actions and CI pipelines. 
-I've added a chapter on how to [Deploy](../../docs/deploy.md){:.heading.flip-title} and updated many of the existing chapters.
+更有趣的是，每個隊伍在老街或寺廟周邊相遇時，總會忍不住試探一下對方目前找到的線索。大家一邊小心翼翼地討論，一邊又怕被別隊聽見關鍵資訊，那種既合作又競爭的氣氛，真的讓整個活動變得更有趣。
 
-The deployment experience for __PRO customers__ has also been improved. You are now automatically added to a "PRO Customers" team on GitHub if you provide a GitHub username during checkout (existing customers can request an invite through [mail@hydejack.com](mailto:mail@hydejack.com)).
-Members of this team have read access to the pro repository, which allows the theme to be fetched during a CI run. 
-For detail, check out the new [Deploy](../../docs/deploy.md){:.heading.flip-title} chapter.
+## 選擇會改變劇情，也會改變命運
 
+這次最讓大家印象深刻的，除了找線索之外，還有遊戲中各種選擇造成的不同結果。
 
-## Google Fonts Off by Default
-Google Fonts are now turned off by default in the starter kits, but remain in use on hydejack.com for visual continuity. All associated options continue to work as they did before. Only new users have to enable them in the config file if they want to match the look of hydejack.com.
+每個小隊面對械鬥、捐款、選邊站等劇情時，做出的決定都不太一樣，也因此讓主角走向不同命運。有些隊伍的主角非常出師不利，竟然死掉了兩次；也有隊伍一路順順，主角完全沒死。
 
-The reason for this change is that sensibilities around privacy have changed in recent years. 
-No Google product feels appropriate as a default option for an ownership and self-hosting oriented product like Hydejack.
+沒想到城市尋寶不只考驗觀察力和推理力，連主角能不能平安活下來都要看大家怎麼選，真的非常有趣，也成為這次活動中大家事後聊天最有共鳴的笑點之一。
 
-To restore the old look that matches hydejack.com, add the following to your `_config.yml` file:
+## 艋舺老街裡的隊伍身影
 
-```yml
-google_fonts:          Roboto+Slab:700|Noto+Sans:400,400i,700,700i
-font:                  Noto Sans, Helvetica, Arial, sans-serif
-font_heading:          Roboto Slab, Helvetica, Arial, sans-serif
-```
+![隊伍在艋舺老街合照](/assets/img/blog/city-treasure/city-treasure-05.png)
+伊布兩步三步四步望著天，看起來非常享受艋舺老街氣氛。
+{:.figcaption}
 
-On a related note, I've also decided against updating the included Google Analytics script, in part because the upgrade path is incomprehensible, but also due the the same privacy concerns that make Google Fonts a bad default option. I recommend independent analytics services like 
-[Plausible](https://plausible.io), [Matomo](https://matomo.org/) or maybe even [Counterscale](https://counterscale.dev) (if you are a Cloudflare customer).
-You can include the tracking scripts by [adding them as custom HTML](../../docs/basics.md#adding-custom-html-to-the-head).
+![我只想 Take a break 小隊合照](/assets/img/blog/city-treasure/city-treasure-06.png)
+「我只想 Take a break 小隊」動起來啊！
+{:.figcaption}
+
+![努力解謎的隊伍](/assets/img/blog/city-treasure/city-treasure-07.png)
+努力解謎的男人最帥。
+{:.figcaption}
+
+![勝利笑容隊伍合照](/assets/img/blog/city-treasure/city-treasure-08.png)
+勝利的笑容，看來只是一塊小蛋糕呢！
+{:.figcaption}
+
+![目標 3 點下午茶小隊](/assets/img/blog/city-treasure/city-treasure-09.png)
+發下豪語「目標 3 點下午茶」小隊，真的達標了，恭喜！
+{:.figcaption}
+
+## 排行榜與破關成果
+
+最後，各隊伍都順利完成挑戰，排行榜上也留下了大家努力破關的成果。
+
+第一名由「突破紅塵尋寶藏、解碼紫微見星光」拿下；第二名是「目標 3 點下午茶」；第三名則是「艋舺扛霸子」。其他隊伍也都展現了滿滿的行動力與解謎精神，讓這次活動充滿競爭感，也充滿歡笑。
+
+![西門紅樓隊伍合照](/assets/img/blog/city-treasure/city-treasure-10.png)
+城市尋寶不只是一場遊戲，也是一次一起走過街區、破解線索、留下回憶的旅程。
+{:.figcaption}
+
+## 一起走過艋舺，也一起留下回憶
+
+這次《艋舺生存遊戲》讓我們用不同方式認識艋舺。原本可能只是經過的街道、古蹟或牆面，因為任務與線索，變成了大家認真觀察的對象。
+
+城市尋寶就像一場放大版的桌遊，而這次的遊戲版圖，就是我們腳下的街區。
+
+感謝所有參與的社員與隊伍，也謝謝大家在炎熱天氣中依然認真投入。希望這次活動不只是一場破關紀錄，也成為大家一起走過艋舺、一起解謎、一起留下回憶的社團篇章。
+
 
