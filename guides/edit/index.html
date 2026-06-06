@@ -123,7 +123,7 @@ description: >
 
 <div class="guide-editor">
   <h1>編輯桌遊攻略</h1>
-  <p>你可以修改自己的攻略文章內容。若重新上傳封面圖片，會替換文章顯示的封面。</p>
+  <p>你可以修改自己的攻略文章內容。封面圖片請使用外部圖床圖片網址。</p>
 
   <label for="guideTitle">文章標題</label>
   <input id="guideTitle" type="text" maxlength="60" placeholder="例如：阿瓦隆新手攻略｜好人陣營怎麼判斷資訊">
@@ -136,11 +136,11 @@ description: >
     <img id="guideCurrentCoverImg" alt="目前封面圖片">
   </div>
 
-  <label for="guideCoverFile">更換封面圖片，選填</label>
-  <input id="guideCoverFile" type="file" accept="image/png,image/jpeg,image/webp">
+  <label for="guideCoverImage">封面圖片網址，選填</label>
+  <input id="guideCoverImage" type="text" placeholder="請貼上圖片網址，例如 https://...jpg">
 
   <div class="guide-help">
-    建議上傳 1MB 以下圖片，支援 JPG、PNG、WEBP。不選擇新圖片則保留原本封面。
+    請先將圖片上傳至 ImgBB、Postimages 等外部圖床，再貼上圖片「直接連結」。留空代表不顯示封面。
   </div>
 
   <div id="guideCoverPreviewWrap" style="display:none; margin-top: 1rem;">
