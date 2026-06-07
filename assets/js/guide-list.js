@@ -267,10 +267,10 @@ console.log("guide-list.js 已載入");
             </a>
 
             <div class="guide-meta">
-              主題：${escapeHtml(data.gameName || "未分類主題")}
-              ・${escapeHtml(data.authorName || "未命名社員")}
-              ・${escapeHtml(formatTime(data.createdAt))}
-              ・${escapeHtml(category)}
+              <span>主題：${escapeHtml(data.gameName || "未分類主題")}</span>
+              <span>・${escapeHtml(data.authorName || "未命名社員")}</span>
+              <span>・${escapeHtml(formatTime(data.createdAt))}</span>
+              <span class="guide-category-pill">${escapeHtml(category)}</span>
             </div>
 
             <p class="guide-summary">${escapeHtml(data.summary || "這篇文章還沒有摘要。")}</p>
@@ -384,11 +384,32 @@ console.log("guide-list.js 已載入");
       }
 
       .guide-meta {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.25rem;
         opacity: 0.78;
         font-size: 0.92rem;
         line-height: 1.55;
         margin: 0 !important;
         padding: 0 !important;
+      }
+
+      .guide-category-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 0.35rem;
+        padding: 3px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(79,177,186,0.45);
+        background: rgba(79,177,186,0.12);
+        color: inherit;
+        font-size: 0.82rem;
+        font-weight: 700;
+        line-height: 1.25;
+        white-space: nowrap;
+        opacity: 1;
       }
 
       .guide-summary {
@@ -442,6 +463,10 @@ console.log("guide-list.js 已載入");
 
         .guide-card-cover {
           height: 190px;
+        }
+
+        .guide-category-pill {
+          margin-left: 0;
         }
       }
     `;
