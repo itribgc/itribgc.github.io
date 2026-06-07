@@ -38,7 +38,7 @@ description: 守夜人桌遊社電子報總覽
   }
 
   .newsletter-card h2 {
-    margin: 0 0 8px;
+    margin: 0 0 8px 0;
     font-size: 1.35rem;
     line-height: 1.35;
   }
@@ -64,7 +64,7 @@ description: 守夜人桌遊社電子報總覽
 </style>
 
 <p class="newsletter-intro">
-  請選擇想閱讀的電子報月份。點選月份後，會進入該期電子報閱讀頁面。
+  請選擇想閱讀的電子報月份。點選月份後，就會進入該期電子報翻頁閱讀頁面。
 </p>
 
 <div class="newsletter-grid">
