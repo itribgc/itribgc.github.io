@@ -2,22 +2,31 @@
 layout: page
 title: 2025 年 05–08 月電子報
 permalink: /newsletter-2025-05-08/
-description: 守夜人桌遊社電子報 2025.05~08
+description: 守夜人桌遊社電子報 2025 年 05–08 月
+newsletter_issue: true
+newsletter_label: 2025 年 05–08 月
+newsletter_sort: 20250508
+pdf_url: /assets/newsletter/2025_05_08/2025-05~08.pdf
 ---
 
 <style>
   .newsletter-reader {
-    max-width: 980px;
+    max-width: 1180px;
     margin: 0 auto;
   }
 
   .newsletter-reader-header {
     text-align: center;
-    margin-bottom: 1rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .newsletter-reader-header h1 {
+    margin-bottom: 0.5rem;
   }
 
   .newsletter-reader-header p {
-    opacity: 0.8;
+    margin: 0;
+    opacity: 0.78;
     line-height: 1.7;
   }
 
@@ -35,12 +44,14 @@ description: 守夜人桌遊社電子報 2025.05~08
     display: inline-flex;
     align-items: center;
     justify-content: center;
+
     padding: 8px 14px;
     border-radius: 999px;
     border: 1px solid rgba(255,255,255,0.18);
     background: transparent;
     color: inherit;
     text-decoration: none;
+
     font: inherit;
     font-weight: 700;
     cursor: pointer;
@@ -50,6 +61,7 @@ description: 守夜人桌遊社電子報 2025.05~08
   .newsletter-actions a:hover,
   .newsletter-actions button:hover {
     border-color: rgb(79,177,186);
+    background: rgba(79,177,186,0.08);
     text-decoration: none;
   }
 
@@ -60,40 +72,16 @@ description: 守夜人桌遊社電子報 2025.05~08
 
   .newsletter-page-info {
     text-align: center;
-    margin: 0.75rem 0 1rem;
-    opacity: 0.85;
+    margin: 0.8rem 0 1rem;
+    opacity: 0.86;
     font-weight: 700;
   }
 
-  .newsletter-canvas-wrap {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    padding: 1rem;
-    box-sizing: border-box;
-    border-radius: 16px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
-  }
-
-  #newsletterCanvas {
-    width: 100%;
-    max-width: 860px;
-    height: auto;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 8px 28px rgba(0,0,0,0.22);
-  }
-
-  .newsletter-loading {
-    text-align: center;
-    padding: 2rem 1rem;
-    opacity: 0.85;
-  }
-
   .newsletter-error {
+    display: none;
     text-align: center;
     padding: 1rem;
+    margin: 1rem 0;
     border-radius: 12px;
     background: rgba(255, 120, 120, 0.12);
     border: 1px solid rgba(255, 120, 120, 0.25);
@@ -101,13 +89,85 @@ description: 守夜人桌遊社電子報 2025.05~08
     line-height: 1.7;
   }
 
-  @media (max-width: 720px) {
-    .newsletter-canvas-wrap {
-      padding: 0.5rem;
+  .desktop-reader {
+    display: block;
+  }
+
+  .desktop-spread-wrap {
+    width: 100%;
+    padding: 1rem;
+    box-sizing: border-box;
+    border-radius: 18px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .desktop-spread {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .desktop-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 360px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .desktop-page.blank {
+    background: rgba(255,255,255,0.055);
+    border: 1px dashed rgba(255,255,255,0.14);
+  }
+
+  .desktop-page canvas {
+    width: 100%;
+    height: auto;
+    display: block;
+    background: white;
+  }
+
+  .mobile-reader {
+    display: none;
+  }
+
+  .mobile-page-wrap {
+    width: 100%;
+    padding: 0.6rem;
+    box-sizing: border-box;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .mobile-page {
+    display: flex;
+    justify-content: center;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .mobile-page canvas {
+    width: 100%;
+    height: auto;
+    display: block;
+    background: white;
+  }
+
+  @media (max-width: 768px) {
+    .desktop-reader {
+      display: none;
     }
 
-    .newsletter-actions {
-      gap: 8px;
+    .mobile-reader {
+      display: block;
     }
 
     .newsletter-actions a,
@@ -120,13 +180,13 @@ description: 守夜人桌遊社電子報 2025.05~08
 
 <div class="newsletter-reader">
   <div class="newsletter-reader-header">
-    <h1>2025 年 05–08 月電子報</h1>
-    <p>使用「上一頁 / 下一頁」切換頁面。若文字太小，也可以直接開啟 PDF 原檔查看。</p>
+    <h1>{{ page.newsletter_label }}</h1>
+    <p>電腦版為雙頁閱讀，手機版為單頁閱讀。也可以直接開啟 PDF 原檔查看。</p>
   </div>
 
   <div class="newsletter-actions">
     <a href="/newsletter/">返回電子報列表</a>
-    <a href="/assets/newsletter/2025_05_08/2025-05~08.pdf" target="_blank" rel="noopener">開啟 PDF 原檔</a>
+    <a href="{{ page.pdf_url }}" target="_blank" rel="noopener">開啟 PDF 原檔</a>
   </div>
 
   <div class="newsletter-actions">
@@ -134,126 +194,287 @@ description: 守夜人桌遊社電子報 2025.05~08
     <button id="nextPageBtn" type="button">下一頁</button>
   </div>
 
-  <div id="pageInfo" class="newsletter-page-info">載入中...</div>
+  <div id="pageInfo" class="newsletter-page-info">PDF 載入中...</div>
+  <div id="readerError" class="newsletter-error"></div>
 
-  <div id="readerError" class="newsletter-error" style="display:none;"></div>
+  <div class="desktop-reader">
+    <div class="desktop-spread-wrap">
+      <div class="desktop-spread">
+        <div id="desktopLeftPage" class="desktop-page">
+          <canvas id="desktopLeftCanvas"></canvas>
+        </div>
 
-  <div class="newsletter-canvas-wrap">
-    <canvas id="newsletterCanvas"></canvas>
+        <div id="desktopRightPage" class="desktop-page blank">
+          <canvas id="desktopRightCanvas"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mobile-reader">
+    <div class="mobile-page-wrap">
+      <div class="mobile-page">
+        <canvas id="mobileCanvas"></canvas>
+      </div>
+    </div>
   </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 
 <script>
-  const NEWSLETTER_PDF_URL = "/assets/newsletter/2025_05_08/2025-05~08.pdf";
+  const NEWSLETTER_PDF_URL = "{{ page.pdf_url }}";
 
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
 
   let pdfDoc = null;
-  let currentPage = 1;
   let totalPages = 0;
+  let currentMobilePage = 1;
+  let currentDesktopStartPage = 1;
   let isRendering = false;
 
-  const canvas = document.getElementById("newsletterCanvas");
-  const context = canvas.getContext("2d");
   const pageInfo = document.getElementById("pageInfo");
   const prevBtn = document.getElementById("prevPageBtn");
   const nextBtn = document.getElementById("nextPageBtn");
   const errorBox = document.getElementById("readerError");
+
+  const desktopLeftPage = document.getElementById("desktopLeftPage");
+  const desktopRightPage = document.getElementById("desktopRightPage");
+  const desktopLeftCanvas = document.getElementById("desktopLeftCanvas");
+  const desktopRightCanvas = document.getElementById("desktopRightCanvas");
+  const mobileCanvas = document.getElementById("mobileCanvas");
+
+  function isMobileView() {
+    return window.innerWidth <= 768;
+  }
 
   function showError(message) {
     errorBox.style.display = "block";
     errorBox.innerHTML = message;
   }
 
-  function updateControls() {
-    pageInfo.textContent = "第 " + currentPage + " / " + totalPages + " 頁";
-    prevBtn.disabled = currentPage <= 1 || isRendering;
-    nextBtn.disabled = currentPage >= totalPages || isRendering;
+  function hideError() {
+    errorBox.style.display = "none";
+    errorBox.innerHTML = "";
   }
 
-  async function renderPage(pageNumber) {
+  function updateControls() {
+    if (!pdfDoc) {
+      prevBtn.disabled = true;
+      nextBtn.disabled = true;
+      return;
+    }
+
+    if (isMobileView()) {
+      pageInfo.textContent = "第 " + currentMobilePage + " / " + totalPages + " 頁";
+      prevBtn.disabled = currentMobilePage <= 1 || isRendering;
+      nextBtn.disabled = currentMobilePage >= totalPages || isRendering;
+      return;
+    }
+
+    if (currentDesktopStartPage === 1) {
+      pageInfo.textContent = "封面";
+      prevBtn.disabled = true || isRendering;
+      nextBtn.disabled = totalPages <= 1 || isRendering;
+      return;
+    }
+
+    const left = currentDesktopStartPage;
+    const right = Math.min(currentDesktopStartPage + 1, totalPages);
+
+    if (left === right) {
+      pageInfo.textContent = "第 " + left + " 頁";
+    } else {
+      pageInfo.textContent = "第 " + left + "–" + right + " 頁";
+    }
+
+    prevBtn.disabled = currentDesktopStartPage <= 1 || isRendering;
+    nextBtn.disabled = currentDesktopStartPage + 2 > totalPages || isRendering;
+  }
+
+  async function renderPdfPageToCanvas(pageNumber, canvas, maxWidth) {
+    const page = await pdfDoc.getPage(pageNumber);
+    const originalViewport = page.getViewport({ scale: 1 });
+
+    const scale = Math.min(maxWidth / originalViewport.width, 2);
+    const viewport = page.getViewport({ scale: scale });
+
+    const context = canvas.getContext("2d");
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+
+    await page.render({
+      canvasContext: context,
+      viewport: viewport
+    }).promise;
+  }
+
+  function clearCanvas(canvas) {
+    const context = canvas.getContext("2d");
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    canvas.width = 1;
+    canvas.height = 1;
+  }
+
+  async function renderMobilePage(pageNumber) {
     if (!pdfDoc || isRendering) return;
 
     try {
       isRendering = true;
+      hideError();
       updateControls();
 
-      const page = await pdfDoc.getPage(pageNumber);
-      const containerWidth = document.querySelector(".newsletter-canvas-wrap").clientWidth - 24;
+      const wrapWidth = document.querySelector(".mobile-page-wrap").clientWidth - 20;
+      await renderPdfPageToCanvas(pageNumber, mobileCanvas, wrapWidth);
 
-      const originalViewport = page.getViewport({ scale: 1 });
-      const scale = Math.min(containerWidth / originalViewport.width, 1.8);
-      const viewport = page.getViewport({ scale: scale });
-
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-
-      await page.render({
-        canvasContext: context,
-        viewport: viewport
-      }).promise;
-
-      currentPage = pageNumber;
+      currentMobilePage = pageNumber;
       isRendering = false;
       updateControls();
     } catch (error) {
-      console.error("PDF 頁面渲染失敗：", error);
+      console.error("手機版 PDF 渲染失敗：", error);
       isRendering = false;
       showError("PDF 頁面載入失敗，請確認 PDF 檔案路徑是否正確。");
       updateControls();
     }
   }
 
-  async function initNewsletterReader() {
+  async function renderDesktopSpread(startPage) {
+    if (!pdfDoc || isRendering) return;
+
     try {
+      isRendering = true;
+      hideError();
+      updateControls();
+
+      const spreadWidth = document.querySelector(".desktop-spread").clientWidth;
+      const pageMaxWidth = Math.floor((spreadWidth - 12) / 2);
+
+      currentDesktopStartPage = startPage;
+
+      desktopLeftPage.classList.remove("blank");
+      desktopRightPage.classList.remove("blank");
+
+      if (startPage === 1) {
+        await renderPdfPageToCanvas(1, desktopLeftCanvas, pageMaxWidth);
+        clearCanvas(desktopRightCanvas);
+        desktopRightPage.classList.add("blank");
+      } else {
+        await renderPdfPageToCanvas(startPage, desktopLeftCanvas, pageMaxWidth);
+
+        if (startPage + 1 <= totalPages) {
+          await renderPdfPageToCanvas(startPage + 1, desktopRightCanvas, pageMaxWidth);
+        } else {
+          clearCanvas(desktopRightCanvas);
+          desktopRightPage.classList.add("blank");
+        }
+      }
+
+      isRendering = false;
+      updateControls();
+    } catch (error) {
+      console.error("電腦版 PDF 渲染失敗：", error);
+      isRendering = false;
+      showError("PDF 頁面載入失敗，請確認 PDF 檔案路徑是否正確。");
+      updateControls();
+    }
+  }
+
+  function goPrev() {
+    if (!pdfDoc || isRendering) return;
+
+    if (isMobileView()) {
+      if (currentMobilePage > 1) {
+        renderMobilePage(currentMobilePage - 1);
+      }
+      return;
+    }
+
+    if (currentDesktopStartPage === 1) return;
+
+    if (currentDesktopStartPage === 2) {
+      renderDesktopSpread(1);
+    } else {
+      renderDesktopSpread(Math.max(1, currentDesktopStartPage - 2));
+    }
+  }
+
+  function goNext() {
+    if (!pdfDoc || isRendering) return;
+
+    if (isMobileView()) {
+      if (currentMobilePage < totalPages) {
+        renderMobilePage(currentMobilePage + 1);
+      }
+      return;
+    }
+
+    if (currentDesktopStartPage === 1) {
+      if (totalPages >= 2) {
+        renderDesktopSpread(2);
+      }
+      return;
+    }
+
+    if (currentDesktopStartPage + 2 <= totalPages) {
+      renderDesktopSpread(currentDesktopStartPage + 2);
+    }
+  }
+
+  async function initReader() {
+    try {
+      hideError();
+      prevBtn.disabled = true;
+      nextBtn.disabled = true;
       pageInfo.textContent = "PDF 載入中...";
 
       pdfDoc = await pdfjsLib.getDocument(NEWSLETTER_PDF_URL).promise;
       totalPages = pdfDoc.numPages;
 
-      await renderPage(1);
+      if (isMobileView()) {
+        await renderMobilePage(1);
+      } else {
+        await renderDesktopSpread(1);
+      }
     } catch (error) {
       console.error("PDF 載入失敗：", error);
       pageInfo.textContent = "載入失敗";
-
       showError(
-        "PDF 載入失敗。請檢查檔案是否存在：<br><code>" +
+        "PDF 載入失敗，請確認檔案是否存在：<br><code>" +
         NEWSLETTER_PDF_URL +
         "</code>"
       );
     }
   }
 
-  prevBtn.addEventListener("click", function () {
-    if (currentPage > 1) {
-      renderPage(currentPage - 1);
+  prevBtn.addEventListener("click", goPrev);
+  nextBtn.addEventListener("click", goNext);
+
+  document.addEventListener("keydown", function(event) {
+    if (event.key === "ArrowLeft") {
+      goPrev();
+    }
+
+    if (event.key === "ArrowRight") {
+      goNext();
     }
   });
 
-  nextBtn.addEventListener("click", function () {
-    if (currentPage < totalPages) {
-      renderPage(currentPage + 1);
-    }
+  let resizeTimer = null;
+
+  window.addEventListener("resize", function() {
+    if (!pdfDoc) return;
+
+    clearTimeout(resizeTimer);
+
+    resizeTimer = setTimeout(function() {
+      if (isMobileView()) {
+        renderMobilePage(currentMobilePage);
+      } else {
+        renderDesktopSpread(currentDesktopStartPage);
+      }
+    }, 250);
   });
 
-  window.addEventListener("resize", function () {
-    if (pdfDoc && !isRendering) {
-      renderPage(currentPage);
-    }
-  });
-
-  document.addEventListener("keydown", function (event) {
-    if (event.key === "ArrowLeft" && currentPage > 1) {
-      renderPage(currentPage - 1);
-    }
-
-    if (event.key === "ArrowRight" && currentPage < totalPages) {
-      renderPage(currentPage + 1);
-    }
-  });
-
-  document.addEventListener("DOMContentLoaded", initNewsletterReader);
+  document.addEventListener("DOMContentLoaded", initReader);
 </script>
