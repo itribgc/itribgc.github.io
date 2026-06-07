@@ -10,22 +10,34 @@ description: >
     margin-bottom: 1.5rem;
   }
 
+  .guide-page-header h1 {
+    margin-bottom: 1rem;
+  }
+
   .guide-page-header p {
     opacity: 0.78;
     line-height: 1.7;
+    margin-bottom: 0;
+  }
+
+  .guide-header-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 1.1rem;
   }
 
   .guide-create-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    margin-top: 1rem;
-    padding: 10px 16px;
+    padding: 10px 18px;
     border-radius: 999px;
     background: rgb(79,177,186);
     color: #fff;
     font-weight: 700;
     text-decoration: none;
+    line-height: 1.2;
   }
 
   .guide-create-btn:hover {
@@ -45,16 +57,25 @@ description: >
     background: rgba(255,255,255,0.055);
     opacity: 0.82;
   }
+
+  @media (max-width: 640px) {
+    .guide-header-actions {
+      justify-content: flex-start;
+    }
+  }
 </style>
 
 <div class="guide-page-header">
   <h1>社員論壇</h1>
+
   <p>
     這裡可以分享桌遊攻略、活動心得、規則討論、開箱分享與揪團交流。
     登入社員可自由撰寫貼文，也可以編輯或刪除自己的文章。
   </p>
 
-  <a class="guide-create-btn" href="/guides/new/">撰寫貼文</a>
+  <div class="guide-header-actions">
+    <a class="guide-create-btn" href="/guides/new/">撰寫貼文</a>
+  </div>
 </div>
 
 <div id="guideList" class="guide-list">
