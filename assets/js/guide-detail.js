@@ -20,6 +20,8 @@ console.log("guide-detail.js 已載入");
   let currentUser = null;
   let currentGuideId = "";
   let currentGuideData = null;
+  let currentCommentCount = 0;
+  let hasCountedView = false;
 
   function getGuideId() {
     const params = new URLSearchParams(window.location.search);
@@ -51,8 +53,102 @@ console.log("guide-detail.js 已載入");
     return data.category || "桌遊攻略";
   }
 
+  function getLikeCount(data) {
+    return data.likeCount || 0;
+  }
+
+  function getViewCount(data) {
+    return data.viewCount || 0;
+  }
+
+  function hasLiked() {
+    if (!currentUser || !currentGuideData || !currentGuideData.likedBy) return false;
+    return currentGuideData.likedBy[currentUser.uid] === true;
+  }
+
   function isOwner() {
     return currentUser && currentGuideData && currentGuideData.authorUid === currentUser.uid;
+  }
+
+  async function getCommentCount(guideId) {
+    try {
+      const snapshot = await db.collection("comments")
+        .where("postPath", "==", "guide:" + guideId)
+        .get();
+
+      return snapshot.size;
+    } catch (error) {
+      console.error("讀取留言數失敗：", error);
+      return 0;
+    }
+  }
+
+  async function increaseViewCountOnce() {
+    if (hasCountedView || !currentGuideId || !currentUser) return;
+
+    const storageKey = "guide_viewed_" + currentGuideId;
+
+    if (sessionStorage.getItem(storageKey) === "1") {
+      hasCountedView = true;
+      return;
+    }
+
+    try {
+      hasCountedView = true;
+      sessionStorage.setItem(storageKey, "1");
+
+      await db.collection("guides").doc(currentGuideId).update({
+        viewCount: firebase.firestore.FieldValue.increment(1),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    } catch (error) {
+      console.error("更新瀏覽數失敗：", error);
+    }
+  }
+
+  async function toggleGuideLike() {
+    if (!currentUser) {
+      alert("請先登入後再按讚。");
+      return;
+    }
+
+    if (!currentGuideId) return;
+
+    const ref = db.collection("guides").doc(currentGuideId);
+
+    try {
+      await db.runTransaction(async function (transaction) {
+        const snap = await transaction.get(ref);
+
+        if (!snap.exists) return;
+
+        const data = snap.data();
+        const likedBy = data.likedBy || {};
+        const uid = currentUser.uid;
+        const alreadyLiked = likedBy[uid] === true;
+
+        if (alreadyLiked) {
+          delete likedBy[uid];
+
+          transaction.update(ref, {
+            likedBy: likedBy,
+            likeCount: Math.max((data.likeCount || 0) - 1, 0),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        } else {
+          likedBy[uid] = true;
+
+          transaction.update(ref, {
+            likedBy: likedBy,
+            likeCount: (data.likeCount || 0) + 1,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        }
+      });
+    } catch (error) {
+      console.error("文章按讚失敗：", error);
+      alert("按讚失敗，請稍後再試。");
+    }
   }
 
   function createDeleteModal() {
@@ -249,22 +345,47 @@ console.log("guide-detail.js 已載入");
         margin-bottom: 0.5rem;
       }
 
-      .guide-detail-category {
+      .guide-detail-side-info {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+        flex: 0 0 auto;
+        margin-top: 0.25rem;
+      }
+
+      .guide-detail-category,
+      .guide-detail-stat,
+      .guide-detail-like-btn {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        flex: 0 0 auto;
         width: fit-content;
-        margin-top: 0.25rem;
         padding: 5px 12px;
         border-radius: 999px;
-        background: rgba(79,177,186,0.16);
-        border: 1px solid rgba(79,177,186,0.35);
+        border: 1px solid rgba(255,255,255,0.18);
+        background: rgba(255,255,255,0.055);
         color: inherit;
         font-size: 0.9rem;
         font-weight: 700;
         line-height: 1.2;
         white-space: nowrap;
+      }
+
+      .guide-detail-category {
+        background: rgba(79,177,186,0.16);
+        border-color: rgba(79,177,186,0.35);
+      }
+
+      .guide-detail-like-btn {
+        cursor: pointer;
+      }
+
+      .guide-detail-like-btn:hover,
+      .guide-detail-like-btn.liked {
+        border-color: rgb(79,177,186);
+        background: rgba(79,177,186,0.16);
       }
 
       .guide-detail-owner-actions {
@@ -314,6 +435,10 @@ console.log("guide-detail.js 已載入");
           flex-direction: column-reverse;
           align-items: flex-start;
         }
+
+        .guide-detail-side-info {
+          justify-content: flex-start;
+        }
       }
     `;
 
@@ -327,6 +452,9 @@ console.log("guide-detail.js 已載入");
 
     const data = currentGuideData;
     const category = getCategory(data);
+    const likeCount = getLikeCount(data);
+    const viewCount = getViewCount(data);
+    const liked = hasLiked();
 
     const coverImage = data.coverImage && data.coverImage.trim()
       ? data.coverImage.trim()
@@ -362,7 +490,12 @@ console.log("guide-detail.js 已載入");
           </div>
         </div>
 
-        <div class="guide-detail-category">${escapeHtml(category)}</div>
+        <div class="guide-detail-side-info">
+          <span class="guide-detail-category">${escapeHtml(category)}</span>
+          <button id="guideLikeBtn" class="guide-detail-like-btn ${liked ? "liked" : ""}" type="button">👍 ${likeCount}</button>
+          <span class="guide-detail-stat">👁 ${viewCount}</span>
+          <span class="guide-detail-stat">💬 ${currentCommentCount}</span>
+        </div>
       </div>
 
       ${
@@ -390,13 +523,56 @@ console.log("guide-detail.js 已載入");
     `;
 
     const deleteBtn = document.getElementById("guideDetailDeleteBtn");
+    const likeBtn = document.getElementById("guideLikeBtn");
 
     if (deleteBtn) {
       deleteBtn.addEventListener("click", openDeleteModal);
     }
+
+    if (likeBtn) {
+      likeBtn.addEventListener("click", toggleGuideLike);
+    }
   }
 
-  async function loadGuide() {
+  function listenGuide() {
+    if (!currentGuideId) return;
+
+    db.collection("guides").doc(currentGuideId).onSnapshot(async function (doc) {
+      if (!doc.exists) {
+        const guideDetail = document.getElementById("guideDetail");
+        if (guideDetail) {
+          guideDetail.innerHTML = `<div class="guide-empty">找不到這篇文章。</div>`;
+        }
+        return;
+      }
+
+      const data = doc.data();
+
+      if (data.status !== "published") {
+        const guideDetail = document.getElementById("guideDetail");
+        if (guideDetail) {
+          guideDetail.innerHTML = `<div class="guide-empty">這篇文章目前未公開。</div>`;
+        }
+        return;
+      }
+
+      currentGuideData = data;
+      currentCommentCount = await getCommentCount(currentGuideId);
+
+      injectDetailStyle();
+      renderGuide();
+
+      await increaseViewCountOnce();
+    }, function (error) {
+      console.error("讀取文章失敗：", error);
+      const guideDetail = document.getElementById("guideDetail");
+      if (guideDetail) {
+        guideDetail.innerHTML = `<div class="guide-empty">文章讀取失敗，請稍後再試。</div>`;
+      }
+    });
+  }
+
+  function init() {
     const guideDetail = document.getElementById("guideDetail");
     const guideId = getGuideId();
 
@@ -408,30 +584,7 @@ console.log("guide-detail.js 已載入");
     }
 
     currentGuideId = guideId;
-
-    try {
-      const doc = await db.collection("guides").doc(guideId).get();
-
-      if (!doc.exists) {
-        guideDetail.innerHTML = `<div class="guide-empty">找不到這篇文章。</div>`;
-        return;
-      }
-
-      const data = doc.data();
-
-      if (data.status !== "published") {
-        guideDetail.innerHTML = `<div class="guide-empty">這篇文章目前未公開。</div>`;
-        return;
-      }
-
-      currentGuideData = data;
-
-      injectDetailStyle();
-      renderGuide();
-    } catch (error) {
-      console.error("讀取文章失敗：", error);
-      guideDetail.innerHTML = `<div class="guide-empty">文章讀取失敗，請稍後再試。</div>`;
-    }
+    listenGuide();
   }
 
   createDeleteModal();
@@ -441,8 +594,9 @@ console.log("guide-detail.js 已載入");
 
     if (currentGuideData) {
       renderGuide();
+      increaseViewCountOnce();
     }
   });
 
-  document.addEventListener("DOMContentLoaded", loadGuide);
+  document.addEventListener("DOMContentLoaded", init);
 })();
