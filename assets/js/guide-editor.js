@@ -49,6 +49,8 @@ console.log("guide-editor.js 已載入");
   const linkInsertBtn = document.getElementById("mdLinkInsertBtn");
 
   function setMsg(text, type) {
+    if (!msg) return;
+
     msg.innerText = text || "";
     msg.className = type === "success"
       ? "guide-editor-msg success"
@@ -66,8 +68,10 @@ console.log("guide-editor.js 已載入");
 
   function normalizeImageUrl(url) {
     const value = String(url || "").trim();
+
     if (!value) return "";
     if (value.startsWith("/")) return value;
+
     return value;
   }
 
@@ -148,7 +152,9 @@ console.log("guide-editor.js 已載入");
     }
 
     const safeHtml = window.DOMPurify
-      ? window.DOMPurify.sanitize(rawHtml, { ADD_ATTR: ["style"] })
+      ? window.DOMPurify.sanitize(rawHtml, {
+          ADD_ATTR: ["style"]
+        })
       : rawHtml;
 
     previewContent.innerHTML = safeHtml;
@@ -268,6 +274,7 @@ console.log("guide-editor.js 已載入");
 
     const cursorStart = lineStart + prefix.length;
     const cursorEnd = cursorStart + selectedText.length;
+
     contentInput.focus();
     contentInput.setSelectionRange(cursorStart, cursorEnd);
   }
@@ -291,7 +298,7 @@ console.log("guide-editor.js 已載入");
   function addUnorderedList() {
     const selection = getSelection();
     const text = selection.text || "項目一\n項目二\n項目三";
-    const lines = text.split("\n").map(line => {
+    const lines = text.split("\n").map(function (line) {
       const trimmed = line.trim();
       return trimmed ? "- " + trimmed : "- ";
     });
@@ -300,7 +307,7 @@ console.log("guide-editor.js 已載入");
   }
 
   function sanitizeFontSize(value) {
-    const size = Number(value);
+    const size = Number(String(value || "").trim());
 
     if (Number.isNaN(size)) return 16;
     if (size < 8) return 8;
@@ -440,7 +447,9 @@ console.log("guide-editor.js 已載入");
   function bindFontSizeControl() {
     if (!fontSizeInput) return;
 
-    fontSizeInput.addEventListener("change", applyFontSize);
+    fontSizeInput.addEventListener("change", function () {
+      applyFontSize();
+    });
 
     fontSizeInput.addEventListener("keydown", function (event) {
       if (event.key === "Enter") {
@@ -450,6 +459,10 @@ console.log("guide-editor.js 已載入");
     });
 
     fontSizeInput.addEventListener("dblclick", function () {
+      fontSizeInput.select();
+    });
+
+    fontSizeInput.addEventListener("focus", function () {
       fontSizeInput.select();
     });
   }
@@ -462,11 +475,15 @@ console.log("guide-editor.js 已載入");
     linkInsertBtn.addEventListener("click", insertLinkFromModal);
 
     imageModal.addEventListener("click", function (event) {
-      if (event.target === imageModal) closeImageModal();
+      if (event.target === imageModal) {
+        closeImageModal();
+      }
     });
 
     linkModal.addEventListener("click", function (event) {
-      if (event.target === linkModal) closeLinkModal();
+      if (event.target === linkModal) {
+        closeLinkModal();
+      }
     });
 
     document.addEventListener("keydown", function (event) {
