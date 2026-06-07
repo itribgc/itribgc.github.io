@@ -38,6 +38,20 @@ console.log("guide-edit.js 已載入");
   const previewContent = document.getElementById("guidePreviewContent");
   const backLink = document.getElementById("guideBackLink");
 
+  const imageModal = document.getElementById("mdImageModal");
+  const imageAltInput = document.getElementById("mdImageAlt");
+  const imageUrlInput = document.getElementById("mdImageUrl");
+  const imageMsg = document.getElementById("mdImageMsg");
+  const imageCancelBtn = document.getElementById("mdImageCancelBtn");
+  const imageInsertBtn = document.getElementById("mdImageInsertBtn");
+
+  const linkModal = document.getElementById("mdLinkModal");
+  const linkTextInput = document.getElementById("mdLinkText");
+  const linkUrlInput = document.getElementById("mdLinkUrl");
+  const linkMsg = document.getElementById("mdLinkMsg");
+  const linkCancelBtn = document.getElementById("mdLinkCancelBtn");
+  const linkInsertBtn = document.getElementById("mdLinkInsertBtn");
+
   function getGuideId() {
     const params = new URLSearchParams(window.location.search);
     return params.get("id") || "";
@@ -60,6 +74,10 @@ console.log("guide-edit.js 已載入");
     if (contentInput) contentInput.disabled = disabled;
     if (previewBtn) previewBtn.disabled = disabled;
     if (saveBtn) saveBtn.disabled = disabled;
+
+    document.querySelectorAll(".md-toolbar button").forEach(function (btn) {
+      btn.disabled = disabled;
+    });
   }
 
   function escapeHtml(text) {
@@ -73,28 +91,30 @@ console.log("guide-edit.js 已載入");
 
   function normalizeImageUrl(url) {
     const value = String(url || "").trim();
-
-    if (!value) {
-      return "";
-    }
-
-    if (value.startsWith("/")) {
-      return value;
-    }
-
+    if (!value) return "";
+    if (value.startsWith("/")) return value;
     return value;
+  }
+
+  function isValidUrl(url) {
+    const value = String(url || "").trim();
+
+    if (!value) return false;
+    if (value.startsWith("/")) return true;
+
+    try {
+      const parsed = new URL(value);
+      return parsed.protocol === "https:" || parsed.protocol === "http:";
+    } catch (error) {
+      return false;
+    }
   }
 
   function isValidImageUrl(url) {
     const value = String(url || "").trim();
 
-    if (!value) {
-      return true;
-    }
-
-    if (value.startsWith("/")) {
-      return true;
-    }
+    if (!value) return true;
+    if (value.startsWith("/")) return true;
 
     try {
       const parsed = new URL(value);
@@ -213,8 +233,6 @@ console.log("guide-edit.js 已載入");
     }
 
     try {
-      console.log("準備讀取文章 ID：", guideId);
-
       const ref = db.collection("guides").doc(guideId);
       const snap = await ref.get();
 
@@ -224,8 +242,6 @@ console.log("guide-edit.js 已載入");
       }
 
       guideData = snap.data();
-
-      console.log("讀取到的文章資料：", guideData);
 
       if (guideData.authorUid !== currentUser.uid) {
         setMsg("只能編輯自己的文章。");
@@ -291,6 +307,216 @@ console.log("guide-edit.js 已載入");
     }
   }
 
+  function getSelection() {
+    return {
+      start: contentInput.selectionStart,
+      end: contentInput.selectionEnd,
+      text: contentInput.value.substring(contentInput.selectionStart, contentInput.selectionEnd)
+    };
+  }
+
+  function replaceSelection(insertText, selectStartOffset, selectEndOffset) {
+    const start = contentInput.selectionStart;
+    const end = contentInput.selectionEnd;
+    const before = contentInput.value.substring(0, start);
+    const after = contentInput.value.substring(end);
+
+    contentInput.value = before + insertText + after;
+    contentInput.focus();
+
+    const newStart = start + (selectStartOffset || insertText.length);
+    const newEnd = start + (selectEndOffset || insertText.length);
+
+    contentInput.setSelectionRange(newStart, newEnd);
+  }
+
+  function ensureLinePrefix(prefix, placeholder) {
+    const selection = getSelection();
+    const selectedText = selection.text || placeholder;
+    const start = selection.start;
+    const value = contentInput.value;
+
+    const lineStart = value.lastIndexOf("\n", start - 1) + 1;
+    const beforeLine = value.substring(0, lineStart);
+    const afterLineStart = value.substring(lineStart);
+    const newLineText = prefix + selectedText;
+
+    contentInput.value = beforeLine + newLineText + afterLineStart.substring(selection.text.length);
+
+    const cursorStart = lineStart + prefix.length;
+    const cursorEnd = cursorStart + selectedText.length;
+    contentInput.focus();
+    contentInput.setSelectionRange(cursorStart, cursorEnd);
+  }
+
+  function wrapSelection(beforeText, afterText, placeholder) {
+    const selection = getSelection();
+    const selectedText = selection.text || placeholder;
+    const insertText = beforeText + selectedText + afterText;
+
+    replaceSelection(
+      insertText,
+      beforeText.length,
+      beforeText.length + selectedText.length
+    );
+  }
+
+  function insertAtCursor(text) {
+    replaceSelection(text, text.length, text.length);
+  }
+
+  function addUnorderedList() {
+    const selection = getSelection();
+    const text = selection.text || "項目一\n項目二\n項目三";
+    const lines = text.split("\n").map(line => {
+      const trimmed = line.trim();
+      return trimmed ? "- " + trimmed : "- ";
+    });
+
+    replaceSelection(lines.join("\n"));
+  }
+
+  function openImageModal() {
+    const selection = getSelection();
+
+    imageAltInput.value = selection.text || "";
+    imageUrlInput.value = "";
+    imageMsg.innerText = "";
+    imageModal.classList.add("show");
+
+    setTimeout(function () {
+      if (imageAltInput.value) {
+        imageUrlInput.focus();
+      } else {
+        imageAltInput.focus();
+      }
+    }, 100);
+  }
+
+  function closeImageModal() {
+    imageModal.classList.remove("show");
+  }
+
+  function insertImageFromModal() {
+    const alt = imageAltInput.value.trim() || "圖片說明";
+    const url = imageUrlInput.value.trim();
+
+    imageMsg.innerText = "";
+
+    if (!url) {
+      imageMsg.innerText = "請輸入圖片網址。";
+      imageUrlInput.focus();
+      return;
+    }
+
+    if (!isValidUrl(url)) {
+      imageMsg.innerText = "圖片網址格式不正確。";
+      imageUrlInput.focus();
+      return;
+    }
+
+    insertAtCursor(`\n![${alt}](${url})\n`);
+    closeImageModal();
+  }
+
+  function openLinkModal() {
+    const selection = getSelection();
+
+    linkTextInput.value = selection.text || "";
+    linkUrlInput.value = "";
+    linkMsg.innerText = "";
+    linkModal.classList.add("show");
+
+    setTimeout(function () {
+      if (linkTextInput.value) {
+        linkUrlInput.focus();
+      } else {
+        linkTextInput.focus();
+      }
+    }, 100);
+  }
+
+  function closeLinkModal() {
+    linkModal.classList.remove("show");
+  }
+
+  function insertLinkFromModal() {
+    const text = linkTextInput.value.trim() || "連結文字";
+    const url = linkUrlInput.value.trim();
+
+    linkMsg.innerText = "";
+
+    if (!url) {
+      linkMsg.innerText = "請輸入連結網址。";
+      linkUrlInput.focus();
+      return;
+    }
+
+    if (!isValidUrl(url)) {
+      linkMsg.innerText = "連結網址格式不正確。";
+      linkUrlInput.focus();
+      return;
+    }
+
+    insertAtCursor(`[${text}](${url})`);
+    closeLinkModal();
+  }
+
+  function bindToolbar() {
+    document.querySelectorAll(".md-toolbar button").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        const action = btn.dataset.mdAction;
+
+        if (action === "h2") {
+          ensureLinePrefix("## ", "副標題1");
+        } else if (action === "h3") {
+          ensureLinePrefix("### ", "副標題2");
+        } else if (action === "bold") {
+          wrapSelection("**", "**", "加粗文字");
+        } else if (action === "mark") {
+          wrapSelection("<mark>", "</mark>", "螢光重點");
+        } else if (action === "large") {
+          wrapSelection('<span class="md-size-lg">', "</span>", "大字文字");
+        } else if (action === "small") {
+          wrapSelection('<span class="md-size-sm">', "</span>", "小字文字");
+        } else if (action === "ul") {
+          addUnorderedList();
+        } else if (action === "image") {
+          openImageModal();
+        } else if (action === "link") {
+          openLinkModal();
+        }
+      });
+    });
+  }
+
+  function bindModals() {
+    imageCancelBtn.addEventListener("click", closeImageModal);
+    imageInsertBtn.addEventListener("click", insertImageFromModal);
+
+    linkCancelBtn.addEventListener("click", closeLinkModal);
+    linkInsertBtn.addEventListener("click", insertLinkFromModal);
+
+    imageModal.addEventListener("click", function (event) {
+      if (event.target === imageModal) {
+        closeImageModal();
+      }
+    });
+
+    linkModal.addEventListener("click", function (event) {
+      if (event.target === linkModal) {
+        closeLinkModal();
+      }
+    });
+
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") {
+        closeImageModal();
+        closeLinkModal();
+      }
+    });
+  }
+
   function bindCoverPreview() {
     if (!coverInput) return;
 
@@ -328,6 +554,8 @@ console.log("guide-edit.js 已載入");
   });
 
   bindCoverPreview();
+  bindToolbar();
+  bindModals();
 
   if (previewBtn) {
     previewBtn.addEventListener("click", renderPreview);
