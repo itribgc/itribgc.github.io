@@ -42,13 +42,15 @@ console.log("guide-detail.js 已載入");
     });
   }
 
+  function getCategory(data) {
+    return data.category || "桌遊攻略";
+  }
+
   async function loadGuide() {
     const guideDetail = document.getElementById("guideDetail");
     const guideId = getGuideId();
 
-    if (!guideDetail) {
-      return;
-    }
+    if (!guideDetail) return;
 
     if (!guideId) {
       guideDetail.innerHTML = `<div class="guide-empty">找不到文章 ID。</div>`;
@@ -59,7 +61,7 @@ console.log("guide-detail.js 已載入");
       const doc = await db.collection("guides").doc(guideId).get();
 
       if (!doc.exists) {
-        guideDetail.innerHTML = `<div class="guide-empty">找不到這篇攻略文章。</div>`;
+        guideDetail.innerHTML = `<div class="guide-empty">找不到這篇文章。</div>`;
         return;
       }
 
@@ -69,6 +71,8 @@ console.log("guide-detail.js 已載入");
         guideDetail.innerHTML = `<div class="guide-empty">這篇文章目前未公開。</div>`;
         return;
       }
+
+      const category = getCategory(data);
 
       const coverImage = data.coverImage && data.coverImage.trim()
         ? data.coverImage.trim()
@@ -88,15 +92,17 @@ console.log("guide-detail.js 已載入");
           })
         : rawHtml;
 
-      document.title = (data.title || "桌遊攻略文章") + " | " + document.title;
+      document.title = (data.title || "社員論壇文章") + " | " + document.title;
 
       guideDetail.innerHTML = `
         ${coverImage ? `<img class="guide-detail-cover" src="${escapeHtml(coverImage)}" alt="${escapeHtml(data.title)}">` : ""}
 
-        <h1>${escapeHtml(data.title || "未命名攻略")}</h1>
+        <div class="guide-detail-category">${escapeHtml(category)}</div>
+
+        <h1>${escapeHtml(data.title || "未命名文章")}</h1>
 
         <div class="guide-detail-meta">
-          ${escapeHtml(data.gameName || "未分類桌遊")}
+          主題：${escapeHtml(data.gameName || "未分類主題")}
           ・${escapeHtml(data.authorName || "未命名社員")}
           ・${escapeHtml(formatTime(data.createdAt))}
         </div>
@@ -110,13 +116,45 @@ console.log("guide-detail.js 已載入");
         </div>
 
         <div class="guide-detail-actions">
-          <a href="/guides/">返回桌遊攻略</a>
+          <a href="/guides/">返回社員論壇</a>
         </div>
       `;
+
+      injectDetailStyle();
     } catch (error) {
-      console.error("讀取攻略文章失敗：", error);
+      console.error("讀取文章失敗：", error);
       guideDetail.innerHTML = `<div class="guide-empty">文章讀取失敗，請稍後再試。</div>`;
     }
+  }
+
+  function injectDetailStyle() {
+    if (document.getElementById("guideDetailExtraStyle")) return;
+
+    const style = document.createElement("style");
+    style.id = "guideDetailExtraStyle";
+    style.innerHTML = `
+      .guide-detail-category {
+        display: inline-flex;
+        width: fit-content;
+        margin-bottom: 0.75rem;
+        padding: 5px 12px;
+        border-radius: 999px;
+        background: rgba(79,177,186,0.16);
+        border: 1px solid rgba(79,177,186,0.35);
+        color: inherit;
+        font-size: 0.9rem;
+        font-weight: 700;
+      }
+
+      .guide-detail-content mark {
+        padding: 0.1em 0.25em;
+        border-radius: 0.25em;
+        background: #fff176;
+        color: #222;
+      }
+    `;
+
+    document.head.appendChild(style);
   }
 
   document.addEventListener("DOMContentLoaded", loadGuide);
