@@ -266,7 +266,6 @@ console.log("guide-list.js 已載入");
               <a class="guide-card-title-link" href="/guides/post/?id=${encodeURIComponent(doc.id)}">
                 <h2>${escapeHtml(data.title || "未命名文章")}</h2>
               </a>
-
               <span class="guide-category-badge">${escapeHtml(category)}</span>
             </div>
 
@@ -339,8 +338,8 @@ console.log("guide-list.js 已載入");
       .guide-card {
         display: grid;
         grid-template-columns: 240px minmax(0, 1fr);
-        gap: 1.25rem;
-        align-items: center;
+        gap: 1.35rem;
+        align-items: start;
         padding: 1rem;
         border-radius: 16px;
         background: rgba(255,255,255,0.055);
@@ -350,7 +349,8 @@ console.log("guide-list.js 已載入");
 
       .guide-card-cover-link {
         display: block;
-        align-self: center;
+        align-self: start;
+        line-height: 0;
       }
 
       .guide-card-cover {
@@ -364,9 +364,8 @@ console.log("guide-list.js 已載入");
 
       .guide-card-body {
         min-width: 0;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
+        display: block;
+        padding-top: 0;
       }
 
       .guide-title-row {
@@ -375,13 +374,20 @@ console.log("guide-list.js 已載入");
         justify-content: flex-start;
         gap: 0.65rem;
         flex-wrap: wrap;
-        margin-bottom: 0.45rem;
+        margin: 0 0 0.4rem 0 !important;
+        padding: 0 !important;
+        line-height: 1.25;
       }
 
       .guide-card-title-link {
+        display: inline-flex !important;
+        align-items: center;
         color: inherit;
         text-decoration: none;
         min-width: 0;
+        margin: 0 !important;
+        padding: 0 !important;
+        line-height: 1.25;
       }
 
       .guide-card-title-link:hover {
@@ -389,8 +395,11 @@ console.log("guide-list.js 已載入");
       }
 
       .guide-card-title-link h2 {
-        margin: 0;
-        line-height: 1.25;
+        display: inline !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        line-height: 1.25 !important;
+        font-size: 1.45rem;
       }
 
       .guide-category-badge {
@@ -408,6 +417,7 @@ console.log("guide-list.js 已載入");
         font-weight: 700;
         line-height: 1.2;
         white-space: nowrap;
+        margin: 0 !important;
         transform: translateY(1px);
       }
 
@@ -415,11 +425,13 @@ console.log("guide-list.js 已載入");
         opacity: 0.78;
         font-size: 0.92rem;
         line-height: 1.55;
-        margin-top: 0.2rem;
+        margin: 0.35rem 0 0 0 !important;
+        padding: 0 !important;
       }
 
       .guide-summary {
-        margin: 0.45rem 0 0 0;
+        margin: 0.45rem 0 0 0 !important;
+        padding: 0 !important;
         line-height: 1.65;
       }
 
@@ -428,7 +440,7 @@ console.log("guide-list.js 已載入");
         gap: 0.5rem;
         flex-wrap: wrap;
         align-items: center;
-        margin-top: 1rem;
+        margin-top: 0.95rem;
       }
 
       .guide-read-btn,
@@ -463,23 +475,14 @@ console.log("guide-list.js 已載入");
       @media (max-width: 720px) {
         .guide-card {
           grid-template-columns: 1fr;
-          align-items: start;
-        }
-
-        .guide-card-cover-link {
-          align-self: stretch;
         }
 
         .guide-card-cover {
           height: 190px;
         }
 
-        .guide-card-body {
-          justify-content: flex-start;
-        }
-
         .guide-title-row {
-          align-items: flex-start;
+          align-items: center;
         }
       }
     `;
