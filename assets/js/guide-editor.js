@@ -17,9 +17,12 @@ console.log("guide-editor.js 已載入");
   const auth = firebase.auth();
   const db = firebase.firestore();
 
+  const allowedCategories = ["桌遊攻略", "活動心得", "規則討論", "開箱分享", "揪團交流"];
+
   let currentUser = null;
   let currentDisplayName = "";
 
+  const categoryInput = document.getElementById("guideCategory");
   const titleInput = document.getElementById("guideTitle");
   const gameInput = document.getElementById("guideGameName");
   const coverInput = document.getElementById("guideCoverImage");
@@ -50,11 +53,8 @@ console.log("guide-editor.js 已載入");
 
   function setMsg(text, type) {
     if (!msg) return;
-
     msg.innerText = text || "";
-    msg.className = type === "success"
-      ? "guide-editor-msg success"
-      : "guide-editor-msg";
+    msg.className = type === "success" ? "guide-editor-msg success" : "guide-editor-msg";
   }
 
   function escapeHtml(text) {
@@ -68,16 +68,13 @@ console.log("guide-editor.js 已載入");
 
   function normalizeImageUrl(url) {
     const value = String(url || "").trim();
-
     if (!value) return "";
     if (value.startsWith("/")) return value;
-
     return value;
   }
 
   function isValidUrl(url) {
     const value = String(url || "").trim();
-
     if (!value) return false;
     if (value.startsWith("/")) return true;
 
@@ -91,7 +88,6 @@ console.log("guide-editor.js 已載入");
 
   function isValidImageUrl(url) {
     const value = String(url || "").trim();
-
     if (!value) return true;
     if (value.startsWith("/")) return true;
 
@@ -114,6 +110,7 @@ console.log("guide-editor.js 已載入");
   }
 
   function validateGuide() {
+    const category = categoryInput.value.trim();
     const title = titleInput.value.trim();
     const gameName = gameInput.value.trim();
     const coverImage = coverInput.value.trim();
@@ -122,14 +119,15 @@ console.log("guide-editor.js 已載入");
 
     if (!currentUser) return "請先登入後再投稿。";
     if (!currentDisplayName) return "請先設定社員 ID，才能投稿。";
+    if (!allowedCategories.includes(category)) return "請選擇正確的文章分類。";
     if (!title) return "請輸入文章標題。";
     if (title.length > 60) return "文章標題請控制在 60 字以內。";
-    if (!gameName) return "請輸入桌遊名稱。";
-    if (gameName.length > 40) return "桌遊名稱請控制在 40 字以內。";
+    if (!gameName) return "請輸入主題名稱。";
+    if (gameName.length > 40) return "主題名稱請控制在 40 字以內。";
     if (!summary) return "請輸入文章摘要。";
     if (summary.length > 180) return "文章摘要請控制在 180 字以內。";
-    if (!content) return "請輸入攻略內容。";
-    if (content.length > 10000) return "攻略內容請控制在 10000 字以內。";
+    if (!content) return "請輸入文章內容。";
+    if (content.length > 10000) return "文章內容請控制在 10000 字以內。";
     if (coverImage && !isValidImageUrl(coverImage)) return "封面圖片網址格式不正確。";
 
     return "";
@@ -139,7 +137,7 @@ console.log("guide-editor.js 已載入");
     const content = contentInput.value.trim();
 
     if (!content) {
-      setMsg("請先輸入攻略內容再預覽。");
+      setMsg("請先輸入文章內容再預覽。");
       return;
     }
 
@@ -152,9 +150,7 @@ console.log("guide-editor.js 已載入");
     }
 
     const safeHtml = window.DOMPurify
-      ? window.DOMPurify.sanitize(rawHtml, {
-          ADD_ATTR: ["style"]
-        })
+      ? window.DOMPurify.sanitize(rawHtml, { ADD_ATTR: ["style"] })
       : rawHtml;
 
     previewContent.innerHTML = safeHtml;
@@ -179,6 +175,7 @@ console.log("guide-editor.js 已載入");
       const payload = {
         title: titleInput.value.trim(),
         gameName: gameInput.value.trim(),
+        category: categoryInput.value.trim(),
         coverImage: normalizeImageUrl(coverInput.value),
         summary: summaryInput.value.trim(),
         contentMarkdown: contentInput.value.trim(),
@@ -198,7 +195,7 @@ console.log("guide-editor.js 已載入");
         window.location.href = "/guides/post/?id=" + encodeURIComponent(docRef.id);
       }, 800);
     } catch (error) {
-      console.error("發布攻略失敗：", error);
+      console.error("發布文章失敗：", error);
       setMsg("發布失敗，請稍後再試。");
       publishBtn.disabled = false;
       previewBtn.disabled = false;
@@ -284,11 +281,7 @@ console.log("guide-editor.js 已載入");
     const selectedText = selection.text || placeholder;
     const insertText = beforeText + selectedText + afterText;
 
-    replaceSelection(
-      insertText,
-      beforeText.length,
-      beforeText.length + selectedText.length
-    );
+    replaceSelection(insertText, beforeText.length, beforeText.length + selectedText.length);
   }
 
   function insertAtCursor(text) {
@@ -308,11 +301,9 @@ console.log("guide-editor.js 已載入");
 
   function sanitizeFontSize(value) {
     const size = Number(String(value || "").trim());
-
     if (Number.isNaN(size)) return 16;
     if (size < 8) return 8;
     if (size > 40) return 40;
-
     return Math.round(size);
   }
 
@@ -343,11 +334,8 @@ console.log("guide-editor.js 已載入");
     imageModal.classList.add("show");
 
     setTimeout(function () {
-      if (imageAltInput.value) {
-        imageUrlInput.focus();
-      } else {
-        imageAltInput.focus();
-      }
+      if (imageAltInput.value) imageUrlInput.focus();
+      else imageAltInput.focus();
     }, 100);
   }
 
@@ -386,11 +374,8 @@ console.log("guide-editor.js 已載入");
     linkModal.classList.add("show");
 
     setTimeout(function () {
-      if (linkTextInput.value) {
-        linkUrlInput.focus();
-      } else {
-        linkTextInput.focus();
-      }
+      if (linkTextInput.value) linkUrlInput.focus();
+      else linkTextInput.focus();
     }, 100);
   }
 
@@ -425,21 +410,13 @@ console.log("guide-editor.js 已載入");
       btn.addEventListener("click", function () {
         const action = btn.dataset.mdAction;
 
-        if (action === "h2") {
-          ensureLinePrefix("## ", "副標題1");
-        } else if (action === "h3") {
-          ensureLinePrefix("### ", "副標題2");
-        } else if (action === "bold") {
-          wrapSelection("**", "**", "加粗文字");
-        } else if (action === "mark") {
-          wrapSelection("<mark>", "</mark>", "螢光重點");
-        } else if (action === "ul") {
-          addUnorderedList();
-        } else if (action === "image") {
-          openImageModal();
-        } else if (action === "link") {
-          openLinkModal();
-        }
+        if (action === "h2") ensureLinePrefix("## ", "副標題1");
+        else if (action === "h3") ensureLinePrefix("### ", "副標題2");
+        else if (action === "bold") wrapSelection("**", "**", "加粗文字");
+        else if (action === "mark") wrapSelection("<mark>", "</mark>", "螢光重點");
+        else if (action === "ul") addUnorderedList();
+        else if (action === "image") openImageModal();
+        else if (action === "link") openLinkModal();
       });
     });
   }
@@ -447,9 +424,7 @@ console.log("guide-editor.js 已載入");
   function bindFontSizeControl() {
     if (!fontSizeInput) return;
 
-    fontSizeInput.addEventListener("change", function () {
-      applyFontSize();
-    });
+    fontSizeInput.addEventListener("change", applyFontSize);
 
     fontSizeInput.addEventListener("keydown", function (event) {
       if (event.key === "Enter") {
@@ -470,20 +445,15 @@ console.log("guide-editor.js 已載入");
   function bindModals() {
     imageCancelBtn.addEventListener("click", closeImageModal);
     imageInsertBtn.addEventListener("click", insertImageFromModal);
-
     linkCancelBtn.addEventListener("click", closeLinkModal);
     linkInsertBtn.addEventListener("click", insertLinkFromModal);
 
     imageModal.addEventListener("click", function (event) {
-      if (event.target === imageModal) {
-        closeImageModal();
-      }
+      if (event.target === imageModal) closeImageModal();
     });
 
     linkModal.addEventListener("click", function (event) {
-      if (event.target === linkModal) {
-        closeLinkModal();
-      }
+      if (event.target === linkModal) closeLinkModal();
     });
 
     document.addEventListener("keydown", function (event) {
