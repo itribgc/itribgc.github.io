@@ -6,77 +6,126 @@ description: 守夜人桌遊社電子報總覽
 ---
 
 <style>
-  .newsletter-intro {
-    opacity: 0.82;
-    line-height: 1.8;
-    margin-bottom: 1.5rem;
-  }
-
-  .newsletter-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 24px;
+  .newsletter-list-wrap {
+    max-width: 760px;
     margin-top: 2rem;
   }
 
-  .newsletter-card {
-    display: block;
-    padding: 24px 20px;
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 16px;
-    text-decoration: none;
-    background: rgba(255,255,255,0.03);
-    color: inherit;
-    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  .newsletter-intro {
+    margin-bottom: 1.5rem;
+    line-height: 1.8;
+    opacity: 0.82;
   }
 
-  .newsletter-card:hover {
-    transform: translateY(-4px);
-    border-color: rgba(79,177,186,0.55);
-    background: rgba(79,177,186,0.08);
-    text-decoration: none;
+  .newsletter-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
   }
 
-  .newsletter-card h2 {
-    margin: 0 0 8px 0;
-    font-size: 1.35rem;
-    line-height: 1.35;
-  }
-
-  .newsletter-card p {
-    margin: 0;
-    opacity: 0.85;
-    line-height: 1.7;
-  }
-
-  .newsletter-tag {
-    display: inline-flex;
+  .newsletter-item {
+    display: flex;
     align-items: center;
-    justify-content: center;
-    margin-bottom: 12px;
-    padding: 4px 10px;
-    border-radius: 999px;
-    border: 1px solid rgba(79,177,186,0.45);
-    background: rgba(79,177,186,0.12);
-    font-size: 0.85rem;
-    font-weight: 700;
+    justify-content: space-between;
+    gap: 1rem;
+
+    width: 100%;
+    padding: 18px 22px;
+    box-sizing: border-box;
+
+    border-radius: 16px;
+    border: 1px solid rgba(79,177,186,0.38);
+    background: rgba(255,255,255,0.035);
+    color: inherit;
+    text-decoration: none;
+
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+  }
+
+  .newsletter-item:hover {
+    transform: translateY(-2px);
+    border-color: rgba(79,177,186,0.75);
+    background: rgba(79,177,186,0.10);
+    text-decoration: none;
+  }
+
+  .newsletter-item-main {
+    min-width: 0;
+  }
+
+  .newsletter-item-title {
+    margin: 0;
+    font-size: 1.25rem;
+    line-height: 1.35;
+    font-weight: 800;
+  }
+
+  .newsletter-item-desc {
+    margin: 0.35rem 0 0 0;
+    line-height: 1.6;
+    opacity: 0.75;
+    font-size: 0.95rem;
+  }
+
+  .newsletter-item-arrow {
+    flex: 0 0 auto;
+    opacity: 0.75;
+    font-size: 1.15rem;
+  }
+
+  .newsletter-empty {
+    padding: 1rem;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.055);
+    opacity: 0.82;
+  }
+
+  @media (max-width: 640px) {
+    .newsletter-item {
+      align-items: flex-start;
+      padding: 16px 18px;
+    }
+
+    .newsletter-item-title {
+      font-size: 1.12rem;
+    }
   }
 </style>
 
-<p class="newsletter-intro">
-  請選擇想閱讀的電子報月份。點選月份後，就會進入該期電子報翻頁閱讀頁面。
-</p>
+<div class="newsletter-list-wrap">
+  <p class="newsletter-intro">
+    請選擇想閱讀的電子報月份。點選後會進入該期電子報翻頁閱讀頁面。
+  </p>
 
-<div class="newsletter-grid">
-  <a class="newsletter-card" href="/newsletter-2025-05-08/">
-    <span class="newsletter-tag">最新一期</span>
-    <h2>2025 年 05–08 月</h2>
-    <p>活動回顧、桌遊競賽、名人專欄、守夜人天地</p>
-  </a>
+  <div class="newsletter-list">
+    {% assign newsletter_pages = site.pages | sort: "newsletter_sort" | reverse %}
+    {% assign newsletter_count = 0 %}
 
-  <a class="newsletter-card" href="/newsletter-2025-03+04/">
-    <span class="newsletter-tag">電子報</span>
-    <h2>2025 年 03–04 月</h2>
-    <p>點擊進入閱讀本期電子報</p>
-  </a>
+    {% for item in newsletter_pages %}
+      {% if item.newsletter_issue == true %}
+        {% assign newsletter_count = newsletter_count | plus: 1 %}
+        <a class="newsletter-item" href="{{ item.url | relative_url }}">
+          <div class="newsletter-item-main">
+            <h2 class="newsletter-item-title">
+              {{ item.newsletter_label | default: item.title }}
+            </h2>
+
+            {% if item.description %}
+              <p class="newsletter-item-desc">
+                {{ item.description }}
+              </p>
+            {% endif %}
+          </div>
+
+          <span class="newsletter-item-arrow">前往閱讀 →</span>
+        </a>
+      {% endif %}
+    {% endfor %}
+
+    {% if newsletter_count == 0 %}
+      <div class="newsletter-empty">
+        目前尚未找到電子報頁面。請確認電子報 md 檔案有設定 <code>newsletter_issue: true</code>。
+      </div>
+    {% endif %}
+  </div>
 </div>
