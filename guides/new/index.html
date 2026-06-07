@@ -343,25 +343,24 @@ description: >
       字體大小
       <input
         id="mdFontSizeInput"
-        type="number"
+        type="text"
+        inputmode="numeric"
         list="mdFontSizeOptions"
-        min="8"
-        max="40"
-        step="1"
         value="16"
+        autocomplete="off"
         title="可下拉選擇，也可雙擊數字後自行輸入">
     </label>
 
     <datalist id="mdFontSizeOptions">
-      <option value="8"></option>
-      <option value="12"></option>
-      <option value="16"></option>
-      <option value="20"></option>
-      <option value="24"></option>
-      <option value="28"></option>
-      <option value="32"></option>
-      <option value="36"></option>
-      <option value="40"></option>
+      <option value="8">8</option>
+      <option value="12">12</option>
+      <option value="16">16</option>
+      <option value="20">20</option>
+      <option value="24">24</option>
+      <option value="28">28</option>
+      <option value="32">32</option>
+      <option value="36">36</option>
+      <option value="40">40</option>
     </datalist>
 
     <button type="button" data-md-action="ul">項目符號</button>
