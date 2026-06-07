@@ -101,6 +101,26 @@ description: >
     line-height: 1.75;
   }
 
+  .guide-preview-content mark,
+  .md-guide-help mark {
+    padding: 0.1em 0.25em;
+    border-radius: 0.25em;
+    background: #fff176;
+    color: #222;
+  }
+
+  .guide-preview-content .md-size-lg,
+  .md-guide-help .md-size-lg {
+    font-size: 1.25em;
+    font-weight: 700;
+  }
+
+  .guide-preview-content .md-size-sm,
+  .md-guide-help .md-size-sm {
+    font-size: 0.88em;
+    opacity: 0.82;
+  }
+
   .guide-current-cover {
     display: none;
     margin-top: 1rem;
@@ -114,17 +134,153 @@ description: >
     object-fit: cover;
   }
 
-  .guide-help {
+  .guide-help,
+  .md-guide-help {
     margin-top: 0.5rem;
     font-size: 0.9rem;
-    opacity: 0.75;
+    opacity: 0.85;
     line-height: 1.6;
+  }
+
+  .md-guide-help {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: 12px;
+    background: rgba(79,177,186,0.12);
+    border: 1px solid rgba(79,177,186,0.28);
+  }
+
+  .md-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin: 0.5rem 0 0.75rem 0;
+    padding: 0.75rem;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.055);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .md-toolbar button {
+    padding: 7px 11px;
+    border: 1px solid rgba(255,255,255,0.16);
+    border-radius: 999px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    font-size: 0.88rem;
+    font-weight: 700;
+  }
+
+  .md-toolbar button:hover {
+    border-color: rgb(79,177,186);
+  }
+
+  .md-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(0,0,0,0.62);
+    box-sizing: border-box;
+  }
+
+  .md-modal.show {
+    display: flex;
+  }
+
+  .md-modal-card {
+    width: 100%;
+    max-width: 460px;
+    background: #fff;
+    color: #222;
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.34);
+    box-sizing: border-box;
+  }
+
+  .md-modal-card h3 {
+    margin: 0 0 12px 0;
+    color: #222;
+  }
+
+  .md-modal-card p {
+    margin: 0 0 16px 0;
+    color: #555;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .md-modal-card label {
+    color: #333;
+  }
+
+  .md-modal-card input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    border: 1px solid #d6d6d6;
+    border-radius: 8px;
+    color: #222;
+    background: #fff;
+  }
+
+  .md-modal-msg {
+    min-height: 20px;
+    color: #d93025;
+    font-size: 14px;
+  }
+
+  .md-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .md-modal-actions button {
+    padding: 9px 14px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 700;
+  }
+
+  .md-modal-cancel {
+    background: #e8e8e8;
+    color: #333;
+  }
+
+  .md-modal-insert {
+    background: rgb(79,177,186);
+    color: #fff;
+  }
+
+  code {
+    white-space: pre-wrap;
   }
 </style>
 
 <div class="guide-editor">
   <h1>編輯桌遊攻略</h1>
-  <p>你可以修改自己的攻略文章內容。封面圖片請使用外部圖床圖片網址。</p>
+  <p>你可以修改自己的攻略文章內容。封面圖片與內文圖片都請使用外部圖床圖片網址。</p>
+
+  <div class="md-guide-help">
+    <strong>撰寫格式小提醒：</strong><br>
+    副標題1：<code>## 阿瓦隆詳細規則</code><br>
+    副標題2：<code>### 任務成功與失敗條件</code><br>
+    加粗：<code>**重要規則**</code><br>
+    螢光：<code>&lt;mark&gt;重點提醒&lt;/mark&gt;</code><br>
+    大字：<code>&lt;span class="md-size-lg"&gt;重要段落&lt;/span&gt;</code><br>
+    小字：<code>&lt;span class="md-size-sm"&gt;補充說明&lt;/span&gt;</code><br>
+    圖片：<code>![圖片說明](圖片直接網址)</code><br>
+    連結：<code>[連結文字](https://example.com)</code>
+  </div>
 
   <label for="guideTitle">文章標題</label>
   <input id="guideTitle" type="text" maxlength="60" placeholder="例如：阿瓦隆新手攻略｜好人陣營怎麼判斷資訊">
@@ -141,8 +297,7 @@ description: >
   <input id="guideCoverImage" type="text" placeholder="請貼上圖片網址，例如 https://...jpg">
 
   <div class="guide-help">
-    請先將圖片上傳至 ImgBB、Postimages 等外部圖床，再貼上圖片「直接連結」。<br>
-    留空代表不顯示封面圖片。
+    請先將圖片上傳至 ImgBB、Postimages 等外部圖床，再貼上圖片「直接連結」。留空代表不顯示封面圖片。
   </div>
 
   <div id="guideCoverPreviewWrap" style="display:none; margin-top: 1rem;">
@@ -153,6 +308,19 @@ description: >
   <textarea id="guideSummary" maxlength="180" style="min-height: 90px;" placeholder="用一小段話介紹這篇攻略重點。"></textarea>
 
   <label for="guideContent">Markdown 內容</label>
+
+  <div class="md-toolbar">
+    <button type="button" data-md-action="h2">副標題1</button>
+    <button type="button" data-md-action="h3">副標題2</button>
+    <button type="button" data-md-action="bold">加粗</button>
+    <button type="button" data-md-action="mark">螢光</button>
+    <button type="button" data-md-action="large">大字</button>
+    <button type="button" data-md-action="small">小字</button>
+    <button type="button" data-md-action="ul">項目符號</button>
+    <button type="button" data-md-action="image">新增圖片</button>
+    <button type="button" data-md-action="link">新增連結</button>
+  </div>
+
   <textarea id="guideContent" maxlength="10000" placeholder="開始撰寫你的攻略..."></textarea>
 
   <div class="guide-editor-actions">
@@ -166,6 +334,46 @@ description: >
   <div id="guidePreview" class="guide-preview" style="display:none;">
     <h2>預覽</h2>
     <div id="guidePreviewContent" class="guide-preview-content"></div>
+  </div>
+</div>
+
+<div id="mdImageModal" class="md-modal">
+  <div class="md-modal-card">
+    <h3>新增圖片</h3>
+    <p>請貼上圖片直接連結，通常會是 .jpg、.png 或 .webp 結尾。商品頁或 Google 搜尋結果網址通常無法顯示。</p>
+
+    <label for="mdImageAlt">圖片說明</label>
+    <input id="mdImageAlt" type="text" placeholder="例如：阿瓦隆角色卡">
+
+    <label for="mdImageUrl">圖片網址</label>
+    <input id="mdImageUrl" type="text" placeholder="例如：https://example.com/image.jpg">
+
+    <div id="mdImageMsg" class="md-modal-msg"></div>
+
+    <div class="md-modal-actions">
+      <button id="mdImageCancelBtn" class="md-modal-cancel" type="button">取消</button>
+      <button id="mdImageInsertBtn" class="md-modal-insert" type="button">插入圖片</button>
+    </div>
+  </div>
+</div>
+
+<div id="mdLinkModal" class="md-modal">
+  <div class="md-modal-card">
+    <h3>新增連結</h3>
+    <p>可以先反白文字，再點選新增連結，系統會自動套用成 Markdown 連結格式。</p>
+
+    <label for="mdLinkText">連結文字</label>
+    <input id="mdLinkText" type="text" placeholder="例如：官方規則說明">
+
+    <label for="mdLinkUrl">連結網址</label>
+    <input id="mdLinkUrl" type="text" placeholder="例如：https://example.com">
+
+    <div id="mdLinkMsg" class="md-modal-msg"></div>
+
+    <div class="md-modal-actions">
+      <button id="mdLinkCancelBtn" class="md-modal-cancel" type="button">取消</button>
+      <button id="mdLinkInsertBtn" class="md-modal-insert" type="button">插入連結</button>
+    </div>
   </div>
 </div>
 
