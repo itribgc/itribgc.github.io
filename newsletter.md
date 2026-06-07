@@ -1,6 +1,6 @@
 ---
 layout: page
-title: 電子報
+title: 電子報報
 permalink: /newsletter/
 description: 守夜人桌遊社電子報總覽
 ---
