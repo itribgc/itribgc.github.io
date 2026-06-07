@@ -31,6 +31,7 @@ console.log("guide-edit.js 已載入");
   const coverPreview = document.getElementById("guideCoverPreview");
   const summaryInput = document.getElementById("guideSummary");
   const contentInput = document.getElementById("guideContent");
+  const fontSizeInput = document.getElementById("mdFontSizeInput");
   const previewBtn = document.getElementById("guidePreviewBtn");
   const saveBtn = document.getElementById("guideSaveBtn");
   const msg = document.getElementById("guideEditorMsg");
@@ -74,6 +75,7 @@ console.log("guide-edit.js 已載入");
     if (contentInput) contentInput.disabled = disabled;
     if (previewBtn) previewBtn.disabled = disabled;
     if (saveBtn) saveBtn.disabled = disabled;
+    if (fontSizeInput) fontSizeInput.disabled = disabled;
 
     document.querySelectorAll(".md-toolbar button").forEach(function (btn) {
       btn.disabled = disabled;
@@ -206,7 +208,7 @@ console.log("guide-edit.js 已載入");
     }
 
     const safeHtml = window.DOMPurify
-      ? window.DOMPurify.sanitize(rawHtml)
+      ? window.DOMPurify.sanitize(rawHtml, { ADD_ATTR: ["style"] })
       : rawHtml;
 
     previewContent.innerHTML = safeHtml;
@@ -324,8 +326,8 @@ console.log("guide-edit.js 已載入");
     contentInput.value = before + insertText + after;
     contentInput.focus();
 
-    const newStart = start + (selectStartOffset || insertText.length);
-    const newEnd = start + (selectEndOffset || insertText.length);
+    const newStart = start + (selectStartOffset ?? insertText.length);
+    const newEnd = start + (selectEndOffset ?? insertText.length);
 
     contentInput.setSelectionRange(newStart, newEnd);
   }
@@ -374,6 +376,34 @@ console.log("guide-edit.js 已載入");
     });
 
     replaceSelection(lines.join("\n"));
+  }
+
+  function sanitizeFontSize(value) {
+    const size = Number(value);
+
+    if (Number.isNaN(size)) return 16;
+    if (size < 8) return 8;
+    if (size > 40) return 40;
+
+    return Math.round(size);
+  }
+
+  function applyFontSize() {
+    if (!fontSizeInput) return;
+
+    const size = sanitizeFontSize(fontSizeInput.value);
+    fontSizeInput.value = size;
+
+    const selection = getSelection();
+    const openTag = `<span style="font-size: ${size}px;">`;
+    const closeTag = `</span>`;
+
+    if (selection.text) {
+      wrapSelection(openTag, closeTag, selection.text);
+    } else {
+      const insertText = openTag + closeTag;
+      replaceSelection(insertText, openTag.length, openTag.length);
+    }
   }
 
   function openImageModal() {
@@ -475,10 +505,6 @@ console.log("guide-edit.js 已載入");
           wrapSelection("**", "**", "加粗文字");
         } else if (action === "mark") {
           wrapSelection("<mark>", "</mark>", "螢光重點");
-        } else if (action === "large") {
-          wrapSelection('<span class="md-size-lg">', "</span>", "大字文字");
-        } else if (action === "small") {
-          wrapSelection('<span class="md-size-sm">', "</span>", "小字文字");
         } else if (action === "ul") {
           addUnorderedList();
         } else if (action === "image") {
@@ -490,6 +516,23 @@ console.log("guide-edit.js 已載入");
     });
   }
 
+  function bindFontSizeControl() {
+    if (!fontSizeInput) return;
+
+    fontSizeInput.addEventListener("change", applyFontSize);
+
+    fontSizeInput.addEventListener("keydown", function (event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        applyFontSize();
+      }
+    });
+
+    fontSizeInput.addEventListener("dblclick", function () {
+      fontSizeInput.select();
+    });
+  }
+
   function bindModals() {
     imageCancelBtn.addEventListener("click", closeImageModal);
     imageInsertBtn.addEventListener("click", insertImageFromModal);
@@ -498,15 +541,11 @@ console.log("guide-edit.js 已載入");
     linkInsertBtn.addEventListener("click", insertLinkFromModal);
 
     imageModal.addEventListener("click", function (event) {
-      if (event.target === imageModal) {
-        closeImageModal();
-      }
+      if (event.target === imageModal) closeImageModal();
     });
 
     linkModal.addEventListener("click", function (event) {
-      if (event.target === linkModal) {
-        closeLinkModal();
-      }
+      if (event.target === linkModal) closeLinkModal();
     });
 
     document.addEventListener("keydown", function (event) {
@@ -555,6 +594,7 @@ console.log("guide-edit.js 已載入");
 
   bindCoverPreview();
   bindToolbar();
+  bindFontSizeControl();
   bindModals();
 
   if (previewBtn) {
