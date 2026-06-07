@@ -44,7 +44,7 @@ author:
 # Add links to the sidebar.
 menu:
   - title:             電子報報
-    url:               /example/
+    url:               /newsletter/
   - title:             桌遊攻略
     url:               /forum/
   - title:             文章列表
