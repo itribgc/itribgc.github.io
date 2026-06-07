@@ -18,6 +18,7 @@ console.log("guide-list.js 已載入");
   const db = firebase.firestore();
 
   let currentUser = null;
+  let unsubscribeGuides = null;
   let pendingDeleteGuideId = "";
   let pendingDeleteGuideTitle = "";
 
@@ -152,6 +153,10 @@ console.log("guide-list.js 已載入");
     modal.addEventListener("click", function (event) {
       if (event.target === modal) closeDeleteModal();
     });
+
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") closeDeleteModal();
+    });
   }
 
   function openDeleteModal(guideId, guideTitle) {
@@ -253,15 +258,17 @@ console.log("guide-list.js 已載入");
       html += `
         <article class="guide-card">
           <a class="guide-card-cover-link" href="/guides/post/?id=${encodeURIComponent(doc.id)}">
-            <img class="guide-card-cover" src="${escapeHtml(coverImage)}" alt="${escapeHtml(data.title)}">
+            <img class="guide-card-cover" src="${escapeHtml(coverImage)}" alt="${escapeHtml(data.title || "文章封面")}">
           </a>
 
           <div class="guide-card-body">
-            <div class="guide-category-badge">${escapeHtml(category)}</div>
+            <div class="guide-title-row">
+              <a class="guide-card-title-link" href="/guides/post/?id=${encodeURIComponent(doc.id)}">
+                <h2>${escapeHtml(data.title || "未命名文章")}</h2>
+              </a>
 
-            <a class="guide-card-title-link" href="/guides/post/?id=${encodeURIComponent(doc.id)}">
-              <h2>${escapeHtml(data.title || "未命名文章")}</h2>
-            </a>
+              <span class="guide-category-badge">${escapeHtml(category)}</span>
+            </div>
 
             <div class="guide-meta">
               主題：${escapeHtml(data.gameName || "未分類主題")}
@@ -304,7 +311,12 @@ console.log("guide-list.js 已載入");
   }
 
   function loadGuides() {
-    db.collection("guides")
+    if (unsubscribeGuides) {
+      unsubscribeGuides();
+      unsubscribeGuides = null;
+    }
+
+    unsubscribeGuides = db.collection("guides")
       .where("status", "==", "published")
       .orderBy("createdAt", "desc")
       .onSnapshot(renderGuides, function (error) {
@@ -326,8 +338,9 @@ console.log("guide-list.js 已載入");
     style.innerHTML = `
       .guide-card {
         display: grid;
-        grid-template-columns: 220px 1fr;
-        gap: 1.2rem;
+        grid-template-columns: 240px minmax(0, 1fr);
+        gap: 1.25rem;
+        align-items: start;
         padding: 1rem;
         border-radius: 16px;
         background: rgba(255,255,255,0.055);
@@ -337,6 +350,7 @@ console.log("guide-list.js 已載入");
 
       .guide-card-cover-link {
         display: block;
+        align-self: start;
       }
 
       .guide-card-cover {
@@ -348,10 +362,42 @@ console.log("guide-list.js 已載入");
         display: block;
       }
 
+      .guide-card-body {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+      }
+
+      .guide-title-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.35rem;
+      }
+
+      .guide-card-title-link {
+        color: inherit;
+        text-decoration: none;
+        min-width: 0;
+      }
+
+      .guide-card-title-link:hover {
+        text-decoration: none;
+      }
+
+      .guide-card-title-link h2 {
+        margin: 0;
+        line-height: 1.25;
+      }
+
       .guide-category-badge {
         display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
         width: fit-content;
-        margin-bottom: 0.45rem;
         padding: 4px 10px;
         border-radius: 999px;
         background: rgba(79,177,186,0.16);
@@ -359,15 +405,20 @@ console.log("guide-list.js 已載入");
         color: inherit;
         font-size: 0.82rem;
         font-weight: 700;
+        line-height: 1.2;
+        white-space: nowrap;
       }
 
-      .guide-card-title-link {
-        color: inherit;
-        text-decoration: none;
+      .guide-meta {
+        opacity: 0.78;
+        font-size: 0.92rem;
+        line-height: 1.55;
+        margin-top: 0.35rem;
       }
 
-      .guide-card-title-link:hover {
-        text-decoration: none;
+      .guide-summary {
+        margin: 0.55rem 0 0 0;
+        line-height: 1.65;
       }
 
       .guide-card-actions {
@@ -393,6 +444,7 @@ console.log("guide-list.js 已載入");
         background: transparent;
         color: inherit;
         cursor: pointer;
+        line-height: 1.2;
       }
 
       .guide-read-btn:hover,
@@ -413,6 +465,12 @@ console.log("guide-list.js 已載入");
 
         .guide-card-cover {
           height: 190px;
+        }
+
+        .guide-title-row {
+          flex-direction: column-reverse;
+          align-items: flex-start;
+          gap: 0.45rem;
         }
       }
     `;
