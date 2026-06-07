@@ -109,18 +109,6 @@ description: >
     color: #222;
   }
 
-  .guide-preview-content .md-size-lg,
-  .md-guide-help .md-size-lg {
-    font-size: 1.25em;
-    font-weight: 700;
-  }
-
-  .guide-preview-content .md-size-sm,
-  .md-guide-help .md-size-sm {
-    font-size: 0.88em;
-    opacity: 0.82;
-  }
-
   .guide-template-box,
   .md-guide-help {
     margin-top: 1rem;
@@ -169,6 +157,37 @@ description: >
 
   .md-toolbar button:hover {
     border-color: rgb(79,177,186);
+  }
+
+  .md-toolbar button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .md-font-size-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 6px 10px;
+    border: 1px solid rgba(255,255,255,0.16);
+    border-radius: 999px;
+    font-size: 0.88rem;
+    font-weight: 700;
+  }
+
+  .md-font-size-control input {
+    width: 64px;
+    padding: 3px 6px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.22);
+    background: rgba(255,255,255,0.08);
+    color: inherit;
+    font-size: 0.88rem;
+  }
+
+  .md-font-size-control input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
   .md-modal {
@@ -271,8 +290,7 @@ description: >
     副標題2：<code>### 任務成功與失敗條件</code><br>
     加粗：<code>**重要規則**</code><br>
     螢光：<code>&lt;mark&gt;重點提醒&lt;/mark&gt;</code><br>
-    大字：<code>&lt;span class="md-size-lg"&gt;重要段落&lt;/span&gt;</code><br>
-    小字：<code>&lt;span class="md-size-sm"&gt;補充說明&lt;/span&gt;</code><br>
+    字體大小：<code>&lt;span style="font-size: 20px;"&gt;重要段落&lt;/span&gt;</code><br>
     圖片：<code>![圖片說明](圖片直接網址)</code><br>
     連結：<code>[連結文字](https://example.com)</code>
   </div>
@@ -320,8 +338,32 @@ description: >
     <button type="button" data-md-action="h3">副標題2</button>
     <button type="button" data-md-action="bold">加粗</button>
     <button type="button" data-md-action="mark">螢光</button>
-    <button type="button" data-md-action="large">大字</button>
-    <button type="button" data-md-action="small">小字</button>
+
+    <label class="md-font-size-control" for="mdFontSizeInput">
+      字體大小
+      <input
+        id="mdFontSizeInput"
+        type="number"
+        list="mdFontSizeOptions"
+        min="8"
+        max="40"
+        step="1"
+        value="16"
+        title="可下拉選擇，也可雙擊數字後自行輸入">
+    </label>
+
+    <datalist id="mdFontSizeOptions">
+      <option value="8"></option>
+      <option value="12"></option>
+      <option value="16"></option>
+      <option value="20"></option>
+      <option value="24"></option>
+      <option value="28"></option>
+      <option value="32"></option>
+      <option value="36"></option>
+      <option value="40"></option>
+    </datalist>
+
     <button type="button" data-md-action="ul">項目符號</button>
     <button type="button" data-md-action="image">新增圖片</button>
     <button type="button" data-md-action="link">新增連結</button>
