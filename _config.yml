@@ -48,7 +48,7 @@ menu:
   - title:             社員論壇
     url:               /guides/
   - title:             文章列表
-    url:               /article/
+    url:               /example/
 
 # Add links to the footer.
 legal:
