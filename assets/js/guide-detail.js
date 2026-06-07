@@ -32,6 +32,7 @@ console.log("guide-detail.js 已載入");
 
   function formatTime(timestamp) {
     if (!timestamp || !timestamp.toDate) return "";
+
     const date = timestamp.toDate();
 
     return date.toLocaleDateString("zh-TW", {
@@ -44,6 +45,10 @@ console.log("guide-detail.js 已載入");
   async function loadGuide() {
     const guideDetail = document.getElementById("guideDetail");
     const guideId = getGuideId();
+
+    if (!guideDetail) {
+      return;
+    }
 
     if (!guideId) {
       guideDetail.innerHTML = `<div class="guide-empty">找不到文章 ID。</div>`;
@@ -78,7 +83,9 @@ console.log("guide-detail.js 已載入");
       }
 
       const safeHtml = window.DOMPurify
-        ? window.DOMPurify.sanitize(rawHtml)
+        ? window.DOMPurify.sanitize(rawHtml, {
+            ADD_ATTR: ["style"]
+          })
         : rawHtml;
 
       document.title = (data.title || "桌遊攻略文章") + " | " + document.title;
