@@ -46,7 +46,7 @@ menu:
   - title:             電子報報
     url:               /newsletter/
   - title:             桌遊攻略
-    url:               /forum/
+    url:               /guides/
   - title:             文章列表
     url:               /about/
 
