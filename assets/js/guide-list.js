@@ -340,7 +340,7 @@ console.log("guide-list.js 已載入");
         display: grid;
         grid-template-columns: 240px minmax(0, 1fr);
         gap: 1.25rem;
-        align-items: start;
+        align-items: center;
         padding: 1rem;
         border-radius: 16px;
         background: rgba(255,255,255,0.055);
@@ -350,7 +350,7 @@ console.log("guide-list.js 已載入");
 
       .guide-card-cover-link {
         display: block;
-        align-self: start;
+        align-self: center;
       }
 
       .guide-card-cover {
@@ -366,15 +366,16 @@ console.log("guide-list.js 已載入");
         min-width: 0;
         display: flex;
         flex-direction: column;
-        justify-content: flex-start;
+        justify-content: center;
       }
 
       .guide-title-row {
         display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 0.75rem;
-        margin-bottom: 0.35rem;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 0.65rem;
+        flex-wrap: wrap;
+        margin-bottom: 0.45rem;
       }
 
       .guide-card-title-link {
@@ -407,17 +408,18 @@ console.log("guide-list.js 已載入");
         font-weight: 700;
         line-height: 1.2;
         white-space: nowrap;
+        transform: translateY(1px);
       }
 
       .guide-meta {
         opacity: 0.78;
         font-size: 0.92rem;
         line-height: 1.55;
-        margin-top: 0.35rem;
+        margin-top: 0.2rem;
       }
 
       .guide-summary {
-        margin: 0.55rem 0 0 0;
+        margin: 0.45rem 0 0 0;
         line-height: 1.65;
       }
 
@@ -461,16 +463,23 @@ console.log("guide-list.js 已載入");
       @media (max-width: 720px) {
         .guide-card {
           grid-template-columns: 1fr;
+          align-items: start;
+        }
+
+        .guide-card-cover-link {
+          align-self: stretch;
         }
 
         .guide-card-cover {
           height: 190px;
         }
 
+        .guide-card-body {
+          justify-content: flex-start;
+        }
+
         .guide-title-row {
-          flex-direction: column-reverse;
           align-items: flex-start;
-          gap: 0.45rem;
         }
       }
     `;
