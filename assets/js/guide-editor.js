@@ -183,6 +183,8 @@ console.log("guide-editor.js 已載入");
         authorName: currentDisplayName,
         status: "published",
         likeCount: 0,
+        viewCount: 0,
+        likedBy: {},
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       };
