@@ -47,6 +47,19 @@ console.log("guide-list.js 已載入");
     return data.category || "桌遊攻略";
   }
 
+  async function getCommentCount(guideId) {
+    try {
+      const snapshot = await db.collection("comments")
+        .where("postPath", "==", "guide:" + guideId)
+        .get();
+
+      return snapshot.size;
+    } catch (error) {
+      console.error("讀取留言數失敗：", error);
+      return 0;
+    }
+  }
+
   function createDeleteModal() {
     if (document.getElementById("guideDeleteModal")) return;
 
@@ -234,7 +247,7 @@ console.log("guide-list.js 已載入");
     }
   }
 
-  function renderGuides(snapshot) {
+  async function renderGuides(snapshot) {
     const guideList = document.getElementById("guideList");
 
     if (!guideList) return;
@@ -246,10 +259,28 @@ console.log("guide-list.js 已載入");
 
     let html = "";
 
-    snapshot.forEach(function (doc) {
+    const rows = [];
+
+    for (const doc of snapshot.docs) {
       const data = doc.data();
+      const commentCount = await getCommentCount(doc.id);
+
+      rows.push({
+        id: doc.id,
+        data: data,
+        commentCount: commentCount
+      });
+    }
+
+    rows.forEach(function (item) {
+      const docId = item.id;
+      const data = item.data;
+      const commentCount = item.commentCount;
+
       const isOwner = currentUser && data.authorUid === currentUser.uid;
       const category = getCategory(data);
+      const likeCount = data.likeCount || 0;
+      const viewCount = data.viewCount || 0;
 
       const coverImage = data.coverImage && data.coverImage.trim()
         ? data.coverImage.trim()
@@ -257,12 +288,12 @@ console.log("guide-list.js 已載入");
 
       html += `
         <article class="guide-card">
-          <a class="guide-card-cover-link" href="/guides/post/?id=${encodeURIComponent(doc.id)}">
+          <a class="guide-card-cover-link" href="/guides/post/?id=${encodeURIComponent(docId)}">
             <img class="guide-card-cover" src="${escapeHtml(coverImage)}" alt="${escapeHtml(data.title || "文章封面")}">
           </a>
 
           <div class="guide-card-body">
-            <a class="guide-card-title-link" href="/guides/post/?id=${encodeURIComponent(doc.id)}">
+            <a class="guide-card-title-link" href="/guides/post/?id=${encodeURIComponent(docId)}">
               <h2>${escapeHtml(data.title || "未命名文章")}</h2>
             </a>
 
@@ -271,21 +302,24 @@ console.log("guide-list.js 已載入");
               <span>・${escapeHtml(data.authorName || "未命名社員")}</span>
               <span>・${escapeHtml(formatTime(data.createdAt))}</span>
               <span class="guide-category-pill">${escapeHtml(category)}</span>
+              <span class="guide-count-pill">👁 ${viewCount}</span>
+              <span class="guide-count-pill">💬 ${commentCount}</span>
+              <span class="guide-count-pill">👍 ${likeCount}</span>
             </div>
 
             <p class="guide-summary">${escapeHtml(data.summary || "這篇文章還沒有摘要。")}</p>
 
             <div class="guide-card-actions">
-              <a class="guide-read-btn" href="/guides/post/?id=${encodeURIComponent(doc.id)}">閱讀全文</a>
+              <a class="guide-read-btn" href="/guides/post/?id=${encodeURIComponent(docId)}">閱讀全文</a>
 
               ${
                 isOwner
                   ? `
-                    <a class="guide-edit-btn" href="/guides/edit/?id=${encodeURIComponent(doc.id)}">編輯文章</a>
+                    <a class="guide-edit-btn" href="/guides/edit/?id=${encodeURIComponent(docId)}">編輯文章</a>
                     <button
                       class="guide-delete-btn"
                       type="button"
-                      data-guide-id="${escapeHtml(doc.id)}"
+                      data-guide-id="${escapeHtml(docId)}"
                       data-guide-title="${escapeHtml(data.title || "未命名文章")}">
                       刪除文章
                     </button>
@@ -387,7 +421,7 @@ console.log("guide-list.js 已載入");
         display: flex;
         align-items: center;
         flex-wrap: wrap;
-        gap: 0.25rem;
+        gap: 0.35rem;
         opacity: 0.78;
         font-size: 0.92rem;
         line-height: 1.55;
@@ -395,11 +429,11 @@ console.log("guide-list.js 已載入");
         padding: 0 !important;
       }
 
-      .guide-category-pill {
+      .guide-category-pill,
+      .guide-count-pill {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        margin-left: 0.35rem;
         padding: 3px 10px;
         border-radius: 999px;
         border: 1px solid rgba(79,177,186,0.45);
@@ -410,6 +444,12 @@ console.log("guide-list.js 已載入");
         line-height: 1.25;
         white-space: nowrap;
         opacity: 1;
+      }
+
+      .guide-count-pill {
+        border-color: rgba(255,255,255,0.18);
+        background: rgba(255,255,255,0.055);
+        font-weight: 600;
       }
 
       .guide-summary {
@@ -463,10 +503,6 @@ console.log("guide-list.js 已載入");
 
         .guide-card-cover {
           height: 190px;
-        }
-
-        .guide-category-pill {
-          margin-left: 0;
         }
       }
     `;
