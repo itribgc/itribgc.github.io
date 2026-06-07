@@ -45,10 +45,10 @@ author:
 menu:
   - title:             電子報報
     url:               /newsletter/
-  - title:             桌遊攻略
+  - title:             社員論壇
     url:               /guides/
   - title:             文章列表
-    url:               /about/
+    url:               /example/
 
 # Add links to the footer.
 legal:
