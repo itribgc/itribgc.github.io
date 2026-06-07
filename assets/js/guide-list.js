@@ -42,10 +42,12 @@ console.log("guide-list.js 已載入");
     });
   }
 
+  function getCategory(data) {
+    return data.category || "桌遊攻略";
+  }
+
   function createDeleteModal() {
-    if (document.getElementById("guideDeleteModal")) {
-      return;
-    }
+    if (document.getElementById("guideDeleteModal")) return;
 
     const modal = document.createElement("div");
     modal.id = "guideDeleteModal";
@@ -148,9 +150,7 @@ console.log("guide-list.js 已載入");
     document.getElementById("guideDeleteConfirmBtn").addEventListener("click", deleteGuide);
 
     modal.addEventListener("click", function (event) {
-      if (event.target === modal) {
-        closeDeleteModal();
-      }
+      if (event.target === modal) closeDeleteModal();
     });
   }
 
@@ -220,7 +220,6 @@ console.log("guide-list.js 已載入");
       }
 
       await ref.delete();
-
       closeDeleteModal();
     } catch (error) {
       console.error("刪除文章失敗：", error);
@@ -236,7 +235,7 @@ console.log("guide-list.js 已載入");
     if (!guideList) return;
 
     if (snapshot.empty) {
-      guideList.innerHTML = `<div class="guide-empty">目前還沒有桌遊攻略，快來發布第一篇吧！</div>`;
+      guideList.innerHTML = `<div class="guide-empty">目前還沒有文章，快來發布第一篇吧！</div>`;
       return;
     }
 
@@ -245,6 +244,7 @@ console.log("guide-list.js 已載入");
     snapshot.forEach(function (doc) {
       const data = doc.data();
       const isOwner = currentUser && data.authorUid === currentUser.uid;
+      const category = getCategory(data);
 
       const coverImage = data.coverImage && data.coverImage.trim()
         ? data.coverImage.trim()
@@ -257,17 +257,19 @@ console.log("guide-list.js 已載入");
           </a>
 
           <div class="guide-card-body">
+            <div class="guide-category-badge">${escapeHtml(category)}</div>
+
             <a class="guide-card-title-link" href="/guides/post/?id=${encodeURIComponent(doc.id)}">
-              <h2>${escapeHtml(data.title || "未命名攻略")}</h2>
+              <h2>${escapeHtml(data.title || "未命名文章")}</h2>
             </a>
 
             <div class="guide-meta">
-              ${escapeHtml(data.gameName || "未分類桌遊")}
+              主題：${escapeHtml(data.gameName || "未分類主題")}
               ・${escapeHtml(data.authorName || "未命名社員")}
               ・${escapeHtml(formatTime(data.createdAt))}
             </div>
 
-            <p class="guide-summary">${escapeHtml(data.summary || "這篇攻略還沒有摘要。")}</p>
+            <p class="guide-summary">${escapeHtml(data.summary || "這篇文章還沒有摘要。")}</p>
 
             <div class="guide-card-actions">
               <a class="guide-read-btn" href="/guides/post/?id=${encodeURIComponent(doc.id)}">閱讀全文</a>
@@ -306,12 +308,12 @@ console.log("guide-list.js 已載入");
       .where("status", "==", "published")
       .orderBy("createdAt", "desc")
       .onSnapshot(renderGuides, function (error) {
-        console.error("讀取攻略列表失敗：", error);
+        console.error("讀取文章列表失敗：", error);
 
         const guideList = document.getElementById("guideList");
 
         if (guideList) {
-          guideList.innerHTML = `<div class="guide-empty">攻略列表讀取失敗，請稍後再試。</div>`;
+          guideList.innerHTML = `<div class="guide-empty">文章列表讀取失敗，請稍後再試。</div>`;
         }
       });
   }
@@ -344,6 +346,19 @@ console.log("guide-list.js 已載入");
         border-radius: 12px;
         background: #303437;
         display: block;
+      }
+
+      .guide-category-badge {
+        display: inline-flex;
+        width: fit-content;
+        margin-bottom: 0.45rem;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: rgba(79,177,186,0.16);
+        border: 1px solid rgba(79,177,186,0.35);
+        color: inherit;
+        font-size: 0.82rem;
+        font-weight: 700;
       }
 
       .guide-card-title-link {
