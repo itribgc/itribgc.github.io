@@ -7,7 +7,7 @@ description: 守夜人桌遊社電子報總覽
 
 <style>
   .newsletter-list-wrap {
-    max-width: 760px;
+    max-width: 820px;
     margin-top: 2rem;
   }
 
@@ -28,17 +28,14 @@ description: 守夜人桌遊社電子報總覽
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-
     width: 100%;
     padding: 18px 22px;
     box-sizing: border-box;
-
     border-radius: 16px;
     border: 1px solid rgba(79,177,186,0.38);
     background: rgba(255,255,255,0.035);
     color: inherit;
     text-decoration: none;
-
     transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
   }
 
@@ -70,7 +67,8 @@ description: 守夜人桌遊社電子報總覽
   .newsletter-item-arrow {
     flex: 0 0 auto;
     opacity: 0.75;
-    font-size: 1.15rem;
+    font-size: 1.05rem;
+    font-weight: 700;
   }
 
   .newsletter-empty {
@@ -88,6 +86,10 @@ description: 守夜人桌遊社電子報總覽
 
     .newsletter-item-title {
       font-size: 1.12rem;
+    }
+
+    .newsletter-item-arrow {
+      font-size: 0.95rem;
     }
   }
 </style>
