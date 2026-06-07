@@ -183,7 +183,6 @@ pdf_url: /assets/newsletter/2025_03_04/2025-03+04.pdf
 
 <div class="newsletter-reader">
   <div class="newsletter-reader-header">
-    <h1>{{ page.newsletter_label }}</h1>
     <p>電腦版為雙頁閱讀，手機版為單頁閱讀。PDF 會直接讀取並以高解析度渲染。</p>
   </div>
 
