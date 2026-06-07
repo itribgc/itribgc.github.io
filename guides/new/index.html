@@ -1,8 +1,8 @@
 ---
 layout: page
-title: 撰寫桌遊攻略
+title: 撰寫社員論壇文章
 description: >
-  撰寫並發布桌遊攻略文章。
+  撰寫並發布社員論壇文章。
 ---
 
 <style>
@@ -17,7 +17,8 @@ description: >
   }
 
   .guide-editor input,
-  .guide-editor textarea {
+  .guide-editor textarea,
+  .guide-editor select {
     width: 100%;
     box-sizing: border-box;
     padding: 12px 14px;
@@ -30,9 +31,15 @@ description: >
   }
 
   .guide-editor input:focus,
-  .guide-editor textarea:focus {
+  .guide-editor textarea:focus,
+  .guide-editor select:focus {
     border-color: rgb(79,177,186);
     box-shadow: 0 0 0 2px rgba(79,177,186,0.2);
+  }
+
+  .guide-editor select option {
+    color: #222;
+    background: #fff;
   }
 
   .guide-editor textarea {
@@ -149,28 +156,21 @@ description: >
     display: inline-flex;
     align-items: center;
     justify-content: center;
-
     width: auto !important;
     min-width: 0 !important;
     max-width: none !important;
-
     height: auto !important;
     min-height: 0 !important;
-
     padding: 6px 12px !important;
     margin: 0 !important;
-
     border: 1px solid rgba(255,255,255,0.18);
     border-radius: 999px;
-
     background: transparent;
     color: inherit;
-
     font: inherit;
     font-size: 0.88rem;
     font-weight: 700;
     line-height: 1.2;
-
     cursor: pointer;
     appearance: none;
     box-sizing: border-box;
@@ -191,27 +191,20 @@ description: >
     align-items: center;
     justify-content: center;
     gap: 0.35rem;
-
     width: auto !important;
     min-width: 0 !important;
     max-width: none !important;
-
     height: auto !important;
     min-height: 0 !important;
-
     padding: 5px 10px !important;
     margin: 0 !important;
-
     border: 1px solid rgba(255,255,255,0.18);
     border-radius: 999px;
-
     background: transparent;
     color: inherit;
-
     font-size: 0.88rem;
     font-weight: 700;
     line-height: 1.2;
-
     box-sizing: border-box;
   }
 
@@ -219,22 +212,16 @@ description: >
     width: 48px !important;
     min-width: 48px !important;
     max-width: 48px !important;
-
     height: 26px !important;
     min-height: 0 !important;
-
     padding: 2px 6px !important;
     margin: 0 !important;
-
     border-radius: 6px;
     border: 1px solid rgba(255,255,255,0.22);
-
     background: rgba(255,255,255,0.08);
     color: inherit;
-
     font-size: 0.88rem;
     line-height: 1.2;
-
     box-sizing: border-box;
   }
 
@@ -334,8 +321,8 @@ description: >
 </style>
 
 <div class="guide-editor">
-  <h1>撰寫桌遊攻略</h1>
-  <p>請使用 Markdown 撰寫內容。發布後，文章會出現在「桌遊攻略」頁面。</p>
+  <h1>撰寫社員論壇文章</h1>
+  <p>請使用 Markdown 撰寫內容。發布後，文章會出現在「社員論壇」頁面。</p>
 
   <div class="md-guide-help">
     <strong>撰寫格式小提醒：</strong><br>
@@ -348,27 +335,20 @@ description: >
     連結：<code>[連結文字](https://example.com)</code>
   </div>
 
-  <div class="guide-template-box">
-    建議文章架構：<br>
-    <code>## 遊戲介紹
-簡單介紹這款桌遊。
-
-## 適合人數與時間
-- 人數：
-- 時間：
-
-## 核心玩法
-說明主要機制。
-
-## 攻略心得
-分享策略、注意事項或推薦玩法。</code>
-  </div>
+  <label for="guideCategory">文章分類</label>
+  <select id="guideCategory">
+    <option value="桌遊攻略">桌遊攻略</option>
+    <option value="活動心得">活動心得</option>
+    <option value="規則討論">規則討論</option>
+    <option value="開箱分享">開箱分享</option>
+    <option value="揪團交流">揪團交流</option>
+  </select>
 
   <label for="guideTitle">文章標題</label>
   <input id="guideTitle" type="text" maxlength="60" placeholder="例如：阿瓦隆新手攻略｜好人陣營怎麼判斷資訊">
 
-  <label for="guideGameName">桌遊名稱</label>
-  <input id="guideGameName" type="text" maxlength="40" placeholder="例如：阿瓦隆、璀璨寶石、風聲">
+  <label for="guideGameName">主題名稱</label>
+  <input id="guideGameName" type="text" maxlength="40" placeholder="例如：阿瓦隆、活動名稱、想揪的遊戲">
 
   <label for="guideCoverImage">封面圖片網址，選填</label>
   <input id="guideCoverImage" type="text" placeholder="請貼上圖片網址，例如 https://...jpg">
@@ -382,7 +362,7 @@ description: >
   </div>
 
   <label for="guideSummary">文章摘要</label>
-  <textarea id="guideSummary" maxlength="180" style="min-height: 90px;" placeholder="用一小段話介紹這篇攻略重點。"></textarea>
+  <textarea id="guideSummary" maxlength="180" style="min-height: 90px;" placeholder="用一小段話介紹這篇文章重點。"></textarea>
 
   <label for="guideContent">Markdown 內容</label>
 
@@ -394,14 +374,7 @@ description: >
 
     <label class="md-font-size-control" for="mdFontSizeInput">
       字體大小
-      <input
-        id="mdFontSizeInput"
-        type="text"
-        inputmode="numeric"
-        list="mdFontSizeOptions"
-        value="16"
-        autocomplete="off"
-        title="可下拉選擇，也可雙擊數字後自行輸入">
+      <input id="mdFontSizeInput" type="text" inputmode="numeric" list="mdFontSizeOptions" value="16" autocomplete="off" title="可下拉選擇，也可雙擊數字後自行輸入">
     </label>
 
     <datalist id="mdFontSizeOptions">
@@ -421,12 +394,12 @@ description: >
     <button type="button" data-md-action="link">新增連結</button>
   </div>
 
-  <textarea id="guideContent" maxlength="10000" placeholder="開始撰寫你的攻略..."></textarea>
+  <textarea id="guideContent" maxlength="10000" placeholder="開始撰寫你的文章..."></textarea>
 
   <div class="guide-editor-actions">
     <button id="guidePreviewBtn" class="guide-preview-btn" type="button">預覽</button>
     <button id="guidePublishBtn" class="guide-publish-btn" type="button">發布文章</button>
-    <a href="/guides/">返回桌遊攻略</a>
+    <a href="/guides/">返回社員論壇</a>
   </div>
 
   <div id="guideEditorMsg" class="guide-editor-msg"></div>
