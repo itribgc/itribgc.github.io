@@ -11,7 +11,8 @@ pdf_url: /assets/newsletter/2025_03_04/2025-03+04.pdf
 
 <style>
   .newsletter-reader {
-    max-width: 1180px;
+    max-width: 1560px;
+    width: min(96vw, 1560px);
     margin: 0 auto;
   }
 
@@ -44,14 +45,12 @@ pdf_url: /assets/newsletter/2025_03_04/2025-03+04.pdf
     display: inline-flex;
     align-items: center;
     justify-content: center;
-
     padding: 8px 14px;
     border-radius: 999px;
     border: 1px solid rgba(255,255,255,0.18);
     background: transparent;
     color: inherit;
     text-decoration: none;
-
     font: inherit;
     font-weight: 700;
     cursor: pointer;
@@ -105,24 +104,24 @@ pdf_url: /assets/newsletter/2025_03_04/2025-03+04.pdf
   .desktop-spread {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    gap: 16px;
     width: 100%;
-    max-width: 1100px;
+    max-width: 1480px;
     margin: 0 auto;
   }
 
   .desktop-page {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
-    min-height: 360px;
-    background: rgba(255,255,255,0.12);
+    min-height: 520px;
+    background: rgba(255,255,255,0.10);
     border-radius: 10px;
     overflow: hidden;
   }
 
   .desktop-page.blank {
-    background: rgba(255,255,255,0.055);
+    background: rgba(255,255,255,0.045);
     border: 1px dashed rgba(255,255,255,0.14);
   }
 
@@ -162,6 +161,10 @@ pdf_url: /assets/newsletter/2025_03_04/2025-03+04.pdf
   }
 
   @media (max-width: 768px) {
+    .newsletter-reader {
+      width: 100%;
+    }
+
     .desktop-reader {
       display: none;
     }
@@ -181,7 +184,7 @@ pdf_url: /assets/newsletter/2025_03_04/2025-03+04.pdf
 <div class="newsletter-reader">
   <div class="newsletter-reader-header">
     <h1>{{ page.newsletter_label }}</h1>
-    <p>電腦版為雙頁閱讀，手機版為單頁閱讀。也可以直接開啟 PDF 原檔查看。</p>
+    <p>電腦版為雙頁閱讀，手機版為單頁閱讀。PDF 會直接讀取並以高解析度渲染。</p>
   </div>
 
   <div class="newsletter-actions">
@@ -249,6 +252,11 @@ pdf_url: /assets/newsletter/2025_03_04/2025-03+04.pdf
     return window.innerWidth <= 768;
   }
 
+  function getRenderPixelRatio() {
+    const deviceRatio = window.devicePixelRatio || 1;
+    return Math.min(Math.max(deviceRatio, 2), 3);
+  }
+
   function showError(message) {
     errorBox.style.display = "block";
     errorBox.innerHTML = message;
@@ -283,30 +291,38 @@ pdf_url: /assets/newsletter/2025_03_04/2025-03+04.pdf
     const left = currentDesktopStartPage;
     const right = Math.min(currentDesktopStartPage + 1, totalPages);
 
-    if (left === right) {
-      pageInfo.textContent = "第 " + left + " 頁";
-    } else {
-      pageInfo.textContent = "第 " + left + "–" + right + " 頁";
-    }
+    pageInfo.textContent = left === right
+      ? "第 " + left + " 頁"
+      : "第 " + left + "–" + right + " 頁";
 
     prevBtn.disabled = currentDesktopStartPage <= 1 || isRendering;
     nextBtn.disabled = currentDesktopStartPage + 2 > totalPages || isRendering;
   }
 
-  async function renderPdfPageToCanvas(pageNumber, canvas, maxWidth) {
+  async function renderPdfPageToCanvas(pageNumber, canvas, cssMaxWidth) {
     const page = await pdfDoc.getPage(pageNumber);
-    const originalViewport = page.getViewport({ scale: 1 });
+    const viewportBase = page.getViewport({ scale: 1 });
 
-    const scale = Math.min(maxWidth / originalViewport.width, 2);
-    const viewport = page.getViewport({ scale: scale });
+    const cssScale = cssMaxWidth / viewportBase.width;
+    const pixelRatio = getRenderPixelRatio();
+    const renderScale = cssScale * pixelRatio;
 
-    const context = canvas.getContext("2d");
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
+    const renderViewport = page.getViewport({ scale: renderScale });
+
+    canvas.width = Math.floor(renderViewport.width);
+    canvas.height = Math.floor(renderViewport.height);
+
+    canvas.style.width = Math.floor(viewportBase.width * cssScale) + "px";
+    canvas.style.height = Math.floor(viewportBase.height * cssScale) + "px";
+
+    const context = canvas.getContext("2d", { alpha: false });
+
+    context.setTransform(1, 0, 0, 1, 0, 0);
+    context.clearRect(0, 0, canvas.width, canvas.height);
 
     await page.render({
       canvasContext: context,
-      viewport: viewport
+      viewport: renderViewport
     }).promise;
   }
 
@@ -315,6 +331,8 @@ pdf_url: /assets/newsletter/2025_03_04/2025-03+04.pdf
     context.clearRect(0, 0, canvas.width, canvas.height);
     canvas.width = 1;
     canvas.height = 1;
+    canvas.style.width = "1px";
+    canvas.style.height = "1px";
   }
 
   async function renderMobilePage(pageNumber) {
@@ -348,7 +366,7 @@ pdf_url: /assets/newsletter/2025_03_04/2025-03+04.pdf
       updateControls();
 
       const spreadWidth = document.querySelector(".desktop-spread").clientWidth;
-      const pageMaxWidth = Math.floor((spreadWidth - 12) / 2);
+      const pageMaxWidth = Math.floor((spreadWidth - 16) / 2);
 
       currentDesktopStartPage = startPage;
 
@@ -384,9 +402,7 @@ pdf_url: /assets/newsletter/2025_03_04/2025-03+04.pdf
     if (!pdfDoc || isRendering) return;
 
     if (isMobileView()) {
-      if (currentMobilePage > 1) {
-        renderMobilePage(currentMobilePage - 1);
-      }
+      if (currentMobilePage > 1) renderMobilePage(currentMobilePage - 1);
       return;
     }
 
@@ -403,16 +419,12 @@ pdf_url: /assets/newsletter/2025_03_04/2025-03+04.pdf
     if (!pdfDoc || isRendering) return;
 
     if (isMobileView()) {
-      if (currentMobilePage < totalPages) {
-        renderMobilePage(currentMobilePage + 1);
-      }
+      if (currentMobilePage < totalPages) renderMobilePage(currentMobilePage + 1);
       return;
     }
 
     if (currentDesktopStartPage === 1) {
-      if (totalPages >= 2) {
-        renderDesktopSpread(2);
-      }
+      if (totalPages >= 2) renderDesktopSpread(2);
       return;
     }
 
@@ -428,7 +440,12 @@ pdf_url: /assets/newsletter/2025_03_04/2025-03+04.pdf
       nextBtn.disabled = true;
       pageInfo.textContent = "PDF 載入中...";
 
-      pdfDoc = await pdfjsLib.getDocument(NEWSLETTER_PDF_URL).promise;
+      pdfDoc = await pdfjsLib.getDocument({
+        url: NEWSLETTER_PDF_URL,
+        disableAutoFetch: false,
+        disableStream: false
+      }).promise;
+
       totalPages = pdfDoc.numPages;
 
       if (isMobileView()) {
@@ -451,13 +468,8 @@ pdf_url: /assets/newsletter/2025_03_04/2025-03+04.pdf
   nextBtn.addEventListener("click", goNext);
 
   document.addEventListener("keydown", function(event) {
-    if (event.key === "ArrowLeft") {
-      goPrev();
-    }
-
-    if (event.key === "ArrowRight") {
-      goNext();
-    }
+    if (event.key === "ArrowLeft") goPrev();
+    if (event.key === "ArrowRight") goNext();
   });
 
   let resizeTimer = null;
