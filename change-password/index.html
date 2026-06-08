@@ -1,0 +1,137 @@
+---
+layout: page
+title: 修改初始密碼
+permalink: /change-password/
+description: 第一次登入請先修改初始密碼
+---
+
+<style>
+  .change-password-page {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 2rem 0;
+  }
+
+  .change-password-card {
+    padding: 1.6rem;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.055);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .change-password-card h1 {
+    margin-top: 0;
+    margin-bottom: 0.8rem;
+  }
+
+  .change-password-card p {
+    line-height: 1.8;
+    opacity: 0.82;
+  }
+
+  .change-password-field {
+    margin-top: 1rem;
+  }
+
+  .change-password-field label {
+    display: block;
+    margin-bottom: 0.45rem;
+    font-weight: 700;
+  }
+
+  .change-password-field input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 11px 13px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.07);
+    color: inherit;
+    font: inherit;
+  }
+
+  .change-password-actions {
+    display: flex;
+    gap: 0.7rem;
+    flex-wrap: wrap;
+    margin-top: 1.3rem;
+  }
+
+  .change-password-actions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(79, 177, 186, 0.55);
+    background: rgba(79, 177, 186, 0.18);
+    color: inherit;
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  .change-password-actions button:hover {
+    border-color: rgb(79, 177, 186);
+    background: rgba(79, 177, 186, 0.28);
+  }
+
+  .change-password-actions button:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+
+  .change-password-msg {
+    min-height: 24px;
+    margin-top: 1rem;
+    color: #ffb4a9;
+    line-height: 1.6;
+  }
+
+  .change-password-msg.success {
+    color: #8fd19e;
+  }
+
+  .change-password-notice {
+    margin-top: 1rem;
+    padding: 0.9rem 1rem;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 214, 102, 0.35);
+    background: rgba(255, 214, 102, 0.12);
+    line-height: 1.7;
+    font-size: 0.95rem;
+  }
+</style>
+
+<div class="change-password-page">
+  <div class="change-password-card">
+    <h1>第一次登入，請先修改密碼</h1>
+
+    <p>
+      為了保護社員帳號安全，第一次登入後需要先修改初始密碼。
+      修改完成後系統會自動登出，請再使用新密碼重新登入。
+    </p>
+
+    <div class="change-password-notice">
+      密碼建議至少 8 碼，請避免使用生日、電話、00000000 或過於簡單的密碼。
+    </div>
+
+    <div class="change-password-field">
+      <label for="newPassword">新密碼</label>
+      <input id="newPassword" type="password" autocomplete="new-password" placeholder="請輸入新密碼">
+    </div>
+
+    <div class="change-password-field">
+      <label for="confirmPassword">再次輸入新密碼</label>
+      <input id="confirmPassword" type="password" autocomplete="new-password" placeholder="請再次輸入新密碼">
+    </div>
+
+    <div class="change-password-actions">
+      <button id="changePasswordBtn" type="button">修改密碼</button>
+    </div>
+
+    <div id="changePasswordMsg" class="change-password-msg"></div>
+  </div>
+</div>
+
+<script src="/assets/js/change-password.js?v=1"></script>
