@@ -1,14 +1,21 @@
 <!-- Custom Favicon -->
-<link rel="icon" type="image/png" href="/assets/img/favicon.png?v=1">
-<link rel="shortcut icon" type="image/png" href="/assets/img/favicon.png?v=1">
-<link rel="apple-touch-icon" href="/assets/img/favicon.png?v=1">
+<link rel="icon" type="image/png" href="/assets/img/favicon.png?v=5">
+<link rel="shortcut icon" type="image/png" href="/assets/img/favicon.png?v=5">
+<link rel="apple-touch-icon" href="/assets/img/favicon.png?v=5">
 
 {% unless page.url contains '/login/' %}
 <!-- Firebase Auth Guard -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
 <script src="/assets/js/auth-guard.js"></script>
+<script src="/assets/js/profile.js"></script>
 {% endunless %}
+
+<!-- Markdown / HTML render tools for 社員論壇文章 -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
 
 <!-- Add HTML tags here to be included in the head. You can delete the below: -->
 <link rel="dns-prefetch" href="https://assets.gumroad.com">
@@ -40,11 +47,11 @@
 
     io1 ||= new IntersectionObserver(async (entries) => {
       if (entries.some(x => x.isIntersecting)) {
-        p1 = p1 || loadJS('https://gumroad.com/js/gumroad-embed.js');
+        p1 = p1 || loadJS("https://gumroad.com/js/gumroad-embed.js");
         await p1;
 
         !embedCreated && await new Promise(function check1(res) {
-          if (typeof createGumroadEmbed !== 'undefined') {
+          if (typeof createGumroadEmbed !== "undefined") {
             embedCreated = 1;
             res(createGumroadEmbed());
           } else {
@@ -53,22 +60,22 @@
         });
 
         await new Promise(function check2(res) {
-          if (typeof GumroadEmbed !== 'undefined') {
+          if (typeof GumroadEmbed !== "undefined") {
             res(GumroadEmbed.reload());
           } else {
             setTimeout(() => check2(res), 200);
           }
         });
       }
-    }, { rootMargin: '1440px' });
+    }, { rootMargin: "1440px" });
 
     io2 ||= new IntersectionObserver(async (entries) => {
       if (entries.some(x => x.isIntersecting)) {
-        p2 = p2 || loadJS('https://gumroad.com/js/gumroad.js');
+        p2 = p2 || loadJS("https://gumroad.com/js/gumroad.js");
         await p2;
 
         !overlayCreated && await new Promise(function check(res) {
-          if (typeof createGumroadOverlay !== 'undefined') {
+          if (typeof createGumroadOverlay !== "undefined") {
             overlayCreated = 1;
             res(createGumroadOverlay());
           } else {
@@ -76,17 +83,17 @@
           }
         });
       }
-    }, { rootMargin: '300px' });
+    }, { rootMargin: "300px" });
 
-    document.querySelectorAll('.gumroad-product-embed').forEach(el => io1.observe(el));
-    document.querySelectorAll('.gumroad-button').forEach(el => io2.observe(el));
+    document.querySelectorAll(".gumroad-product-embed").forEach(el => io1.observe(el));
+    document.querySelectorAll(".gumroad-button").forEach(el => io2.observe(el));
   }
 
   document.addEventListener("DOMContentLoaded", function () {
-    const pushStateEl = document.querySelector('hy-push-state');
+    const pushStateEl = document.querySelector("hy-push-state");
 
     if (pushStateEl) {
-      pushStateEl.addEventListener('load', initGumroad);
+      pushStateEl.addEventListener("load", initGumroad);
     } else {
       initGumroad();
     }
