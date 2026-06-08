@@ -34,15 +34,18 @@ console.log("guide-detail.js 已載入");
     return currentUser && currentUser.email === ADMIN_EMAIL;
   }
 
+  function isOwner() {
+    return currentUser && currentGuideData && currentGuideData.authorUid === currentUser.uid;
+  }
+
   function canManageArticle() {
-    return (
-      currentUser &&
-      currentGuideData &&
-      (
-        currentGuideData.authorUid === currentUser.uid ||
-        isAdmin()
-      )
-    );
+    return currentUser && currentGuideData && (isOwner() || isAdmin());
+  }
+
+  function canViewArticle() {
+    if (!currentUser || !currentGuideData) return false;
+    if (currentGuideData.status === "published") return true;
+    return isOwner() || isAdmin();
   }
 
   function escapeHtml(text) {
@@ -97,7 +100,8 @@ console.log("guide-detail.js 已載入");
   }
 
   async function increaseViewCountOnce() {
-    if (hasCountedView || !currentGuideId || !currentUser) return;
+    if (hasCountedView || !currentGuideId || !currentUser || !currentGuideData) return;
+    if (currentGuideData.status !== "published") return;
 
     const storageKey = "guide_viewed_" + currentGuideId;
 
@@ -122,6 +126,11 @@ console.log("guide-detail.js 已載入");
   async function toggleGuideLike() {
     if (!currentUser) {
       alert("請先登入後再按讚。");
+      return;
+    }
+
+    if (!currentGuideData || currentGuideData.status !== "published") {
+      alert("文章通過審核後才能按讚。");
       return;
     }
 
@@ -243,11 +252,6 @@ console.log("guide-detail.js 已載入");
           background: #d93025;
           color: #fff;
         }
-
-        .guide-detail-delete-actions button:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
       </style>
 
       <div class="guide-detail-delete-card">
@@ -269,10 +273,6 @@ console.log("guide-detail.js 已載入");
 
     modal.addEventListener("click", function (event) {
       if (event.target === modal) closeDeleteModal();
-    });
-
-    document.addEventListener("keydown", function (event) {
-      if (event.key === "Escape") closeDeleteModal();
     });
   }
 
@@ -300,10 +300,7 @@ console.log("guide-detail.js 已載入");
 
   function closeDeleteModal() {
     const modal = document.getElementById("guideDetailDeleteModal");
-
-    if (modal) {
-      modal.classList.remove("show");
-    }
+    if (modal) modal.classList.remove("show");
   }
 
   async function deleteCurrentGuide() {
@@ -436,11 +433,6 @@ console.log("guide-detail.js 已載入");
           background: rgb(79,177,186);
           color: #fff;
         }
-
-        .guide-report-actions button:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
       </style>
 
       <div class="guide-report-card">
@@ -466,15 +458,16 @@ console.log("guide-detail.js 已載入");
     modal.addEventListener("click", function (event) {
       if (event.target === modal) closeReportModal();
     });
-
-    document.addEventListener("keydown", function (event) {
-      if (event.key === "Escape") closeReportModal();
-    });
   }
 
   function openReportModal() {
     if (!currentUser) {
       alert("請先登入後再回報文章。");
+      return;
+    }
+
+    if (!currentGuideData || currentGuideData.status !== "published") {
+      alert("文章通過審核並公開後才能回報疑慮。");
       return;
     }
 
@@ -500,10 +493,7 @@ console.log("guide-detail.js 已載入");
 
   function closeReportModal() {
     const modal = document.getElementById("guideReportModal");
-
-    if (modal) {
-      modal.classList.remove("show");
-    }
+    if (modal) modal.classList.remove("show");
   }
 
   async function getReporterName(user) {
@@ -594,6 +584,16 @@ console.log("guide-detail.js 已載入");
     const style = document.createElement("style");
     style.id = "guideDetailExtraStyle";
     style.innerHTML = `
+      .guide-detail-review-banner {
+        margin: 0 0 1.25rem 0;
+        padding: 0.9rem 1rem;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 214, 102, 0.38);
+        background: rgba(255, 214, 102, 0.12);
+        line-height: 1.7;
+        font-weight: 700;
+      }
+
       .guide-detail-top-row {
         display: flex;
         align-items: flex-start;
@@ -734,6 +734,13 @@ console.log("guide-detail.js 已載入");
     if (!guideDetail || !currentGuideData) return;
 
     const data = currentGuideData;
+
+    if (!canViewArticle()) {
+      guideDetail.innerHTML = `<div class="guide-empty">這篇文章目前尚未公開。</div>`;
+      return;
+    }
+
+    const isPending = data.status !== "published";
     const category = getCategory(data);
     const likeCount = getLikeCount(data);
     const viewCount = getViewCount(data);
@@ -760,6 +767,16 @@ console.log("guide-detail.js 已載入");
     document.title = (data.title || "社員論壇文章") + " | " + document.title;
 
     guideDetail.innerHTML = `
+      ${
+        isPending
+          ? `
+            <div class="guide-detail-review-banner">
+              這篇文章目前為「待審核」狀態，只有作者本人與管理員可以查看。審核通過後才會公開顯示在社員論壇。
+            </div>
+          `
+          : ""
+      }
+
       ${coverImage ? `<img class="guide-detail-cover" src="${escapeHtml(coverImage)}" alt="${escapeHtml(data.title || "文章封面")}">` : ""}
 
       <div class="guide-detail-top-row">
@@ -775,10 +792,16 @@ console.log("guide-detail.js 已載入");
 
         <div class="guide-detail-side-info">
           <span class="guide-detail-category">${escapeHtml(category)}</span>
-          <button id="guideLikeBtn" class="guide-detail-like-btn ${liked ? "liked" : ""}" type="button">👍 ${likeCount}</button>
-          <span class="guide-detail-stat">👁 ${viewCount}</span>
-          <span class="guide-detail-stat">💬 ${currentCommentCount}</span>
-          <button id="guideReportBtn" class="guide-detail-report-btn" type="button">文章有疑慮</button>
+          ${
+            isPending
+              ? `<span class="guide-detail-stat">待審核</span>`
+              : `
+                <button id="guideLikeBtn" class="guide-detail-like-btn ${liked ? "liked" : ""}" type="button">👍 ${likeCount}</button>
+                <span class="guide-detail-stat">👁 ${viewCount}</span>
+                <span class="guide-detail-stat">💬 ${currentCommentCount}</span>
+                <button id="guideReportBtn" class="guide-detail-report-btn" type="button">文章有疑慮</button>
+              `
+          }
         </div>
       </div>
 
@@ -840,18 +863,19 @@ console.log("guide-detail.js 已載入");
         return;
       }
 
-      const data = doc.data();
+      currentGuideData = doc.data();
 
-      if (data.status !== "published" && !isAdmin()) {
+      if (!canViewArticle()) {
         const guideDetail = document.getElementById("guideDetail");
         if (guideDetail) {
-          guideDetail.innerHTML = `<div class="guide-empty">這篇文章目前未公開。</div>`;
+          guideDetail.innerHTML = `<div class="guide-empty">這篇文章目前尚未公開。</div>`;
         }
         return;
       }
 
-      currentGuideData = data;
-      currentCommentCount = await getCommentCount(currentGuideId);
+      currentCommentCount = currentGuideData.status === "published"
+        ? await getCommentCount(currentGuideId)
+        : 0;
 
       injectDetailStyle();
       renderGuide();
