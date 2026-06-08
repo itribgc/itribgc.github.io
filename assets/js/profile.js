@@ -17,6 +17,9 @@ console.log("profile.js 已載入");
   const auth = firebase.auth();
   const db = firebase.firestore();
 
+  const ADMIN_EMAIL = "itribgc@gmail.com";
+  const MAX_LEVEL = 9999;
+
   let currentUser = null;
   let currentDisplayName = "";
   let currentLevelInfo = null;
@@ -28,6 +31,10 @@ console.log("profile.js 已載入");
     "規則討論": 12,
     "揪團交流": 0
   };
+
+  function isAdminUser(user) {
+    return user && user.email === ADMIN_EMAIL;
+  }
 
   function escapeHtml(text) {
     return String(text || "")
@@ -47,10 +54,25 @@ console.log("profile.js 已載入");
     let xpAtLevelStart = 0;
     let needed = xpNeededForNextLevel(level);
 
-    while (totalXP >= xpAtLevelStart + needed) {
+    while (
+      level < MAX_LEVEL &&
+      totalXP >= xpAtLevelStart + needed
+    ) {
       xpAtLevelStart += needed;
       level += 1;
       needed = xpNeededForNextLevel(level);
+    }
+
+    if (level >= MAX_LEVEL) {
+      return {
+        level: MAX_LEVEL,
+        totalXP: totalXP,
+        xpInCurrentLevel: 0,
+        xpNeededForNextLevel: 0,
+        xpToNextLevel: 0,
+        progressPercent: 100,
+        isMaxLevel: true
+      };
     }
 
     const xpInCurrentLevel = totalXP - xpAtLevelStart;
@@ -65,7 +87,27 @@ console.log("profile.js 已載入");
       xpInCurrentLevel: xpInCurrentLevel,
       xpNeededForNextLevel: needed,
       xpToNextLevel: xpToNextLevel,
-      progressPercent: progressPercent
+      progressPercent: progressPercent,
+      isMaxLevel: false
+    };
+  }
+
+  function getAdminLevelInfo() {
+    return {
+      level: MAX_LEVEL,
+      totalXP: 0,
+      xpInCurrentLevel: 0,
+      xpNeededForNextLevel: 0,
+      xpToNextLevel: 0,
+      progressPercent: 100,
+      isMaxLevel: true,
+      isAdmin: true,
+      postCount: 0,
+      articleLikeCount: 0,
+      commentLikeCount: 0,
+      postBaseXP: 0,
+      postLikeXP: 0,
+      commentLikeXP: 0
     };
   }
 
@@ -91,7 +133,39 @@ console.log("profile.js 已載入");
     return fallbackName;
   }
 
+  function getGuideIdFromCommentPostPath(postPath) {
+    const value = String(postPath || "");
+
+    if (!value.startsWith("guide:")) {
+      return "";
+    }
+
+    return value.replace("guide:", "").trim();
+  }
+
+  async function loadPublishedGuideIds() {
+    const publishedGuideIds = new Set();
+
+    try {
+      const snapshot = await db.collection("guides")
+        .where("status", "==", "published")
+        .get();
+
+      snapshot.forEach(function (doc) {
+        publishedGuideIds.add(doc.id);
+      });
+    } catch (error) {
+      console.error("讀取已發布文章列表失敗：", error);
+    }
+
+    return publishedGuideIds;
+  }
+
   async function calculateUserXP(user) {
+    if (isAdminUser(user)) {
+      return getAdminLevelInfo();
+    }
+
     const uid = user.uid;
 
     let postBaseXP = 0;
@@ -101,6 +175,14 @@ console.log("profile.js 已載入");
     let postCount = 0;
     let articleLikeCount = 0;
     let commentLikeCount = 0;
+
+    let publishedGuideIds = new Set();
+
+    try {
+      publishedGuideIds = await loadPublishedGuideIds();
+    } catch (error) {
+      console.error("讀取已發布文章 ID 失敗：", error);
+    }
 
     try {
       const guideSnapshot = await db.collection("guides")
@@ -133,6 +215,11 @@ console.log("profile.js 已載入");
 
       commentSnapshot.forEach(function (doc) {
         const data = doc.data();
+        const guideId = getGuideIdFromCommentPostPath(data.postPath);
+
+        if (!guideId) return;
+        if (!publishedGuideIds.has(guideId)) return;
+
         commentLikeCount += Number(data.likeCount || 0);
       });
 
@@ -146,6 +233,7 @@ console.log("profile.js 已載入");
 
     return {
       ...levelInfo,
+      isAdmin: false,
       postCount: postCount,
       articleLikeCount: articleLikeCount,
       commentLikeCount: commentLikeCount,
@@ -234,6 +322,11 @@ console.log("profile.js 已載入");
         white-space: nowrap;
       }
 
+      .member-profile-level-badge.admin {
+        border-color: rgba(255, 214, 102, 0.7);
+        background: rgba(255, 214, 102, 0.18);
+      }
+
       .member-profile-xp-text {
         min-width: 0;
         opacity: 0.82;
@@ -256,6 +349,10 @@ console.log("profile.js 已載入");
         border-radius: 999px;
         background: rgba(79,177,186,0.92);
         transition: width 0.25s ease;
+      }
+
+      .member-profile-progress-bar.admin {
+        background: rgba(255, 214, 102, 0.92);
       }
 
       .member-profile-breakdown {
@@ -434,6 +531,16 @@ console.log("profile.js 已載入");
     }
 
     const level = currentLevelInfo || calculateLevel(0);
+    const isAdmin = level.isAdmin === true;
+
+    const xpText = isAdmin || level.isMaxLevel
+      ? "MAX LEVEL"
+      : `EXP ${level.xpInCurrentLevel} / ${level.xpNeededForNextLevel}`;
+
+    const breakdownText = isAdmin
+      ? `管理員帳號・不累積經驗值`
+      : `總經驗 ${level.totalXP || 0} XP<br>
+         發文 ${level.postBaseXP || 0} XP・文章讚 ${level.postLikeXP || 0} XP・留言讚 ${level.commentLikeXP || 0} XP`;
 
     panel.innerHTML = `
       <div class="member-profile-name-row">
@@ -444,19 +551,20 @@ console.log("profile.js 已載入");
       </div>
 
       <div class="member-profile-level-row">
-        <span class="member-profile-level-badge">Lv.${level.level}</span>
+        <span class="member-profile-level-badge ${isAdmin ? "admin" : ""}">
+          Lv.${level.level}
+        </span>
         <span class="member-profile-xp-text">
-          EXP ${level.xpInCurrentLevel} / ${level.xpNeededForNextLevel}
+          ${xpText}
         </span>
       </div>
 
-      <div class="member-profile-progress" title="距離下一級還需要 ${level.xpToNextLevel} XP">
-        <div class="member-profile-progress-bar" style="width: ${level.progressPercent}%;"></div>
+      <div class="member-profile-progress" title="${isAdmin || level.isMaxLevel ? "已達最高等級" : "距離下一級還需要 " + level.xpToNextLevel + " XP"}">
+        <div class="member-profile-progress-bar ${isAdmin ? "admin" : ""}" style="width: ${level.progressPercent}%;"></div>
       </div>
 
       <div class="member-profile-breakdown">
-        總經驗 ${level.totalXP || 0} XP<br>
-        發文 ${level.postBaseXP || 0} XP・文章讚 ${level.postLikeXP || 0} XP・留言讚 ${level.commentLikeXP || 0} XP
+        ${breakdownText}
       </div>
 
       <div style="margin-top: 0.65rem;">
