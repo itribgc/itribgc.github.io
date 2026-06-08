@@ -252,12 +252,13 @@ console.log("home-post-bento.js 已載入");
         grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
         grid-auto-flow: dense !important;
         gap: 1.35rem !important;
-        align-items: stretch !important;
+        align-items: start !important;
       }
 
       .home-post-bento-card {
         width: 100% !important;
-        height: 100% !important;
+        height: auto !important;
+        align-self: start !important;
         transition:
           transform 0.2s ease,
           box-shadow 0.2s ease,
@@ -268,9 +269,13 @@ console.log("home-post-bento.js 已載入");
         transform: translateY(-4px);
       }
 
+      /*
+        重點：
+        大卡片只左右變寬，不再上下變高
+      */
       .home-post-bento-large {
         grid-column: span 2 !important;
-        grid-row: span 2 !important;
+        grid-row: span 1 !important;
       }
 
       .home-post-bento-medium {
@@ -285,22 +290,17 @@ console.log("home-post-bento.js 已載入");
 
       .home-post-bento-card img {
         width: 100% !important;
+        display: block !important;
         object-fit: cover !important;
+        aspect-ratio: 16 / 9 !important;
       }
 
-      .home-post-bento-large img {
-        min-height: 360px !important;
-        max-height: 430px !important;
-      }
-
-      .home-post-bento-medium img {
-        min-height: 230px !important;
-        max-height: 300px !important;
-      }
-
+      .home-post-bento-large img,
+      .home-post-bento-medium img,
       .home-post-bento-normal img {
-        min-height: 210px !important;
-        max-height: 260px !important;
+        min-height: unset !important;
+        max-height: unset !important;
+        height: auto !important;
       }
 
       .home-post-bento-large h1,
@@ -309,8 +309,8 @@ console.log("home-post-bento.js 已載入");
       .home-post-bento-large .card-title,
       .home-post-bento-large .post-title,
       .home-post-bento-large .project-title {
-        font-size: 1.55rem !important;
-        line-height: 1.25 !important;
+        font-size: 1.45rem !important;
+        line-height: 1.3 !important;
       }
 
       .home-post-bento-medium h1,
@@ -362,8 +362,7 @@ console.log("home-post-bento.js 已載入");
         }
 
         .home-post-bento-card img {
-          min-height: unset !important;
-          max-height: none !important;
+          aspect-ratio: 16 / 9 !important;
         }
       }
     `;
