@@ -1,137 +1,362 @@
----
-layout: page
-title: 修改初始密碼
-permalink: /change-password/
-description: 第一次登入請先修改初始密碼
----
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>守夜人-桌遊社｜修改初始密碼</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<style>
-  .change-password-page {
-    max-width: 520px;
-    margin: 0 auto;
-    padding: 2rem 0;
-  }
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      font-family: Arial, "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      background: #303437;
+    }
 
-  .change-password-card {
-    padding: 1.6rem;
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.055);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-  }
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
 
-  .change-password-card h1 {
-    margin-top: 0;
-    margin-bottom: 0.8rem;
-  }
+    .card {
+      width: 390px;
+      background: #ffffff;
+      padding: 32px;
+      border-radius: 14px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+      box-sizing: border-box;
+    }
 
-  .change-password-card p {
-    line-height: 1.8;
-    opacity: 0.82;
-  }
+    h2 {
+      margin: 0 0 16px 0;
+      text-align: center;
+      color: #222;
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1.4;
+    }
 
-  .change-password-field {
-    margin-top: 1rem;
-  }
+    .desc {
+      margin: 0 0 18px 0;
+      color: #555;
+      font-size: 14px;
+      line-height: 1.7;
+      text-align: center;
+    }
 
-  .change-password-field label {
-    display: block;
-    margin-bottom: 0.45rem;
-    font-weight: 700;
-  }
+    .notice {
+      margin-bottom: 18px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: #fff7df;
+      border: 1px solid #f1d58a;
+      color: #5f4611;
+      font-size: 13px;
+      line-height: 1.6;
+    }
 
-  .change-password-field input {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 11px 13px;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    background: rgba(255, 255, 255, 0.07);
-    color: inherit;
-    font: inherit;
-  }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      color: #333;
+      font-size: 14px;
+    }
 
-  .change-password-actions {
-    display: flex;
-    gap: 0.7rem;
-    flex-wrap: wrap;
-    margin-top: 1.3rem;
-  }
+    input {
+      width: 100%;
+      padding: 11px 12px;
+      margin-bottom: 14px;
+      box-sizing: border-box;
+      border: 1px solid #d6d6d6;
+      border-radius: 8px;
+      font-size: 15px;
+      outline: none;
+    }
 
-  .change-password-actions button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 10px 16px;
-    border-radius: 999px;
-    border: 1px solid rgba(79, 177, 186, 0.55);
-    background: rgba(79, 177, 186, 0.18);
-    color: inherit;
-    font: inherit;
-    font-weight: 800;
-    cursor: pointer;
-  }
+    input:focus {
+      border-color: #3366cc;
+      box-shadow: 0 0 0 2px rgba(51, 102, 204, 0.15);
+    }
 
-  .change-password-actions button:hover {
-    border-color: rgb(79, 177, 186);
-    background: rgba(79, 177, 186, 0.28);
-  }
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 4px;
+      background: #3366cc;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+    }
 
-  .change-password-actions button:disabled {
-    opacity: 0.65;
-    cursor: not-allowed;
-  }
+    button:hover {
+      background: #2855aa;
+    }
 
-  .change-password-msg {
-    min-height: 24px;
-    margin-top: 1rem;
-    color: #ffb4a9;
-    line-height: 1.6;
-  }
+    button:disabled {
+      background: #999;
+      cursor: not-allowed;
+    }
 
-  .change-password-msg.success {
-    color: #8fd19e;
-  }
+    #msg {
+      margin-top: 14px;
+      min-height: 20px;
+      color: #d93025;
+      font-size: 14px;
+      text-align: center;
+      line-height: 1.5;
+      word-break: break-word;
+    }
 
-  .change-password-notice {
-    margin-top: 1rem;
-    padding: 0.9rem 1rem;
-    border-radius: 14px;
-    border: 1px solid rgba(255, 214, 102, 0.35);
-    background: rgba(255, 214, 102, 0.12);
-    line-height: 1.7;
-    font-size: 0.95rem;
-  }
-</style>
+    #msg.success {
+      color: #188038;
+    }
 
-<div class="change-password-page">
-  <div class="change-password-card">
-    <h1>第一次登入，請先修改密碼</h1>
+    .hint {
+      margin-top: 16px;
+      color: #777;
+      font-size: 13px;
+      text-align: center;
+      line-height: 1.6;
+    }
+  </style>
+</head>
 
-    <p>
-      為了保護社員帳號安全，第一次登入後需要先修改初始密碼。
+<body>
+
+  <div class="card">
+    <h2>第一次登入<br>請先修改初始密碼</h2>
+
+    <p class="desc">
+      為了保護社員帳號安全，第一次登入後必須先修改密碼。
       修改完成後系統會自動登出，請再使用新密碼重新登入。
     </p>
 
-    <div class="change-password-notice">
-      密碼建議至少 8 碼，請避免使用生日、電話、00000000 或過於簡單的密碼。
+    <div class="notice">
+      密碼至少 8 碼，請不要繼續使用 00000000，也請避免使用生日、電話或過於簡單的密碼。
     </div>
 
-    <div class="change-password-field">
-      <label for="newPassword">新密碼</label>
-      <input id="newPassword" type="password" autocomplete="new-password" placeholder="請輸入新密碼">
-    </div>
+    <label for="newPassword">新密碼</label>
+    <input id="newPassword" type="password" placeholder="請輸入新密碼" autocomplete="new-password">
 
-    <div class="change-password-field">
-      <label for="confirmPassword">再次輸入新密碼</label>
-      <input id="confirmPassword" type="password" autocomplete="new-password" placeholder="請再次輸入新密碼">
-    </div>
+    <label for="confirmPassword">再次輸入新密碼</label>
+    <input id="confirmPassword" type="password" placeholder="請再次輸入新密碼" autocomplete="new-password">
 
-    <div class="change-password-actions">
-      <button id="changePasswordBtn" type="button">修改密碼</button>
-    </div>
+    <button id="changePasswordBtn" type="button">修改密碼</button>
 
-    <div id="changePasswordMsg" class="change-password-msg"></div>
+    <div id="msg"></div>
+
+    <div class="hint">
+      修改完成後，請使用新密碼重新登入守夜人桌遊社網站。
+    </div>
   </div>
-</div>
 
-<script src="/assets/js/change-password.js?v=1"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <script>
+    console.log("change-password 頁面 JS 已載入");
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyARLnYPUUSVIXiK3UJnlSw93AeAm3_sSz8",
+      authDomain: "itribgc-0.firebaseapp.com",
+      projectId: "itribgc-0",
+      storageBucket: "itribgc-0.firebasestorage.app",
+      messagingSenderId: "535892877472",
+      appId: "1:535892877472:web:2270ac423ffd6f38b1e9c5"
+    };
+
+    let auth;
+    let db;
+    let currentUser = null;
+
+    const newPasswordInput = document.getElementById("newPassword");
+    const confirmPasswordInput = document.getElementById("confirmPassword");
+    const changePasswordBtn = document.getElementById("changePasswordBtn");
+    const msg = document.getElementById("msg");
+
+    function showMessage(text, type) {
+      msg.innerText = text || "";
+      msg.className = type === "success" ? "success" : "";
+    }
+
+    function setLoading(isLoading) {
+      changePasswordBtn.disabled = isLoading;
+      changePasswordBtn.innerText = isLoading ? "修改中..." : "修改密碼";
+    }
+
+    function initFirebase() {
+      try {
+        if (typeof firebase === "undefined") {
+          showMessage("Firebase SDK 尚未載入，請檢查網路或 script 連結。");
+          return;
+        }
+
+        if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+        }
+
+        auth = firebase.auth();
+        db = firebase.firestore();
+
+        auth.languageCode = "zh-TW";
+
+        console.log("Firebase 初始化成功");
+      } catch (error) {
+        console.error("Firebase 初始化失敗：", error);
+        showMessage("Firebase 初始化失敗，請查看 Console。");
+      }
+    }
+
+    function validatePassword(password, confirmPassword) {
+      if (!password) return "請輸入新密碼。";
+      if (password.length < 8) return "新密碼至少需要 8 碼。";
+      if (password === "00000000") return "新密碼不能繼續使用初始密碼 00000000。";
+      if (password !== confirmPassword) return "兩次輸入的密碼不一致。";
+
+      return "";
+    }
+
+    async function updateUserPasswordFlag(user) {
+      const userRef = db.collection("users").doc(user.uid);
+      const userDoc = await userRef.get();
+
+      if (userDoc.exists) {
+        const data = userDoc.data();
+
+        await userRef.update({
+          email: user.email || data.email || "",
+          mustChangePassword: false,
+          passwordChangedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      } else {
+        await userRef.set({
+          email: user.email || "",
+          displayName: "",
+          displayNameConfirmed: false,
+          mustChangePassword: false,
+          passwordChangedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+    }
+
+    async function changePassword() {
+      if (!currentUser) {
+        showMessage("請先登入後再修改密碼。");
+
+        setTimeout(function () {
+          window.location.replace("/login/");
+        }, 900);
+
+        return;
+      }
+
+      const password = newPasswordInput.value.trim();
+      const confirmPassword = confirmPasswordInput.value.trim();
+
+      const error = validatePassword(password, confirmPassword);
+
+      if (error) {
+        showMessage(error);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        showMessage("正在修改密碼...");
+
+        await currentUser.updatePassword(password);
+        await updateUserPasswordFlag(currentUser);
+
+        showMessage("密碼已修改完成，系統即將登出。請使用新密碼重新登入。", "success");
+
+        setTimeout(async function () {
+          await auth.signOut();
+          window.location.replace("/login/?passwordChanged=1");
+        }, 1300);
+      } catch (error) {
+        console.error("修改密碼失敗：", error);
+
+        if (error.code === "auth/requires-recent-login") {
+          showMessage("登入時間過久，請重新登入後再修改密碼。");
+
+          setTimeout(async function () {
+            await auth.signOut();
+            window.location.replace("/login/?reauth=1");
+          }, 1200);
+        } else if (error.code === "auth/weak-password") {
+          showMessage("密碼強度不足，請使用更安全的密碼。");
+        } else {
+          showMessage("修改密碼失敗：" + (error.message || "請稍後再試。"));
+        }
+
+        setLoading(false);
+      }
+    }
+
+    function bindEvents() {
+      changePasswordBtn.addEventListener("click", changePassword);
+
+      newPasswordInput.addEventListener("keydown", function(event) {
+        if (event.key === "Enter") {
+          confirmPasswordInput.focus();
+        }
+      });
+
+      confirmPasswordInput.addEventListener("keydown", function(event) {
+        if (event.key === "Enter") {
+          changePassword();
+        }
+      });
+    }
+
+    function watchAuthState() {
+      auth.onAuthStateChanged(async function(user) {
+        currentUser = user;
+
+        if (!user) {
+          showMessage("請先登入後再修改密碼。");
+
+          setTimeout(function () {
+            window.location.replace("/login/");
+          }, 900);
+
+          return;
+        }
+
+        try {
+          const userDoc = await db.collection("users").doc(user.uid).get();
+
+          if (userDoc.exists && userDoc.data().mustChangePassword === false) {
+            showMessage("你已經完成密碼修改，即將返回首頁。", "success");
+
+            setTimeout(function () {
+              window.location.replace("/");
+            }, 900);
+
+            return;
+          }
+
+          showMessage("請設定你的新密碼。", "success");
+        } catch (error) {
+          console.error("檢查密碼狀態失敗：", error);
+          showMessage("目前無法確認帳號狀態，但仍可嘗試修改密碼。");
+        }
+      });
+    }
+
+    initFirebase();
+    bindEvents();
+    watchAuthState();
+  </script>
+
+</body>
+</html>
