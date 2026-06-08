@@ -1,7 +1,51 @@
 <!-- Custom Favicon -->
-<link rel="icon" type="image/png" href="/assets/img/favicon.png?v=5">
-<link rel="shortcut icon" type="image/png" href="/assets/img/favicon.png?v=5">
-<link rel="apple-touch-icon" href="/assets/img/favicon.png?v=5">
+<link rel="icon" href="/favicon.ico?v=10" sizes="any">
+<link rel="shortcut icon" href="/favicon.ico?v=10">
+<link rel="icon" type="image/png" sizes="512x512" href="/assets/img/favicon.png?v=10">
+<link rel="apple-touch-icon" href="/assets/img/favicon.png?v=10">
+
+<script>
+  // 強制覆蓋 Hydejack 原本 favicon
+  (function () {
+    function forceCustomFavicon() {
+      const oldIcons = document.querySelectorAll(
+        'link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"], link[rel="mask-icon"]'
+      );
+
+      oldIcons.forEach(function (icon) {
+        icon.parentNode.removeChild(icon);
+      });
+
+      const ico = document.createElement("link");
+      ico.rel = "icon";
+      ico.href = "/favicon.ico?v=10";
+      ico.sizes = "any";
+      document.head.appendChild(ico);
+
+      const shortcut = document.createElement("link");
+      shortcut.rel = "shortcut icon";
+      shortcut.href = "/favicon.ico?v=10";
+      document.head.appendChild(shortcut);
+
+      const png = document.createElement("link");
+      png.rel = "icon";
+      png.type = "image/png";
+      png.sizes = "512x512";
+      png.href = "/assets/img/favicon.png?v=10";
+      document.head.appendChild(png);
+
+      const apple = document.createElement("link");
+      apple.rel = "apple-touch-icon";
+      apple.href = "/assets/img/favicon.png?v=10";
+      document.head.appendChild(apple);
+    }
+
+    forceCustomFavicon();
+
+    document.addEventListener("DOMContentLoaded", forceCustomFavicon);
+    window.addEventListener("load", forceCustomFavicon);
+  })();
+</script>
 
 {% unless page.url contains '/login/' %}
 <!-- Firebase Auth Guard -->
