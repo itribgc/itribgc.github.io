@@ -1,7 +1,7 @@
 ---
 layout: post
 description: > 
-  歡迎2026第七屆桌遊社的各位~~了解彼此一同遊玩~
+  歡迎加入 2026 第七屆桌遊社，一起開局、一起認識、一起玩出精彩回憶！
 image: 
   path: /assets/img/Orientation.jpg
 sitemap: false
@@ -9,11 +9,11 @@ sitemap: false
 
 # 2026迎新活動
 
-5 月 16 日，桌遊社走出室內，來到西門、艋舺一帶，舉辦《艋舺生存遊戲》城市尋寶活動。這次大家不再只是坐在桌邊推理，而是把整座城市當成遊戲地圖，在老街巷弄、歷史建築與在地景點之間尋找線索、破解關卡。
+這是一個特別的一天!!去年一整年的活動已經告一段落，沉寂許久的桌遊社又再次動起來啦!!這天是與新舊夥伴們同樂、認識的一天，還記得當天的遊戲與歡快的氛圍嗎?一起來回顧一下吧!
 {:.lead}
 
-![活動隊伍合照](/assets/img/blog/city-treasure/city-treasure-01.png)
-突破紅塵尋寶藏、解碼紫微見星光：傳說中還在閱讀故事就解出答案的隊伍，榮登第一名當之無愧。
+![迎新活動大成功合照](/assets/img/blog/city-treasure/city-treasure-01.png)
+今夜我們同框，未來我們同桌；故事，就從這張合照開始。
 {:.figcaption}
 
 - Table of Contents
@@ -25,7 +25,7 @@ sitemap: false
 
 這次的城市尋寶不只考驗推理能力，也非常考驗大家的細心與觀察力。
 
-## 緊咬第一名的解謎高手們
+## 命運洗牌，夥伴成隊；今晚的故事，從這裡開始。
 
 ![GGGHow 隊伍合照](/assets/img/blog/city-treasure/city-treasure-02.png)
 由冀豪領軍 GGGHow 的隊伍實力堅強，在解謎過程中緊咬第一名、緊追在後！
