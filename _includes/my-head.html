@@ -23,7 +23,6 @@
 <meta name="twitter:image" content="https://itribgc.github.io/assets/img/og-image.png?v=1">
 
 <script>
-  // 強制覆蓋 Hydejack 原本 favicon
   (function () {
     function forceCustomFavicon() {
       const oldIcons = document.querySelectorAll(
@@ -66,7 +65,7 @@
 </script>
 
 {% unless page.url contains '/login/' %}
-<!-- Firebase Auth Guard -->
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -74,6 +73,15 @@
 <script src="/assets/js/auth-guard.js"></script>
 <script src="/assets/js/profile.js"></script>
 <script src="/assets/js/admin-nav.js"></script>
+
+{% if page.layout == 'post' %}
+<script>
+  window.BGC_POST_PAGE = true;
+  window.BGC_POST_TITLE = {{ page.title | default: page.name | jsonify }};
+  window.BGC_POST_URL = {{ page.url | jsonify }};
+</script>
+<script src="/assets/js/post-interactions.js"></script>
+{% endif %}
 {% endunless %}
 
 <!-- Markdown / HTML render tools for 社員論壇文章 -->
