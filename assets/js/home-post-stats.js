@@ -66,79 +66,30 @@ console.log("home-post-stats.js 已載入");
     });
   }
 
-  function isInsideIgnoredArea(link) {
-    return !!link.closest(
-      "nav, .sidebar, .sidebar-sticky, .menu, .navbar, footer, .footer, .social, .pagination, .breadcrumbs"
-    );
-  }
-
-  function findCardFromLink(link) {
-    return link.closest(
-      "article, .card, .project-card, .post-card, .hy-card, .grid__item, .grid-item, li"
-    );
-  }
-
-  function findTitleInCard(card, link) {
-    const titleSelectors = [
-      "h1",
-      "h2",
-      "h3",
-      ".card-title",
-      ".post-title",
-      ".project-title",
-      ".heading",
-      ".flip-title"
-    ];
-
-    for (const selector of titleSelectors) {
-      const el = card.querySelector(selector);
-
-      if (el && el.innerText && el.innerText.trim()) {
-        return el;
-      }
-    }
-
-    if (link && link.innerText && link.innerText.trim()) {
-      return link;
-    }
-
-    return null;
-  }
-
-  function cardLooksLikePostCard(card) {
-    if (!card) return false;
-
-    const hasTitle = !!card.querySelector("h1, h2, h3, .card-title, .post-title, .project-title, .heading, .flip-title");
-    const hasText = card.innerText && card.innerText.trim().length > 0;
-
-    return hasTitle && hasText;
-  }
-
   function ensureStyles() {
     if (document.getElementById("homePostStatsStyle")) return;
 
     const style = document.createElement("style");
     style.id = "homePostStatsStyle";
     style.innerHTML = `
-      .home-post-title-stat-row {
+      .home-post-title-row {
         display: flex;
         align-items: center;
         flex-wrap: wrap;
         gap: 0.55rem;
-        margin: 0 0 0.45rem 0;
+        margin: 0 0 0.35rem 0;
       }
 
-      .home-post-title-stat-row > h1,
-      .home-post-title-stat-row > h2,
-      .home-post-title-stat-row > h3,
-      .home-post-title-stat-row > .card-title,
-      .home-post-title-stat-row > .post-title,
-      .home-post-title-stat-row > .project-title,
-      .home-post-title-stat-row > .heading,
-      .home-post-title-stat-row > .flip-title {
-        margin-top: 0 !important;
-        margin-bottom: 0 !important;
-        display: inline-block;
+      .home-post-title-row h1,
+      .home-post-title-row h2,
+      .home-post-title-row h3,
+      .home-post-title-row .card-title,
+      .home-post-title-row .post-title,
+      .home-post-title-row .project-title,
+      .home-post-title-row .flip-title {
+        margin: 0 !important;
+        padding: 0 !important;
+        line-height: 1.25 !important;
       }
 
       .home-post-inline-stats {
@@ -146,7 +97,7 @@ console.log("home-post-stats.js 已載入");
         align-items: center;
         flex-wrap: wrap;
         gap: 0.35rem;
-        vertical-align: middle;
+        line-height: 1;
       }
 
       .home-post-stat-pill {
@@ -158,7 +109,7 @@ console.log("home-post-stats.js 已載入");
         border: 1px solid rgba(255,255,255,0.18);
         background: rgba(255,255,255,0.055);
         color: inherit;
-        font-size: 0.78rem;
+        font-size: 0.76rem;
         font-weight: 700;
         line-height: 1.25;
         white-space: nowrap;
@@ -175,16 +126,14 @@ console.log("home-post-stats.js 已載入");
       }
 
       @media (max-width: 640px) {
-        .home-post-title-stat-row {
-          gap: 0.45rem;
-        }
-
-        .home-post-inline-stats {
-          gap: 0.3rem;
+        .home-post-title-row {
+          align-items: flex-start;
+          flex-direction: column;
+          gap: 0.35rem;
         }
 
         .home-post-stat-pill {
-          font-size: 0.74rem;
+          font-size: 0.72rem;
           padding: 3px 8px;
         }
       }
@@ -194,37 +143,122 @@ console.log("home-post-stats.js 已載入");
   }
 
   function removeOldStats() {
-    document.querySelectorAll(".home-post-stats, .home-post-inline-stats").forEach(function (el) {
+    document.querySelectorAll(".home-post-inline-stats, .home-post-stats").forEach(function (el) {
       el.remove();
     });
 
-    document.querySelectorAll(".home-post-title-stat-row").forEach(function (row) {
-      const title = row.querySelector("h1, h2, h3, .card-title, .post-title, .project-title, .heading, .flip-title, a");
+    document.querySelectorAll(".home-post-title-row").forEach(function (row) {
+      const title = row.querySelector("h1, h2, h3, .card-title, .post-title, .project-title, .flip-title");
 
       if (title && row.parentNode) {
         row.parentNode.insertBefore(title, row);
-        row.remove();
       }
+
+      row.remove();
     });
   }
 
+  function findLatestPostsSection() {
+    const headings = Array.from(document.querySelectorAll("main h1, main h2, main h3, .content h1, .content h2, .content h3"));
+
+    const latestHeading = headings.find(function (heading) {
+      return heading.innerText && heading.innerText.trim().includes("最新文章");
+    });
+
+    if (!latestHeading) {
+      return document.querySelector("main") || document.querySelector(".content") || document.body;
+    }
+
+    let section = latestHeading.parentElement;
+
+    while (
+      section &&
+      section !== document.body &&
+      section.querySelectorAll("a[href]").length < 2
+    ) {
+      section = section.parentElement;
+    }
+
+    return section || document.querySelector("main") || document.querySelector(".content") || document.body;
+  }
+
+  function findPostCard(link) {
+    let el = link;
+
+    while (el && el !== document.body) {
+      const hasImage = !!el.querySelector("img");
+      const hasTitle = !!el.querySelector("h1, h2, h3, .card-title, .post-title, .project-title, .flip-title");
+      const rect = el.getBoundingClientRect();
+
+      if (
+        hasImage &&
+        hasTitle &&
+        rect.width >= 180 &&
+        rect.height >= 180
+      ) {
+        return el;
+      }
+
+      el = el.parentElement;
+    }
+
+    return null;
+  }
+
+  function findTitleElement(card) {
+    const selectors = [
+      "h1",
+      "h2",
+      "h3",
+      ".card-title",
+      ".post-title",
+      ".project-title",
+      ".flip-title"
+    ];
+
+    for (const selector of selectors) {
+      const el = card.querySelector(selector);
+
+      if (el && el.innerText && el.innerText.trim()) {
+        return el;
+      }
+    }
+
+    return null;
+  }
+
+  function isCarouselCard(card) {
+    if (!card) return false;
+
+    return !!card.closest(
+      ".carousel, .swiper, .slider, .slideshow, .hero, #homeCarousel, #carousel, [class*='carousel'], [class*='slider'], [id*='carousel'], [id*='slider']"
+    );
+  }
+
+  function isIgnoredLink(link) {
+    return !!link.closest(
+      "nav, .sidebar, .sidebar-sticky, .menu, .navbar, footer, .footer, .social, .pagination, .breadcrumbs"
+    );
+  }
+
   function findHomePostCards() {
-    const links = Array.from(document.querySelectorAll("main a[href], article a[href], .content a[href]"));
+    const section = findLatestPostsSection();
+    const links = Array.from(section.querySelectorAll("a[href]"));
     const seenPaths = new Set();
     const results = [];
 
     links.forEach(function (link) {
-      if (isInsideIgnoredArea(link)) return;
+      if (isIgnoredLink(link)) return;
 
       const path = normalizePostPath(link.getAttribute("href"));
       if (shouldSkipPath(path)) return;
       if (seenPaths.has(path)) return;
 
-      const card = findCardFromLink(link);
+      const card = findPostCard(link);
       if (!card) return;
-      if (!cardLooksLikePostCard(card)) return;
+      if (isCarouselCard(card)) return;
 
-      const titleEl = findTitleInCard(card, link);
+      const titleEl = findTitleElement(card);
       if (!titleEl) return;
 
       seenPaths.add(path);
@@ -253,13 +287,13 @@ console.log("home-post-stats.js 已載入");
 
     const titleEl = item.titleEl;
 
-    if (titleEl.parentElement && titleEl.parentElement.classList.contains("home-post-title-stat-row")) {
+    if (titleEl.parentElement && titleEl.parentElement.classList.contains("home-post-title-row")) {
       titleEl.parentElement.appendChild(stats);
       return stats;
     }
 
     const row = document.createElement("div");
-    row.className = "home-post-title-stat-row";
+    row.className = "home-post-title-row";
 
     const parent = titleEl.parentNode;
 
@@ -340,7 +374,7 @@ console.log("home-post-stats.js 已載入");
     const items = findHomePostCards();
 
     if (items.length === 0) {
-      console.warn("首頁沒有找到可加統計資訊的文章卡片");
+      console.warn("首頁沒有找到最新文章卡片，請確認最新文章區塊是否有 h2『最新文章』與文章卡片。");
       return;
     }
 
@@ -364,9 +398,9 @@ console.log("home-post-stats.js 已載入");
       return;
     }
 
-    setTimeout(renderHomePostStats, 250);
-    setTimeout(renderHomePostStats, 900);
-    setTimeout(renderHomePostStats, 1600);
+    setTimeout(renderHomePostStats, 350);
+    setTimeout(renderHomePostStats, 1100);
+    setTimeout(renderHomePostStats, 2200);
   }
 
   auth.onAuthStateChanged(function (user) {
