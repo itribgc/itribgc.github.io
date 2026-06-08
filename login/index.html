@@ -148,12 +148,14 @@
     <div id="msg"></div>
 
     <div class="hint">
-      請使用提供給社團之電子信箱作為帳號登入
+      請使用提供給社團之電子信箱作為帳號登入<br>
+      初始密碼為 00000000，第一次登入後需先修改密碼
     </div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
   <script>
     console.log("login 頁面 JS 已載入");
@@ -168,6 +170,7 @@
     };
 
     let auth;
+    let db;
 
     const emailInput = document.getElementById("email");
     const passwordInput = document.getElementById("password");
@@ -176,7 +179,7 @@
     const msg = document.getElementById("msg");
 
     function showMessage(text, type) {
-      msg.innerText = text;
+      msg.innerText = text || "";
       msg.className = type === "success" ? "success" : "";
     }
 
@@ -242,6 +245,8 @@
         }
 
         auth = firebase.auth();
+        db = firebase.firestore();
+
         auth.languageCode = "zh-TW";
 
         console.log("Firebase 初始化成功");
@@ -251,10 +256,71 @@
       }
     }
 
+    async function ensureUserDocForLogin(user, password) {
+      const userRef = db.collection("users").doc(user.uid);
+      const userDoc = await userRef.get();
+
+      if (!userDoc.exists) {
+        await userRef.set({
+          email: user.email || "",
+          displayName: "",
+          displayNameConfirmed: false,
+          mustChangePassword: password === "00000000",
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        return {
+          mustChangePassword: password === "00000000"
+        };
+      }
+
+      const data = userDoc.data();
+
+      const updateData = {
+        email: user.email || data.email || "",
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      if (typeof data.mustChangePassword === "undefined") {
+        updateData.mustChangePassword = password === "00000000";
+      }
+
+      if (typeof data.displayNameConfirmed === "undefined") {
+        updateData.displayNameConfirmed = false;
+      }
+
+      await userRef.update(updateData);
+
+      return {
+        mustChangePassword:
+          data.mustChangePassword === true ||
+          (typeof data.mustChangePassword === "undefined" && password === "00000000")
+      };
+    }
+
+    function handleLoginRedirect(userState) {
+      if (userState.mustChangePassword) {
+        showMessage("第一次登入，請先修改初始密碼。", "success");
+
+        setTimeout(function () {
+          window.location.replace("/change-password/");
+        }, 600);
+
+        return;
+      }
+
+      showMessage("登入成功，即將進入首頁。", "success");
+
+      setTimeout(function () {
+        window.location.replace("/");
+      }, 600);
+    }
+
     async function doLogin() {
       console.log("登入按鈕被點擊");
 
-      if (!auth) {
+      if (!auth || !db) {
         showMessage("Firebase 尚未初始化完成，請重新整理頁面。");
         return;
       }
@@ -281,11 +347,16 @@
 
         console.log("開始登入：", email);
 
-        await auth.signInWithEmailAndPassword(email, password);
+        const result = await auth.signInWithEmailAndPassword(email, password);
+        const user = result.user;
 
-        console.log("登入成功");
+        console.log("登入成功，開始檢查使用者狀態");
 
-        window.location.replace("/");
+        const userState = await ensureUserDocForLogin(user, password);
+
+        console.log("使用者狀態：", userState);
+
+        handleLoginRedirect(userState);
       } catch (error) {
         showMessage(getFirebaseErrorMessage(error));
         setLoginLoading(false);
@@ -315,7 +386,7 @@
 
         await auth.sendPasswordResetEmail(email);
 
-        showMessage("密碼重設信已寄出，請至您的信箱收信並重新設定密碼。", "success");
+        showMessage("密碼重設信已寄出。若收件匣沒有看到，請到垃圾郵件資料夾找一下。", "success");
         setForgotLoading(false);
       } catch (error) {
         showMessage(getFirebaseErrorMessage(error));
@@ -339,6 +410,16 @@
     });
 
     initFirebase();
+
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.get("passwordChanged") === "1") {
+      showMessage("密碼已修改完成，請使用新密碼重新登入。", "success");
+    }
+
+    if (params.get("reauth") === "1") {
+      showMessage("請重新登入後再修改密碼。");
+    }
   </script>
 
 </body>
