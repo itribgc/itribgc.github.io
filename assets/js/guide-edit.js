@@ -24,7 +24,7 @@ console.log("guide-edit.js 已載入");
   let currentGuideId = "";
   let currentGuideData = null;
 
-  const categoryInput = document.getElementById("guideCategory");
+  let categoryInput = document.getElementById("guideCategory");
   const titleInput = document.getElementById("guideTitle");
   const gameInput = document.getElementById("guideGameName");
   const coverInput = document.getElementById("guideCoverImage");
@@ -121,8 +121,105 @@ console.log("guide-edit.js 已載入");
     }
   }
 
+  function createCategoryInputIfMissing() {
+    categoryInput = document.getElementById("guideCategory");
+
+    if (categoryInput) return categoryInput;
+
+    const anchor =
+      titleInput ||
+      gameInput ||
+      coverInput ||
+      summaryInput ||
+      contentInput;
+
+    if (!anchor || !anchor.parentNode) {
+      console.warn("找不到可以插入文章分類欄位的位置");
+      return null;
+    }
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "guide-field guide-category-auto-field";
+    wrapper.innerHTML = `
+      <label for="guideCategory">文章分類</label>
+      <select id="guideCategory">
+        <option value="桌遊攻略">桌遊攻略</option>
+        <option value="活動心得">活動心得</option>
+        <option value="規則討論">規則討論</option>
+        <option value="開箱分享">開箱分享</option>
+        <option value="揪團交流">揪團交流</option>
+      </select>
+    `;
+
+    anchor.parentNode.insertBefore(wrapper, anchor);
+
+    const styleId = "guideAutoCategoryStyle";
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement("style");
+      style.id = styleId;
+      style.innerHTML = `
+        .guide-category-auto-field {
+          margin-bottom: 1rem;
+        }
+
+        .guide-category-auto-field label {
+          display: block;
+          margin-bottom: 0.45rem;
+          font-weight: 700;
+        }
+
+        .guide-category-auto-field select {
+          width: 100%;
+          box-sizing: border-box;
+          padding: 10px 12px;
+          border-radius: 10px;
+          border: 1px solid rgba(255,255,255,0.18);
+          background: rgba(255,255,255,0.06);
+          color: inherit;
+          font: inherit;
+        }
+
+        .guide-category-auto-field select option {
+          color: #222;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    categoryInput = document.getElementById("guideCategory");
+    return categoryInput;
+  }
+
+  function getCategoryValue() {
+    const input = createCategoryInputIfMissing();
+    if (!input) return "桌遊攻略";
+
+    const value = input.value.trim();
+    return allowedCategories.includes(value) ? value : "桌遊攻略";
+  }
+
+  function validateRequiredElements() {
+    const missing = [];
+
+    if (!titleInput) missing.push("guideTitle");
+    if (!gameInput) missing.push("guideGameName");
+    if (!coverInput) missing.push("guideCoverImage");
+    if (!summaryInput) missing.push("guideSummary");
+    if (!contentInput) missing.push("guideContent");
+    if (!previewBtn) missing.push("guidePreviewBtn");
+    if (!saveBtn) missing.push("guideSaveBtn 或 guidePublishBtn");
+
+    if (missing.length > 0) {
+      setMsg("編輯頁缺少必要欄位：" + missing.join("、"));
+      console.error("編輯頁缺少必要欄位：", missing);
+      return false;
+    }
+
+    return true;
+  }
+
   function validateGuide() {
-    const category = categoryInput.value.trim();
+    const category = getCategoryValue();
     const title = titleInput.value.trim();
     const gameName = gameInput.value.trim();
     const coverImage = coverInput.value.trim();
@@ -146,6 +243,11 @@ console.log("guide-edit.js 已載入");
   }
 
   async function loadGuide() {
+    if (!validateRequiredElements()) {
+      disableForm();
+      return;
+    }
+
     currentGuideId = getGuideId();
 
     if (!currentGuideId) {
@@ -179,14 +281,24 @@ console.log("guide-edit.js 已載入");
         return;
       }
 
-      categoryInput.value = currentGuideData.category || "桌遊攻略";
+      const categoryEl = createCategoryInputIfMissing();
+
+      if (categoryEl) {
+        categoryEl.value = currentGuideData.category || "桌遊攻略";
+      }
+
       titleInput.value = currentGuideData.title || "";
       gameInput.value = currentGuideData.gameName || "";
       coverInput.value = currentGuideData.coverImage || "";
       summaryInput.value = currentGuideData.summary || "";
       contentInput.value = currentGuideData.contentMarkdown || "";
 
-      if (coverInput.value.trim() && isValidImageUrl(coverInput.value.trim())) {
+      if (
+        coverInput.value.trim() &&
+        isValidImageUrl(coverInput.value.trim()) &&
+        coverPreview &&
+        coverPreviewWrap
+      ) {
         coverPreview.src = coverInput.value.trim();
         coverPreviewWrap.style.display = "block";
       }
@@ -222,7 +334,7 @@ console.log("guide-edit.js 已載入");
 
   function enableForm() {
     [
-      categoryInput,
+      createCategoryInputIfMissing(),
       titleInput,
       gameInput,
       coverInput,
@@ -256,7 +368,7 @@ console.log("guide-edit.js 已載入");
       await db.collection("guides").doc(currentGuideId).update({
         title: titleInput.value.trim(),
         gameName: gameInput.value.trim(),
-        category: categoryInput.value.trim(),
+        category: getCategoryValue(),
         coverImage: normalizeImageUrl(coverInput.value),
         summary: summaryInput.value.trim(),
         contentMarkdown: contentInput.value.trim(),
@@ -297,8 +409,8 @@ console.log("guide-edit.js 已載入");
       ? window.DOMPurify.sanitize(rawHtml, { ADD_ATTR: ["style"] })
       : rawHtml;
 
-    previewContent.innerHTML = safeHtml;
-    previewBox.style.display = "block";
+    if (previewContent) previewContent.innerHTML = safeHtml;
+    if (previewBox) previewBox.style.display = "block";
     setMsg("");
   }
 
@@ -307,6 +419,8 @@ console.log("guide-edit.js 已載入");
 
     coverInput.addEventListener("input", function () {
       const url = coverInput.value.trim();
+
+      if (!coverPreview || !coverPreviewWrap) return;
 
       if (!url || !isValidImageUrl(url)) {
         coverPreviewWrap.style.display = "none";
@@ -320,12 +434,12 @@ console.log("guide-edit.js 已載入");
 
     if (coverPreview) {
       coverPreview.addEventListener("error", function () {
-        coverPreviewWrap.style.display = "none";
+        if (coverPreviewWrap) coverPreviewWrap.style.display = "none";
         setMsg("圖片預覽失敗，請確認是否為可公開瀏覽的圖片直接連結。");
       });
 
       coverPreview.addEventListener("load", function () {
-        if (coverInput.value.trim()) {
+        if (coverInput && coverInput.value.trim()) {
           setMsg("");
         }
       });
@@ -429,14 +543,15 @@ console.log("guide-edit.js 已載入");
 
     const selection = getSelection();
 
-    imageAltInput.value = selection.text || "";
-    imageUrlInput.value = "";
-    imageMsg.innerText = "";
+    if (imageAltInput) imageAltInput.value = selection.text || "";
+    if (imageUrlInput) imageUrlInput.value = "";
+    if (imageMsg) imageMsg.innerText = "";
+
     imageModal.classList.add("show");
 
     setTimeout(function () {
-      if (imageAltInput.value) imageUrlInput.focus();
-      else imageAltInput.focus();
+      if (imageAltInput && imageAltInput.value && imageUrlInput) imageUrlInput.focus();
+      else if (imageAltInput) imageAltInput.focus();
     }, 100);
   }
 
@@ -471,14 +586,15 @@ console.log("guide-edit.js 已載入");
 
     const selection = getSelection();
 
-    linkTextInput.value = selection.text || "";
-    linkUrlInput.value = "";
-    linkMsg.innerText = "";
+    if (linkTextInput) linkTextInput.value = selection.text || "";
+    if (linkUrlInput) linkUrlInput.value = "";
+    if (linkMsg) linkMsg.innerText = "";
+
     linkModal.classList.add("show");
 
     setTimeout(function () {
-      if (linkTextInput.value) linkUrlInput.focus();
-      else linkTextInput.focus();
+      if (linkTextInput && linkTextInput.value && linkUrlInput) linkUrlInput.focus();
+      else if (linkTextInput) linkTextInput.focus();
     }, 100);
   }
 
