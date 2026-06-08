@@ -59,9 +59,11 @@ console.log("guide-admin.js 已載入");
   }
 
   function ensureAdminLayout() {
-    const page = document.querySelector(".guide-admin-page");
-
-    if (!page) return;
+    const page =
+      document.querySelector(".guide-admin-page") ||
+      document.querySelector("main") ||
+      document.querySelector(".content") ||
+      document.body;
 
     if (!document.getElementById("pendingGuideList")) {
       const pendingSection = document.createElement("section");
@@ -123,6 +125,36 @@ console.log("guide-admin.js 已載入");
     } catch (error) {
       console.error("審核通過失敗：", error);
       setMsg("審核通過失敗，請稍後再試。");
+    }
+  }
+
+  async function rejectGuide(guideId) {
+    if (!isAdmin(currentUser)) {
+      setMsg("你沒有管理員權限。");
+      return;
+    }
+
+    const reason = prompt("請輸入審核失敗原因，社員會在「我的貼文」看到這段說明：");
+
+    if (reason === null) return;
+
+    const reasonText = reason.trim() || "這篇文章未通過審核，可修改後重新送審。";
+
+    try {
+      await db.collection("guides").doc(guideId).update({
+        status: "rejected",
+        reviewStatus: "rejected",
+        rejectionReason: reasonText,
+        reviewedBy: currentUser.uid,
+        reviewedByEmail: currentUser.email,
+        reviewedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      setMsg("文章已標記為審核失敗。", "success");
+    } catch (error) {
+      console.error("標記審核失敗失敗：", error);
+      setMsg("標記審核失敗失敗，請稍後再試。");
     }
   }
 
@@ -225,6 +257,7 @@ console.log("guide-admin.js 已載入");
             <div class="reported-guide-actions">
               <a class="reported-guide-read-btn" href="/guides/post/?id=${encodeURIComponent(doc.id)}">查看文章</a>
               <button class="reported-guide-approve-btn" type="button" data-guide-id="${escapeHtml(doc.id)}">審核通過</button>
+              <button class="reported-guide-reject-btn" type="button" data-guide-id="${escapeHtml(doc.id)}">審核失敗</button>
               <button class="reported-guide-delete-btn" type="button" data-guide-id="${escapeHtml(doc.id)}" data-title="${escapeHtml(title)}">刪除文章</button>
             </div>
           </div>
@@ -237,6 +270,12 @@ console.log("guide-admin.js 已載入");
     listEl.querySelectorAll(".reported-guide-approve-btn").forEach(function (btn) {
       btn.addEventListener("click", function () {
         approveGuide(btn.dataset.guideId);
+      });
+    });
+
+    listEl.querySelectorAll(".reported-guide-reject-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        rejectGuide(btn.dataset.guideId);
       });
     });
 
@@ -447,6 +486,7 @@ console.log("guide-admin.js 已載入");
         background: rgba(255,255,255,0.055);
         border: 1px solid rgba(255,255,255,0.08);
         color: inherit;
+        margin-bottom: 1rem;
       }
 
       .reported-guide-cover-link {
@@ -571,7 +611,8 @@ console.log("guide-admin.js 已載入");
       .reported-guide-read-btn,
       .reported-guide-delete-btn,
       .reported-guide-resolve-btn,
-      .reported-guide-approve-btn {
+      .reported-guide-approve-btn,
+      .reported-guide-reject-btn {
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -597,6 +638,15 @@ console.log("guide-admin.js 已載入");
       .reported-guide-approve-btn {
         border-color: rgba(79,177,186,0.45);
         background: rgba(79,177,186,0.12);
+      }
+
+      .reported-guide-reject-btn {
+        border-color: rgba(255, 214, 102, 0.45);
+        background: rgba(255, 214, 102, 0.10);
+      }
+
+      .reported-guide-reject-btn:hover {
+        border-color: rgba(255, 214, 102, 0.8);
       }
 
       .reported-guide-delete-btn:hover {
