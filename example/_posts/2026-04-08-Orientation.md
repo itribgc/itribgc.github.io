@@ -12,7 +12,7 @@ sitemap: false
 這是一個特別的一天!!去年一整年的活動已經告一段落，沉寂許久的桌遊社又再次動起來啦!!這天是與新舊夥伴們同樂、認識的一天，還記得當天的遊戲與歡快的氛圍嗎?一起來回顧一下吧!
 {:.lead}
 
-![迎新活動大成功合照](/assets/img/blog/city-treasure/city-treasure-01.png)
+![迎新活動大成功合照](/assets/img/blog/Orientation/Orientation_260408_4.jpg)
 今夜我們同框，未來我們同桌；故事，就從這張合照開始。
 {:.figcaption}
 
