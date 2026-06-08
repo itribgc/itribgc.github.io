@@ -282,3 +282,22 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* =========================
+   隱藏左側社群 icon 區塊
+   目前暫不顯示 YouTube / Instagram
+========================= */
+
+.sidebar-social,
+.sidebar-social *,
+.social,
+.social *,
+.sidebar .social,
+.sidebar .social *,
+.sidebar a[href*="youtube"],
+.sidebar a[href*="instagram"],
+.sidebar a[href*="github"],
+.sidebar a[href*="twitter"],
+.sidebar a[href*="x.com"] {
+  display: none !important;
+}
