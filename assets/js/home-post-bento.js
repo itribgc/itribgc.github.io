@@ -180,17 +180,6 @@ console.log("home-post-bento.js 已載入");
     }
   }
 
-  function clearBentoClasses(items) {
-    items.forEach(function (item) {
-      item.card.classList.remove(
-        "home-post-bento-card",
-        "home-post-bento-large",
-        "home-post-bento-medium",
-        "home-post-bento-normal"
-      );
-    });
-  }
-
   function findCardsParent(items) {
     if (!items.length) return null;
 
@@ -211,40 +200,81 @@ console.log("home-post-bento.js 已載入");
     return null;
   }
 
-  function applyBentoLayout(itemsWithViews) {
-    if (!itemsWithViews.length) return;
-
-    const parent = findCardsParent(itemsWithViews);
+  function clearOldLayout(items) {
+    const parent = findCardsParent(items);
 
     if (parent) {
-      parent.classList.add("home-post-bento-grid");
+      parent.classList.remove("home-post-masonry-grid");
+      parent.classList.remove("home-post-bento-grid");
     }
 
-    clearBentoClasses(itemsWithViews);
+    items.forEach(function (item) {
+      item.card.classList.remove(
+        "home-post-bento-card",
+        "home-post-bento-large",
+        "home-post-bento-medium",
+        "home-post-bento-normal",
+        "home-post-masonry-card",
+        "home-post-masonry-xl",
+        "home-post-masonry-lg",
+        "home-post-masonry-md",
+        "home-post-masonry-sm"
+      );
 
+      item.card.style.order = "";
+      item.card.dataset.viewCount = "";
+    });
+  }
+
+  function classifyCardsByViewCount(itemsWithViews) {
     const sorted = itemsWithViews.slice().sort(function (a, b) {
       return b.viewCount - a.viewCount;
     });
 
     sorted.forEach(function (item, index) {
-      item.card.classList.add("home-post-bento-card");
+      item.card.classList.add("home-post-masonry-card");
+      item.card.dataset.viewCount = String(item.viewCount);
 
       /*
-        排版邏輯：
-        第 1 名：大卡片，左右變寬
-        第 2 名：中卡片，略寬
-        其他：維持一般卡片，不再縮小
+        動態大小邏輯：
+        第 1 名：最大卡
+        第 2 名：大卡
+        第 3、4 名：中卡
+        其他：一般卡
+
+        注意：這邊不是硬塞 CSS Grid，而是交給 CSS columns 自動瀑布流排列，
+        所以卡片上下高度不同也比較不會中間破洞。
       */
       if (index === 0 && item.viewCount > 0) {
-        item.card.classList.add("home-post-bento-large");
+        item.card.classList.add("home-post-masonry-xl");
       } else if (index === 1 && item.viewCount > 0) {
-        item.card.classList.add("home-post-bento-medium");
+        item.card.classList.add("home-post-masonry-lg");
+      } else if (index <= 3 && item.viewCount > 0) {
+        item.card.classList.add("home-post-masonry-md");
       } else {
-        item.card.classList.add("home-post-bento-normal");
+        item.card.classList.add("home-post-masonry-sm");
       }
 
-      item.card.dataset.viewCount = String(item.viewCount);
+      /*
+        讓高瀏覽數的文章優先排在前面。
+        CSS columns 會依照 DOM / order 排列，所以這邊直接調整 order。
+      */
+      item.card.style.order = String(index + 1);
     });
+  }
+
+  function applyMasonryLayout(itemsWithViews) {
+    if (!itemsWithViews.length) return;
+
+    const parent = findCardsParent(itemsWithViews);
+
+    clearOldLayout(itemsWithViews);
+
+    if (parent) {
+      parent.classList.add("home-post-masonry-grid");
+    }
+
+    classifyCardsByViewCount(itemsWithViews);
   }
 
   function injectStyles() {
@@ -255,142 +285,164 @@ console.log("home-post-bento.js 已載入");
     style.id = "homePostBentoStyle";
     style.innerHTML = `
       /*
-        平衡版首頁最新文章：
-        - 不再把小卡片壓到過窄
-        - 一般卡片至少維持接近原本寬度
-        - 熱門文章只做左右加寬，不做上下拉長
+        最新文章 Masonry / Bento 混合版
+        目標：
+        1. 文章依瀏覽數動態變大或變小
+        2. 大小可以包含左右與上下
+        3. 盡量自動補位，不要中間留空洞
+        4. 小卡片不低於原本可讀性
       */
 
-      .home-post-bento-grid {
-        display: grid !important;
-        grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
-        grid-auto-flow: dense !important;
-        gap: 1.35rem !important;
-        align-items: start !important;
+      .home-post-masonry-grid {
+        column-count: 2 !important;
+        column-gap: 1.35rem !important;
+        display: block !important;
       }
 
-      .home-post-bento-card {
+      .home-post-masonry-card {
+        display: inline-block !important;
         width: 100% !important;
-        height: auto !important;
-        align-self: start !important;
+        margin: 0 0 1.35rem 0 !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+        -webkit-column-break-inside: avoid !important;
+        vertical-align: top !important;
         transition:
           transform 0.2s ease,
           box-shadow 0.2s ease,
-          border-color 0.2s ease;
+          border-color 0.2s ease,
+          opacity 0.2s ease;
       }
 
-      .home-post-bento-card:hover {
+      .home-post-masonry-card:hover {
         transform: translateY(-4px);
       }
 
-      .home-post-bento-large {
-        grid-column: span 3 !important;
-        grid-row: span 1 !important;
-      }
-
-      .home-post-bento-medium {
-        grid-column: span 3 !important;
-        grid-row: span 1 !important;
-      }
-
-      .home-post-bento-normal {
-        grid-column: span 3 !important;
-        grid-row: span 1 !important;
-      }
-
       /*
-        讓全部卡片最小都維持兩欄版大小。
-        也就是：瀏覽數少的文章不再被壓成窄長卡。
+        圖片比例依熱門程度微調：
+        - 熱門卡：圖片更有視覺份量
+        - 一般卡：維持原本文章卡片感
       */
 
-      .home-post-bento-card img {
+      .home-post-masonry-card img {
         width: 100% !important;
         display: block !important;
         object-fit: cover !important;
-        aspect-ratio: 16 / 9 !important;
         height: auto !important;
-        min-height: unset !important;
-        max-height: unset !important;
       }
 
-      .home-post-bento-large h1,
-      .home-post-bento-large h2,
-      .home-post-bento-large h3,
-      .home-post-bento-large .card-title,
-      .home-post-bento-large .post-title,
-      .home-post-bento-large .project-title {
-        font-size: 1.45rem !important;
+      .home-post-masonry-xl img {
+        aspect-ratio: 16 / 10 !important;
+      }
+
+      .home-post-masonry-lg img {
+        aspect-ratio: 16 / 9 !important;
+      }
+
+      .home-post-masonry-md img,
+      .home-post-masonry-sm img {
+        aspect-ratio: 16 / 9 !important;
+      }
+
+      /*
+        用 padding / 字體微調視覺大小。
+        不用把卡片寬度壓小，所以不會再出現又窄又小的卡片。
+      */
+
+      .home-post-masonry-xl h1,
+      .home-post-masonry-xl h2,
+      .home-post-masonry-xl h3,
+      .home-post-masonry-xl .card-title,
+      .home-post-masonry-xl .post-title,
+      .home-post-masonry-xl .project-title {
+        font-size: 1.55rem !important;
         line-height: 1.3 !important;
       }
 
-      .home-post-bento-medium h1,
-      .home-post-bento-medium h2,
-      .home-post-bento-medium h3,
-      .home-post-bento-medium .card-title,
-      .home-post-bento-medium .post-title,
-      .home-post-bento-medium .project-title {
-        font-size: 1.32rem !important;
+      .home-post-masonry-lg h1,
+      .home-post-masonry-lg h2,
+      .home-post-masonry-lg h3,
+      .home-post-masonry-lg .card-title,
+      .home-post-masonry-lg .post-title,
+      .home-post-masonry-lg .project-title {
+        font-size: 1.42rem !important;
         line-height: 1.3 !important;
       }
 
-      .home-post-bento-normal h1,
-      .home-post-bento-normal h2,
-      .home-post-bento-normal h3,
-      .home-post-bento-normal .card-title,
-      .home-post-bento-normal .post-title,
-      .home-post-bento-normal .project-title {
-        font-size: 1.25rem !important;
-        line-height: 1.3 !important;
+      .home-post-masonry-md h1,
+      .home-post-masonry-md h2,
+      .home-post-masonry-md h3,
+      .home-post-masonry-md .card-title,
+      .home-post-masonry-md .post-title,
+      .home-post-masonry-md .project-title {
+        font-size: 1.28rem !important;
+        line-height: 1.32 !important;
       }
 
-      @media (min-width: 1180px) {
-        .home-post-bento-grid {
-          grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+      .home-post-masonry-sm h1,
+      .home-post-masonry-sm h2,
+      .home-post-masonry-sm h3,
+      .home-post-masonry-sm .card-title,
+      .home-post-masonry-sm .post-title,
+      .home-post-masonry-sm .project-title {
+        font-size: 1.22rem !important;
+        line-height: 1.32 !important;
+      }
+
+      /*
+        熱門文章描述文字可以多一點呼吸感。
+      */
+
+      .home-post-masonry-xl p,
+      .home-post-masonry-xl .description,
+      .home-post-masonry-xl .excerpt,
+      .home-post-masonry-xl .card-text {
+        font-size: 1.02rem !important;
+        line-height: 1.75 !important;
+      }
+
+      .home-post-masonry-lg p,
+      .home-post-masonry-lg .description,
+      .home-post-masonry-lg .excerpt,
+      .home-post-masonry-lg .card-text {
+        font-size: 0.98rem !important;
+        line-height: 1.72 !important;
+      }
+
+      /*
+        寬螢幕時可以變 3 欄，會更像拼貼牆。
+        但如果你的內容區本身不夠寬，會自動維持 2 欄。
+      */
+
+      @media (min-width: 1240px) {
+        .home-post-masonry-grid {
+          column-count: 3 !important;
         }
 
-        .home-post-bento-large {
-          grid-column: span 4 !important;
-        }
-
-        .home-post-bento-medium {
-          grid-column: span 2 !important;
-        }
-
-        .home-post-bento-normal {
-          grid-column: span 3 !important;
+        .home-post-masonry-xl {
+          /*
+            CSS columns 無法真正跨欄，但可以透過內容高度與視覺比例讓熱門卡更醒目。
+            這樣反而能避免 CSS grid 的大空洞問題。
+          */
         }
       }
 
-      @media (max-width: 1179px) {
-        .home-post-bento-grid {
-          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-        }
-
-        .home-post-bento-large,
-        .home-post-bento-medium,
-        .home-post-bento-normal {
-          grid-column: span 1 !important;
-          grid-row: span 1 !important;
+      @media (max-width: 980px) {
+        .home-post-masonry-grid {
+          column-count: 2 !important;
         }
       }
 
       @media (max-width: 640px) {
-        .home-post-bento-grid {
-          display: block !important;
+        .home-post-masonry-grid {
+          column-count: 1 !important;
         }
 
-        .home-post-bento-card {
+        .home-post-masonry-card {
           margin-bottom: 1.25rem !important;
         }
 
-        .home-post-bento-large,
-        .home-post-bento-medium,
-        .home-post-bento-normal {
-          grid-column: auto !important;
-          grid-row: auto !important;
-        }
-
-        .home-post-bento-card img {
+        .home-post-masonry-card img {
           aspect-ratio: 16 / 9 !important;
         }
       }
@@ -408,7 +460,7 @@ console.log("home-post-bento.js 已載入");
     const items = findHomePostCards();
 
     if (!items.length) {
-      console.warn("首頁沒有找到可套用 Bento 排版的最新文章卡片");
+      console.warn("首頁沒有找到可套用 Masonry 排版的最新文章卡片");
       return;
     }
 
@@ -423,7 +475,7 @@ console.log("home-post-bento.js 已載入");
       });
     }
 
-    applyBentoLayout(itemsWithViews);
+    applyMasonryLayout(itemsWithViews);
   }
 
   function scheduleRender() {
