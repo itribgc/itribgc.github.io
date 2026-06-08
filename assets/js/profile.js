@@ -21,10 +21,10 @@ console.log("profile.js 已載入");
   const MAX_LEVEL = 9999;
 
   let currentUser = null;
-  let currentDisplayName = "";
-  let currentLevelInfo = null;
+  let currentUserData = null;
+  let isSavingDisplayName = false;
 
-  const CATEGORY_XP = {
+  const POST_XP_TABLE = {
     "桌遊攻略": 30,
     "活動心得": 20,
     "開箱分享": 20,
@@ -32,353 +32,396 @@ console.log("profile.js 已載入");
     "揪團交流": 0
   };
 
-  function isAdminUser(user) {
+  function isAdmin(user) {
     return user && user.email === ADMIN_EMAIL;
   }
 
-  function escapeHtml(text) {
-    return String(text || "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
+  function getEmailPrefix(email) {
+    if (!email || !email.includes("@")) return "社員";
+    return email.split("@")[0] || "社員";
   }
 
-  function xpNeededForNextLevel(level) {
-    return 30 + (level - 1) * 15;
+  function sanitizeDisplayName(name) {
+    return String(name || "")
+      .trim()
+      .replace(/\s+/g, " ");
   }
 
-  function calculateLevel(totalXP) {
+  function validateDisplayName(name) {
+    const value = sanitizeDisplayName(name);
+
+    if (!value) return "請輸入社員 ID。";
+    if (value.length < 2) return "社員 ID 至少需要 2 個字。";
+    if (value.length > 20) return "社員 ID 請控制在 20 個字以內。";
+    if (/[<>]/.test(value)) return "社員 ID 不可包含 < 或 > 符號。";
+
+    return "";
+  }
+
+  function getXpRequiredForLevel(level) {
+    const lv = Math.max(Number(level || 1), 1);
+
+    if (lv >= MAX_LEVEL) return 0;
+
+    return Math.floor(30 + (lv - 1) * 12 + Math.pow(lv - 1, 1.35) * 4);
+  }
+
+  function calculateLevelFromXp(totalXp) {
+    let xp = Math.max(Number(totalXp || 0), 0);
     let level = 1;
-    let xpAtLevelStart = 0;
-    let needed = xpNeededForNextLevel(level);
 
-    while (
-      level < MAX_LEVEL &&
-      totalXP >= xpAtLevelStart + needed
-    ) {
-      xpAtLevelStart += needed;
+    while (level < MAX_LEVEL) {
+      const need = getXpRequiredForLevel(level);
+
+      if (xp < need) break;
+
+      xp -= need;
       level += 1;
-      needed = xpNeededForNextLevel(level);
     }
 
-    if (level >= MAX_LEVEL) {
-      return {
-        level: MAX_LEVEL,
-        totalXP: totalXP,
-        xpInCurrentLevel: 0,
-        xpNeededForNextLevel: 0,
-        xpToNextLevel: 0,
-        progressPercent: 100,
-        isMaxLevel: true
-      };
-    }
-
-    const xpInCurrentLevel = totalXP - xpAtLevelStart;
-    const xpToNextLevel = needed - xpInCurrentLevel;
-    const progressPercent = needed > 0
-      ? Math.min(100, Math.max(0, Math.round((xpInCurrentLevel / needed) * 100)))
-      : 0;
+    const currentLevelRequiredXp = getXpRequiredForLevel(level);
 
     return {
       level: level,
-      totalXP: totalXP,
-      xpInCurrentLevel: xpInCurrentLevel,
-      xpNeededForNextLevel: needed,
-      xpToNextLevel: xpToNextLevel,
-      progressPercent: progressPercent,
-      isMaxLevel: false
+      totalXp: Math.max(Number(totalXp || 0), 0),
+      currentXp: xp,
+      nextLevelXp: currentLevelRequiredXp,
+      progressPercent: currentLevelRequiredXp > 0
+        ? Math.min(Math.round((xp / currentLevelRequiredXp) * 100), 100)
+        : 100
     };
   }
 
-  function getAdminLevelInfo() {
-    return {
-      level: MAX_LEVEL,
-      totalXP: 0,
-      xpInCurrentLevel: 0,
-      xpNeededForNextLevel: 0,
-      xpToNextLevel: 0,
-      progressPercent: 100,
-      isMaxLevel: true,
-      isAdmin: true,
-      postCount: 0,
-      articleLikeCount: 0,
-      commentLikeCount: 0,
-      postBaseXP: 0,
-      postLikeXP: 0,
-      commentLikeXP: 0
-    };
-  }
+  async function ensureUserDoc(user) {
+    const userRef = db.collection("users").doc(user.uid);
+    const userDoc = await userRef.get();
 
-  function getCategoryXP(category) {
-    return CATEGORY_XP[category] ?? 0;
-  }
+    if (userDoc.exists) {
+      const data = userDoc.data();
 
-  async function loadUserProfile(user) {
-    const ref = db.collection("users").doc(user.uid);
-    const doc = await ref.get();
+      const updateData = {
+        email: user.email || data.email || "",
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
 
-    if (doc.exists && doc.data().displayName) {
-      return doc.data().displayName;
-    }
+      let shouldUpdate = false;
 
-    const fallbackName = user.displayName || user.email.split("@")[0];
-
-    await ref.set({
-      displayName: fallbackName,
-      email: user.email
-    }, { merge: true });
-
-    return fallbackName;
-  }
-
-  function getGuideIdFromCommentPostPath(postPath) {
-    const value = String(postPath || "");
-
-    if (!value.startsWith("guide:")) {
-      return "";
-    }
-
-    return value.replace("guide:", "").trim();
-  }
-
-  async function loadPublishedGuideIds() {
-    const publishedGuideIds = new Set();
-
-    try {
-      const snapshot = await db.collection("guides")
-        .where("status", "==", "published")
-        .get();
-
-      snapshot.forEach(function (doc) {
-        publishedGuideIds.add(doc.id);
-      });
-    } catch (error) {
-      console.error("讀取已發布文章列表失敗：", error);
-    }
-
-    return publishedGuideIds;
-  }
-
-  async function calculateUserXP(user) {
-    if (isAdminUser(user)) {
-      return getAdminLevelInfo();
-    }
-
-    const uid = user.uid;
-
-    let postBaseXP = 0;
-    let postLikeXP = 0;
-    let commentLikeXP = 0;
-
-    let postCount = 0;
-    let articleLikeCount = 0;
-    let commentLikeCount = 0;
-
-    let publishedGuideIds = new Set();
-
-    try {
-      publishedGuideIds = await loadPublishedGuideIds();
-    } catch (error) {
-      console.error("讀取已發布文章 ID 失敗：", error);
-    }
-
-    try {
-      const guideSnapshot = await db.collection("guides")
-        .where("authorUid", "==", uid)
-        .get();
-
-      guideSnapshot.forEach(function (doc) {
-        const data = doc.data();
-
-        if (data.status !== "published") return;
-
-        postCount += 1;
-
-        const category = data.category || "桌遊攻略";
-        const likeCount = Number(data.likeCount || 0);
-
-        postBaseXP += getCategoryXP(category);
-        articleLikeCount += likeCount;
-      });
-
-      postLikeXP = Math.floor(articleLikeCount / 10);
-    } catch (error) {
-      console.error("計算文章經驗值失敗：", error);
-    }
-
-    try {
-      const commentSnapshot = await db.collection("comments")
-        .where("uid", "==", uid)
-        .get();
-
-      commentSnapshot.forEach(function (doc) {
-        const data = doc.data();
-        const guideId = getGuideIdFromCommentPostPath(data.postPath);
-
-        if (!guideId) return;
-        if (!publishedGuideIds.has(guideId)) return;
-
-        commentLikeCount += Number(data.likeCount || 0);
-      });
-
-      commentLikeXP = Math.floor(commentLikeCount / 10);
-    } catch (error) {
-      console.error("計算留言經驗值失敗：", error);
-    }
-
-    const totalXP = postBaseXP + postLikeXP + commentLikeXP;
-    const levelInfo = calculateLevel(totalXP);
-
-    return {
-      ...levelInfo,
-      isAdmin: false,
-      postCount: postCount,
-      articleLikeCount: articleLikeCount,
-      commentLikeCount: commentLikeCount,
-      postBaseXP: postBaseXP,
-      postLikeXP: postLikeXP,
-      commentLikeXP: commentLikeXP
-    };
-  }
-
-  function ensureProfileStyles() {
-    if (document.getElementById("memberProfileStyle")) return;
-
-    const style = document.createElement("style");
-    style.id = "memberProfileStyle";
-    style.innerHTML = `
-      .member-profile-panel {
-        margin: 1rem auto 0;
-        padding: 0.85rem 0.9rem;
-        width: calc(100% - 1.4rem);
-        max-width: 260px;
-        border-radius: 16px;
-        background: rgba(0, 0, 0, 0.22);
-        border: 1px solid rgba(255, 255, 255, 0.14);
-        box-sizing: border-box;
-        color: inherit;
-        font-size: 0.9rem;
-        line-height: 1.5;
+      if (!data.email || data.email !== user.email) {
+        shouldUpdate = true;
       }
 
-      .member-profile-name-row {
+      if (typeof data.mustChangePassword === "undefined") {
+        updateData.mustChangePassword = false;
+        shouldUpdate = true;
+      }
+
+      if (typeof data.displayNameConfirmed === "undefined") {
+        updateData.displayNameConfirmed = false;
+        shouldUpdate = true;
+      }
+
+      if (shouldUpdate) {
+        await userRef.update(updateData);
+      }
+
+      const refreshedDoc = await userRef.get();
+      return refreshedDoc.exists ? refreshedDoc.data() : data;
+    }
+
+    const newData = {
+      email: user.email || "",
+      displayName: "",
+      displayNameConfirmed: false,
+      mustChangePassword: false,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    await userRef.set(newData);
+
+    return newData;
+  }
+
+  async function getPublishedGuides() {
+    const snapshot = await db.collection("guides")
+      .where("status", "==", "published")
+      .get();
+
+    return snapshot.docs.map(function (doc) {
+      return {
+        id: doc.id,
+        data: doc.data()
+      };
+    });
+  }
+
+  function calculatePostXp(uid, guides) {
+    let postXp = 0;
+    let postCount = 0;
+    const categoryBreakdown = {};
+
+    guides.forEach(function (item) {
+      const data = item.data || {};
+
+      if (data.authorUid !== uid) return;
+
+      const category = data.category || "桌遊攻略";
+      const xp = POST_XP_TABLE[category] ?? 0;
+
+      postXp += xp;
+      postCount += 1;
+
+      if (!categoryBreakdown[category]) {
+        categoryBreakdown[category] = {
+          count: 0,
+          xp: 0
+        };
+      }
+
+      categoryBreakdown[category].count += 1;
+      categoryBreakdown[category].xp += xp;
+    });
+
+    return {
+      postXp: postXp,
+      postCount: postCount,
+      categoryBreakdown: categoryBreakdown
+    };
+  }
+
+  function calculateArticleReceivedLikeXp(uid, guides) {
+    let articleReceivedLikeXp = 0;
+    let totalArticleLikes = 0;
+
+    guides.forEach(function (item) {
+      const data = item.data || {};
+
+      if (data.authorUid !== uid) return;
+
+      const likeCount = Number(data.likeCount || 0);
+
+      totalArticleLikes += likeCount;
+      articleReceivedLikeXp += Math.floor(likeCount / 10);
+    });
+
+    return {
+      articleReceivedLikeXp: articleReceivedLikeXp,
+      totalArticleLikes: totalArticleLikes
+    };
+  }
+
+  function calculateArticleGivenLikeXp(uid, guides) {
+    let articleGivenLikeXp = 0;
+    let givenArticleLikeCount = 0;
+
+    guides.forEach(function (item) {
+      const data = item.data || {};
+      const likedBy = data.likedBy || {};
+      const authorUid = data.authorUid || "";
+
+      const hasLikedThisArticle = likedBy[uid] === true;
+      const isOwnArticle = authorUid === uid;
+
+      if (hasLikedThisArticle && !isOwnArticle) {
+        articleGivenLikeXp += 1;
+        givenArticleLikeCount += 1;
+      }
+    });
+
+    return {
+      articleGivenLikeXp: articleGivenLikeXp,
+      givenArticleLikeCount: givenArticleLikeCount
+    };
+  }
+
+  async function calculateMemberXp(user) {
+    if (!user) {
+      return {
+        totalXp: 0,
+        postXp: 0,
+        postCount: 0,
+        articleReceivedLikeXp: 0,
+        totalArticleLikes: 0,
+        articleGivenLikeXp: 0,
+        givenArticleLikeCount: 0,
+        categoryBreakdown: {},
+        commentLikeXp: 0,
+        totalCommentLikes: 0
+      };
+    }
+
+    if (isAdmin(user)) {
+      return {
+        totalXp: 0,
+        postXp: 0,
+        postCount: 0,
+        articleReceivedLikeXp: 0,
+        totalArticleLikes: 0,
+        articleGivenLikeXp: 0,
+        givenArticleLikeCount: 0,
+        categoryBreakdown: {},
+        commentLikeXp: 0,
+        totalCommentLikes: 0,
+        isAdmin: true
+      };
+    }
+
+    try {
+      const guides = await getPublishedGuides();
+
+      const postResult = calculatePostXp(user.uid, guides);
+      const receivedLikeResult = calculateArticleReceivedLikeXp(user.uid, guides);
+      const givenLikeResult = calculateArticleGivenLikeXp(user.uid, guides);
+
+      const totalXp =
+        postResult.postXp +
+        receivedLikeResult.articleReceivedLikeXp +
+        givenLikeResult.articleGivenLikeXp;
+
+      return {
+        totalXp: totalXp,
+
+        postXp: postResult.postXp,
+        postCount: postResult.postCount,
+        categoryBreakdown: postResult.categoryBreakdown,
+
+        articleReceivedLikeXp: receivedLikeResult.articleReceivedLikeXp,
+        totalArticleLikes: receivedLikeResult.totalArticleLikes,
+
+        articleGivenLikeXp: givenLikeResult.articleGivenLikeXp,
+        givenArticleLikeCount: givenLikeResult.givenArticleLikeCount,
+
+        commentLikeXp: 0,
+        totalCommentLikes: 0
+      };
+    } catch (error) {
+      console.error("計算社員 XP 失敗：", error);
+
+      return {
+        totalXp: 0,
+        postXp: 0,
+        postCount: 0,
+        articleReceivedLikeXp: 0,
+        totalArticleLikes: 0,
+        articleGivenLikeXp: 0,
+        givenArticleLikeCount: 0,
+        categoryBreakdown: {},
+        commentLikeXp: 0,
+        totalCommentLikes: 0
+      };
+    }
+  }
+
+  function injectProfileStyle() {
+    if (document.getElementById("bgcProfileStyle")) return;
+
+    const style = document.createElement("style");
+    style.id = "bgcProfileStyle";
+    style.innerHTML = `
+      .bgc-member-profile-panel {
+        margin-top: 1rem;
+        padding: 0.85rem;
+        border-radius: 16px;
+        background: rgba(0, 0, 0, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.13);
+        color: inherit;
+        font-size: 0.92rem;
+        line-height: 1.6;
+      }
+
+      .bgc-member-profile-name-row {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 0.5rem;
-        margin-bottom: 0.45rem;
+        margin-bottom: 0.55rem;
       }
 
-      .member-profile-name {
+      .bgc-member-profile-name {
         min-width: 0;
         font-weight: 800;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        line-height: 1.35;
+        word-break: break-word;
+      }
+
+      .bgc-member-profile-level {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        padding: 3px 9px;
+        border-radius: 999px;
+        border: 1px solid rgba(79, 177, 186, 0.45);
+        background: rgba(79, 177, 186, 0.13);
+        font-size: 0.78rem;
+        font-weight: 900;
         white-space: nowrap;
       }
 
-      .member-profile-edit-btn,
-      .member-profile-logout-btn {
-        flex: 0 0 auto;
-        border: 1px solid rgba(255,255,255,0.2);
-        background: rgba(255,255,255,0.06);
-        color: inherit;
+      .bgc-member-profile-xp-text {
+        opacity: 0.88;
+        font-size: 0.82rem;
+        line-height: 1.55;
+        margin-bottom: 0.5rem;
+      }
+
+      .bgc-member-profile-progress {
+        width: 100%;
+        height: 8px;
         border-radius: 999px;
-        padding: 4px 9px;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.16);
+        margin-bottom: 0.65rem;
+      }
+
+      .bgc-member-profile-progress-bar {
+        height: 100%;
+        width: 0%;
+        border-radius: 999px;
+        background: rgb(79, 177, 186);
+        transition: width 0.25s ease;
+      }
+
+      .bgc-member-profile-xp-source {
+        margin: 0.55rem 0 0.65rem;
+        padding: 0.55rem 0.65rem;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        font-size: 0.78rem;
+        line-height: 1.65;
+        opacity: 0.9;
+      }
+
+      .bgc-member-profile-actions {
+        display: flex;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+        margin-top: 0.6rem;
+      }
+
+      .bgc-member-profile-actions button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 5px 9px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: transparent;
+        color: inherit;
         font: inherit;
         font-size: 0.78rem;
-        font-weight: 700;
+        font-weight: 800;
         cursor: pointer;
         line-height: 1.2;
       }
 
-      .member-profile-edit-btn:hover,
-      .member-profile-logout-btn:hover {
-        border-color: rgba(79,177,186,0.75);
-        background: rgba(79,177,186,0.12);
+      .bgc-member-profile-actions button:hover {
+        border-color: rgba(79, 177, 186, 0.65);
+        background: rgba(79, 177, 186, 0.12);
       }
 
-      .member-profile-level-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.6rem;
-        margin-top: 0.45rem;
-        font-size: 0.84rem;
-        opacity: 0.95;
-      }
-
-      .member-profile-level-badge {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 3px 9px;
-        border-radius: 999px;
-        border: 1px solid rgba(79,177,186,0.5);
-        background: rgba(79,177,186,0.14);
-        font-weight: 800;
-        white-space: nowrap;
-      }
-
-      .member-profile-level-badge.admin {
-        border-color: rgba(255, 214, 102, 0.7);
-        background: rgba(255, 214, 102, 0.18);
-      }
-
-      .member-profile-xp-text {
-        min-width: 0;
-        opacity: 0.82;
-        font-size: 0.78rem;
-        text-align: right;
-      }
-
-      .member-profile-progress {
-        width: 100%;
-        height: 7px;
-        margin-top: 0.55rem;
-        border-radius: 999px;
-        background: rgba(255,255,255,0.11);
-        overflow: hidden;
-      }
-
-      .member-profile-progress-bar {
-        height: 100%;
-        width: 0%;
-        border-radius: 999px;
-        background: rgba(79,177,186,0.92);
-        transition: width 0.25s ease;
-      }
-
-      .member-profile-progress-bar.admin {
-        background: rgba(255, 214, 102, 0.92);
-      }
-
-      .member-profile-breakdown {
-        margin-top: 0.55rem;
-        font-size: 0.76rem;
-        opacity: 0.72;
-        line-height: 1.55;
-      }
-
-      .member-profile-loading {
-        opacity: 0.75;
-        font-size: 0.85rem;
-      }
-
-      .member-profile-floating {
-        position: fixed;
-        right: 16px;
-        bottom: 16px;
-        z-index: 99998;
-        width: 260px;
-        margin: 0;
-        box-shadow: 0 8px 26px rgba(0,0,0,0.28);
-        backdrop-filter: blur(10px);
-      }
-
-      #memberProfileModal {
+      .bgc-profile-modal {
         position: fixed;
         inset: 0;
         z-index: 100000;
@@ -386,91 +429,100 @@ console.log("profile.js 已載入");
         align-items: center;
         justify-content: center;
         padding: 20px;
-        background: rgba(0,0,0,0.62);
+        background: rgba(0, 0, 0, 0.64);
         box-sizing: border-box;
       }
 
-      #memberProfileModal.show {
+      .bgc-profile-modal.show {
         display: flex;
       }
 
-      .member-profile-modal-card {
+      .bgc-profile-modal-card {
         width: 100%;
-        max-width: 420px;
+        max-width: 440px;
         background: #fff;
         color: #222;
-        border-radius: 14px;
+        border-radius: 18px;
         padding: 24px;
-        box-shadow: 0 16px 40px rgba(0,0,0,0.34);
+        box-shadow: 0 18px 46px rgba(0, 0, 0, 0.36);
         box-sizing: border-box;
       }
 
-      .member-profile-modal-card h3 {
+      .bgc-profile-modal-card h3 {
         margin: 0 0 12px 0;
         color: #222;
+        font-size: 22px;
       }
 
-      .member-profile-modal-card p {
-        margin: 0 0 14px 0;
+      .bgc-profile-modal-card p {
+        margin: 0 0 15px 0;
         color: #555;
-        line-height: 1.6;
+        line-height: 1.7;
         font-size: 14px;
       }
 
-      .member-profile-modal-card input {
+      .bgc-profile-modal-card label {
+        display: block;
+        margin-bottom: 0.45rem;
+        color: #333;
+        font-weight: 800;
+      }
+
+      .bgc-profile-modal-card input {
         width: 100%;
         box-sizing: border-box;
         padding: 10px 12px;
-        border-radius: 8px;
-        border: 1px solid #d6d6d6;
-        color: #222;
+        border-radius: 10px;
+        border: 1px solid #d0d0d0;
         background: #fff;
+        color: #222;
         font: inherit;
       }
 
-      #memberProfileModalMsg {
-        min-height: 20px;
-        margin-top: 10px;
+      .bgc-profile-modal-msg {
+        min-height: 21px;
+        margin-top: 0.8rem;
         color: #d93025;
         font-size: 14px;
-        line-height: 1.5;
+        line-height: 1.55;
       }
 
-      #memberProfileModalMsg.success {
+      .bgc-profile-modal-msg.success {
         color: #188038;
       }
 
-      .member-profile-modal-actions {
+      .bgc-profile-modal-actions {
         display: flex;
         justify-content: flex-end;
         gap: 10px;
-        margin-top: 16px;
+        margin-top: 18px;
       }
 
-      .member-profile-modal-actions button {
+      .bgc-profile-modal-actions button {
         padding: 9px 14px;
         border: none;
-        border-radius: 8px;
+        border-radius: 999px;
         cursor: pointer;
-        font-weight: 700;
+        font-weight: 800;
       }
 
-      #memberProfileCancelBtn {
+      #bgcProfileCancelBtn {
         background: #e8e8e8;
         color: #333;
       }
 
-      #memberProfileSaveBtn {
-        background: rgb(79,177,186);
+      #bgcProfileSaveBtn {
+        background: rgb(79, 177, 186);
         color: #fff;
       }
 
-      @media (max-width: 768px) {
-        .member-profile-floating {
-          right: 10px;
-          bottom: 10px;
-          width: calc(100vw - 20px);
-          max-width: 300px;
+      @media (max-width: 640px) {
+        .bgc-profile-modal-actions {
+          flex-direction: column-reverse;
+        }
+
+        .bgc-profile-modal-actions button {
+          width: 100%;
         }
       }
     `;
@@ -478,105 +530,58 @@ console.log("profile.js 已載入");
     document.head.appendChild(style);
   }
 
-  function findProfileTarget() {
-    const selectors = [
-      ".sidebar-nav",
-      ".sidebar-sticky nav",
-      ".sidebar nav",
-      "nav.sidebar",
-      ".sidebar-sticky",
-      ".sidebar"
-    ];
-
-    for (const selector of selectors) {
-      const el = document.querySelector(selector);
-      if (el) return el;
-    }
-
-    return null;
+  function findSidebarTarget() {
+    return (
+      document.querySelector(".sidebar-sticky") ||
+      document.querySelector(".sidebar") ||
+      document.querySelector("aside") ||
+      document.body
+    );
   }
 
-  function createProfilePanel() {
-    let panel = document.getElementById("memberProfilePanel");
+  function ensureProfilePanel() {
+    injectProfileStyle();
+
+    let panel = document.getElementById("bgcMemberProfilePanel");
 
     if (panel) return panel;
 
+    const target = findSidebarTarget();
+
     panel = document.createElement("div");
-    panel.id = "memberProfilePanel";
-    panel.className = "member-profile-panel";
+    panel.id = "bgcMemberProfilePanel";
+    panel.className = "bgc-member-profile-panel";
     panel.innerHTML = `
-      <div class="member-profile-loading">社員資料載入中...</div>
-    `;
-
-    const target = findProfileTarget();
-
-    if (target) {
-      target.appendChild(panel);
-    } else {
-      panel.classList.add("member-profile-floating");
-      document.body.appendChild(panel);
-    }
-
-    return panel;
-  }
-
-  function renderProfilePanel() {
-    const panel = createProfilePanel();
-
-    if (!currentUser) {
-      panel.innerHTML = `
-        <div class="member-profile-loading">尚未登入</div>
-      `;
-      return;
-    }
-
-    const level = currentLevelInfo || calculateLevel(0);
-    const isAdmin = level.isAdmin === true;
-
-    const xpText = isAdmin || level.isMaxLevel
-      ? "MAX LEVEL"
-      : `EXP ${level.xpInCurrentLevel} / ${level.xpNeededForNextLevel}`;
-
-    const breakdownText = isAdmin
-      ? `管理員帳號・不累積經驗值`
-      : `總經驗 ${level.totalXP || 0} XP<br>
-         發文 ${level.postBaseXP || 0} XP・文章讚 ${level.postLikeXP || 0} XP・留言讚 ${level.commentLikeXP || 0} XP`;
-
-    panel.innerHTML = `
-      <div class="member-profile-name-row">
-        <div class="member-profile-name" title="${escapeHtml(currentDisplayName)}">
-          ${escapeHtml(currentDisplayName || "未命名社員")}
-        </div>
-        <button id="memberProfileEditBtn" class="member-profile-edit-btn" type="button">更改ID</button>
+      <div class="bgc-member-profile-name-row">
+        <div class="bgc-member-profile-name" id="bgcProfileDisplayName">社員</div>
+        <div class="bgc-member-profile-level" id="bgcProfileLevel">Lv.1</div>
       </div>
 
-      <div class="member-profile-level-row">
-        <span class="member-profile-level-badge ${isAdmin ? "admin" : ""}">
-          Lv.${level.level}
-        </span>
-        <span class="member-profile-xp-text">
-          ${xpText}
-        </span>
+      <div class="bgc-member-profile-xp-text" id="bgcProfileXpText">
+        XP 載入中...
       </div>
 
-      <div class="member-profile-progress" title="${isAdmin || level.isMaxLevel ? "已達最高等級" : "距離下一級還需要 " + level.xpToNextLevel + " XP"}">
-        <div class="member-profile-progress-bar ${isAdmin ? "admin" : ""}" style="width: ${level.progressPercent}%;"></div>
+      <div class="bgc-member-profile-progress">
+        <div class="bgc-member-profile-progress-bar" id="bgcProfileProgressBar"></div>
       </div>
 
-      <div class="member-profile-breakdown">
-        ${breakdownText}
+      <div class="bgc-member-profile-xp-source" id="bgcProfileXpSource">
+        經驗值來源載入中...
       </div>
 
-      <div style="margin-top: 0.65rem;">
-        <button id="memberProfileLogoutBtn" class="member-profile-logout-btn" type="button">登出</button>
+      <div class="bgc-member-profile-actions">
+        <button id="bgcChangeDisplayNameBtn" type="button">更改 ID</button>
+        <button id="bgcLogoutBtn" type="button">登出</button>
       </div>
     `;
 
-    const editBtn = document.getElementById("memberProfileEditBtn");
-    const logoutBtn = document.getElementById("memberProfileLogoutBtn");
+    target.appendChild(panel);
 
-    if (editBtn) {
-      editBtn.addEventListener("click", openProfileModal);
+    const changeNameBtn = document.getElementById("bgcChangeDisplayNameBtn");
+    const logoutBtn = document.getElementById("bgcLogoutBtn");
+
+    if (changeNameBtn) {
+      changeNameBtn.addEventListener("click", openDisplayNameModal);
     }
 
     if (logoutBtn) {
@@ -585,54 +590,75 @@ console.log("profile.js 已載入");
         window.location.href = "/login/";
       });
     }
+
+    return panel;
   }
 
-  function createProfileModal() {
-    if (document.getElementById("memberProfileModal")) return;
+  function createDisplayNameModal() {
+    if (document.getElementById("bgcProfileModal")) return;
 
     const modal = document.createElement("div");
-    modal.id = "memberProfileModal";
+    modal.id = "bgcProfileModal";
+    modal.className = "bgc-profile-modal";
     modal.innerHTML = `
-      <div class="member-profile-modal-card">
+      <div class="bgc-profile-modal-card">
         <h3>更改社員 ID</h3>
-        <p>社員 ID 會顯示在留言與文章作者資訊中，建議使用大家認得出你的暱稱。</p>
+        <p>社員 ID 會顯示在留言、社員論壇文章與互動紀錄中。建議使用大家認得出你的暱稱。</p>
 
-        <input id="memberProfileNameInput" type="text" maxlength="20" placeholder="請輸入 1–20 字的社員 ID">
+        <label for="bgcProfileDisplayNameInput">社員 ID</label>
+        <input id="bgcProfileDisplayNameInput" type="text" maxlength="20" placeholder="請輸入新的社員 ID">
 
-        <div id="memberProfileModalMsg"></div>
+        <div id="bgcProfileModalMsg" class="bgc-profile-modal-msg"></div>
 
-        <div class="member-profile-modal-actions">
-          <button id="memberProfileCancelBtn" type="button">取消</button>
-          <button id="memberProfileSaveBtn" type="button">儲存</button>
+        <div class="bgc-profile-modal-actions">
+          <button id="bgcProfileCancelBtn" type="button">取消</button>
+          <button id="bgcProfileSaveBtn" type="button">儲存</button>
         </div>
       </div>
     `;
 
     document.body.appendChild(modal);
 
-    document.getElementById("memberProfileCancelBtn").addEventListener("click", closeProfileModal);
-    document.getElementById("memberProfileSaveBtn").addEventListener("click", saveDisplayName);
+    document.getElementById("bgcProfileCancelBtn").addEventListener("click", closeDisplayNameModal);
+    document.getElementById("bgcProfileSaveBtn").addEventListener("click", saveDisplayName);
 
-    modal.addEventListener("click", function (event) {
-      if (event.target === modal) closeProfileModal();
+    document.getElementById("bgcProfileDisplayNameInput").addEventListener("keydown", function (event) {
+      if (event.key === "Enter") {
+        saveDisplayName();
+      }
     });
 
-    document.addEventListener("keydown", function (event) {
-      if (event.key === "Escape") closeProfileModal();
+    modal.addEventListener("click", function (event) {
+      if (event.target === modal) closeDisplayNameModal();
     });
   }
 
-  function openProfileModal() {
-    createProfileModal();
+  function setModalMsg(text, type) {
+    const modalMsg = document.getElementById("bgcProfileModalMsg");
+    if (!modalMsg) return;
 
-    const modal = document.getElementById("memberProfileModal");
-    const input = document.getElementById("memberProfileNameInput");
-    const msg = document.getElementById("memberProfileModalMsg");
+    modalMsg.innerText = text || "";
+    modalMsg.className = type === "success"
+      ? "bgc-profile-modal-msg success"
+      : "bgc-profile-modal-msg";
+  }
 
-    input.value = currentDisplayName || "";
-    msg.innerText = "";
-    msg.className = "";
+  function openDisplayNameModal() {
+    if (!currentUser) return;
 
+    createDisplayNameModal();
+
+    const modal = document.getElementById("bgcProfileModal");
+    const input = document.getElementById("bgcProfileDisplayNameInput");
+
+    if (!modal || !input) return;
+
+    input.value =
+      currentUserData && currentUserData.displayName
+        ? currentUserData.displayName
+        : getEmailPrefix(currentUser.email);
+
+    setModalMsg("");
     modal.classList.add("show");
 
     setTimeout(function () {
@@ -641,107 +667,191 @@ console.log("profile.js 已載入");
     }, 100);
   }
 
-  function closeProfileModal() {
-    const modal = document.getElementById("memberProfileModal");
-
-    if (modal) {
-      modal.classList.remove("show");
-    }
+  function closeDisplayNameModal() {
+    const modal = document.getElementById("bgcProfileModal");
+    if (modal) modal.classList.remove("show");
   }
 
   async function saveDisplayName() {
-    const input = document.getElementById("memberProfileNameInput");
-    const msg = document.getElementById("memberProfileModalMsg");
-    const saveBtn = document.getElementById("memberProfileSaveBtn");
+    if (isSavingDisplayName) return;
 
     if (!currentUser) {
-      msg.innerText = "請先登入。";
+      setModalMsg("請先登入。");
       return;
     }
 
-    const name = input.value.trim();
+    const input = document.getElementById("bgcProfileDisplayNameInput");
+    const saveBtn = document.getElementById("bgcProfileSaveBtn");
 
-    if (!name) {
-      msg.innerText = "社員 ID 不能空白。";
-      input.focus();
-      return;
-    }
+    const displayName = sanitizeDisplayName(input.value);
+    const error = validateDisplayName(displayName);
 
-    if (name.length > 20) {
-      msg.innerText = "社員 ID 請控制在 20 字以內。";
+    if (error) {
+      setModalMsg(error);
       input.focus();
       return;
     }
 
     try {
+      isSavingDisplayName = true;
       saveBtn.disabled = true;
       saveBtn.innerText = "儲存中...";
+      setModalMsg("正在儲存...");
 
-      await db.collection("users").doc(currentUser.uid).set({
-        displayName: name,
-        email: currentUser.email
-      }, { merge: true });
+      await db.collection("users").doc(currentUser.uid).update({
+        email: currentUser.email || "",
+        displayName: displayName,
+        displayNameConfirmed: true,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
 
-      currentDisplayName = name;
+      currentUserData = {
+        ...(currentUserData || {}),
+        email: currentUser.email || "",
+        displayName: displayName,
+        displayNameConfirmed: true
+      };
 
-      msg.className = "success";
-      msg.innerText = "已更新社員 ID。";
+      setModalMsg("社員 ID 已更新。", "success");
+      await renderProfile();
 
-      renderProfilePanel();
+      window.dispatchEvent(new CustomEvent("bgc-profile-updated", {
+        detail: {
+          displayName: displayName
+        }
+      }));
 
-      setTimeout(closeProfileModal, 800);
+      setTimeout(function () {
+        closeDisplayNameModal();
+      }, 700);
     } catch (error) {
       console.error("更新社員 ID 失敗：", error);
-      msg.className = "";
-      msg.innerText = "更新失敗，請稍後再試。";
+      setModalMsg("更新失敗，請稍後再試。");
     } finally {
+      isSavingDisplayName = false;
       saveBtn.disabled = false;
       saveBtn.innerText = "儲存";
     }
   }
 
-  async function refreshProfile(user) {
-    currentUser = user;
+  function renderProfileContent(displayName, levelInfo, xpInfo) {
+    ensureProfilePanel();
 
-    if (!user) {
-      currentDisplayName = "";
-      currentLevelInfo = null;
-      renderProfilePanel();
+    const displayNameEl = document.getElementById("bgcProfileDisplayName");
+    const levelEl = document.getElementById("bgcProfileLevel");
+    const xpTextEl = document.getElementById("bgcProfileXpText");
+    const progressBarEl = document.getElementById("bgcProfileProgressBar");
+    const xpSourceEl = document.getElementById("bgcProfileXpSource");
+
+    if (displayNameEl) {
+      displayNameEl.innerText = displayName || "尚未設定 ID";
+    }
+
+    if (isAdmin(currentUser)) {
+      if (levelEl) levelEl.innerText = "Lv.9999";
+      if (xpTextEl) xpTextEl.innerText = "管理員帳號，等級固定為最高等級。";
+      if (progressBarEl) progressBarEl.style.width = "100%";
+      if (xpSourceEl) {
+        xpSourceEl.innerHTML = `
+          <div>管理員模式：不累積一般經驗值。</div>
+        `;
+      }
       return;
     }
 
-    try {
-      currentDisplayName = await loadUserProfile(user);
-    } catch (error) {
-      console.error("讀取社員 ID 失敗：", error);
-      currentDisplayName = user.displayName || user.email.split("@")[0];
+    if (levelEl) {
+      levelEl.innerText = "Lv." + levelInfo.level;
     }
 
-    renderProfilePanel();
-
-    try {
-      currentLevelInfo = await calculateUserXP(user);
-    } catch (error) {
-      console.error("計算社員等級失敗：", error);
-      currentLevelInfo = calculateLevel(0);
+    if (xpTextEl) {
+      xpTextEl.innerText =
+        "目前 XP：" +
+        levelInfo.totalXp +
+        "｜距離下一級：" +
+        levelInfo.currentXp +
+        " / " +
+        levelInfo.nextLevelXp;
     }
 
-    renderProfilePanel();
+    if (progressBarEl) {
+      progressBarEl.style.width = levelInfo.progressPercent + "%";
+    }
+
+    if (xpSourceEl) {
+      xpSourceEl.innerHTML = `
+        <div>發文 XP：${xpInfo.postXp}（${xpInfo.postCount} 篇）</div>
+        <div>文章獲讚 XP：${xpInfo.articleReceivedLikeXp}（文章總讚數 ${xpInfo.totalArticleLikes}，每 10 讚 +1 XP）</div>
+        <div>按讚文章 XP：${xpInfo.articleGivenLikeXp}（已按讚 ${xpInfo.givenArticleLikeCount} 篇別人的文章）</div>
+      `;
+    }
   }
 
-  function init() {
-    ensureProfileStyles();
-    createProfilePanel();
-    createProfileModal();
+  async function renderProfile() {
+    if (!currentUser) return;
 
-    auth.onAuthStateChanged(function (user) {
-      refreshProfile(user);
-    });
+    try {
+      ensureProfilePanel();
+
+      currentUserData = await ensureUserDoc(currentUser);
+
+      const displayName =
+        currentUserData.displayName ||
+        getEmailPrefix(currentUser.email);
+
+      const xpInfo = await calculateMemberXp(currentUser);
+
+      if (isAdmin(currentUser)) {
+        renderProfileContent(displayName, {
+          level: MAX_LEVEL,
+          totalXp: 0,
+          currentXp: 0,
+          nextLevelXp: 0,
+          progressPercent: 100
+        }, xpInfo);
+
+        return;
+      }
+
+      const levelInfo = calculateLevelFromXp(xpInfo.totalXp);
+
+      renderProfileContent(displayName, levelInfo, xpInfo);
+    } catch (error) {
+      console.error("渲染會員資料失敗：", error);
+    }
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
-  } else {
-    init();
+  function hideProfilePanel() {
+    const panel = document.getElementById("bgcMemberProfilePanel");
+
+    if (panel) {
+      panel.remove();
+    }
   }
+
+  auth.onAuthStateChanged(async function (user) {
+    currentUser = user;
+
+    if (!user) {
+      currentUserData = null;
+      hideProfilePanel();
+      return;
+    }
+
+    await renderProfile();
+  });
+
+  window.addEventListener("bgc-profile-updated", async function () {
+    await renderProfile();
+  });
+
+  window.addEventListener("bgc-xp-refresh", async function () {
+    await renderProfile();
+  });
+
+  document.addEventListener("DOMContentLoaded", function () {
+    if (auth.currentUser) {
+      currentUser = auth.currentUser;
+      renderProfile();
+    }
+  });
 })();
