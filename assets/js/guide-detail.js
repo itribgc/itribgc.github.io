@@ -17,6 +17,8 @@ console.log("guide-detail.js 已載入");
   const auth = firebase.auth();
   const db = firebase.firestore();
 
+  const ADMIN_EMAIL = "itribgc@gmail.com";
+
   let currentUser = null;
   let currentGuideId = "";
   let currentGuideData = null;
@@ -26,6 +28,21 @@ console.log("guide-detail.js 已載入");
   function getGuideId() {
     const params = new URLSearchParams(window.location.search);
     return params.get("id");
+  }
+
+  function isAdmin() {
+    return currentUser && currentUser.email === ADMIN_EMAIL;
+  }
+
+  function canManageArticle() {
+    return (
+      currentUser &&
+      currentGuideData &&
+      (
+        currentGuideData.authorUid === currentUser.uid ||
+        isAdmin()
+      )
+    );
   }
 
   function escapeHtml(text) {
@@ -64,10 +81,6 @@ console.log("guide-detail.js 已載入");
   function hasLiked() {
     if (!currentUser || !currentGuideData || !currentGuideData.likedBy) return false;
     return currentGuideData.likedBy[currentUser.uid] === true;
-  }
-
-  function isOwner() {
-    return currentUser && currentGuideData && currentGuideData.authorUid === currentUser.uid;
   }
 
   async function getCommentCount(guideId) {
@@ -264,7 +277,7 @@ console.log("guide-detail.js 已載入");
   }
 
   function openDeleteModal() {
-    if (!isOwner()) return;
+    if (!canManageArticle()) return;
 
     createDeleteModal();
 
@@ -273,7 +286,11 @@ console.log("guide-detail.js 已載入");
     const msg = document.getElementById("guideDetailDeleteMsg");
     const confirmBtn = document.getElementById("guideDetailDeleteConfirmBtn");
 
-    text.innerText = `是否確定刪除文章「${currentGuideData.title || "未命名文章"}」？刪除後將無法復原。`;
+    const adminText = isAdmin() && currentGuideData.authorUid !== currentUser.uid
+      ? "你目前是以管理員身分刪除這篇文章。"
+      : "";
+
+    text.innerText = `是否確定刪除文章「${currentGuideData.title || "未命名文章"}」？刪除後將無法復原。${adminText}`;
     msg.innerText = "";
     confirmBtn.disabled = false;
     confirmBtn.innerText = "確定";
@@ -303,8 +320,8 @@ console.log("guide-detail.js 已載入");
       return;
     }
 
-    if (!isOwner()) {
-      msg.innerText = "只能刪除自己的文章。";
+    if (!canManageArticle()) {
+      msg.innerText = "你沒有刪除這篇文章的權限。";
       return;
     }
 
@@ -678,6 +695,17 @@ console.log("guide-detail.js 已載入");
         color: #ffb4a9;
       }
 
+      .guide-admin-note {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 13px;
+        border-radius: 999px;
+        font-size: 0.88rem;
+        font-weight: 700;
+        border: 1px solid rgba(79,177,186,0.35);
+        background: rgba(79,177,186,0.12);
+      }
+
       .guide-detail-content mark {
         padding: 0.1em 0.25em;
         border-radius: 0.25em;
@@ -755,9 +783,14 @@ console.log("guide-detail.js 已載入");
       </div>
 
       ${
-        isOwner()
+        canManageArticle()
           ? `
             <div class="guide-detail-owner-actions">
+              ${
+                isAdmin() && data.authorUid !== currentUser.uid
+                  ? `<span class="guide-admin-note">管理員模式</span>`
+                  : ""
+              }
               <a class="guide-detail-edit-btn" href="/guides/edit/?id=${encodeURIComponent(currentGuideId)}">編輯文章</a>
               <button class="guide-detail-delete-btn" id="guideDetailDeleteBtn" type="button">刪除文章</button>
             </div>
@@ -809,7 +842,7 @@ console.log("guide-detail.js 已載入");
 
       const data = doc.data();
 
-      if (data.status !== "published") {
+      if (data.status !== "published" && !isAdmin()) {
         const guideDetail = document.getElementById("guideDetail");
         if (guideDetail) {
           guideDetail.innerHTML = `<div class="guide-empty">這篇文章目前未公開。</div>`;
