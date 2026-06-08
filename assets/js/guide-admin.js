@@ -20,9 +20,9 @@ console.log("guide-admin.js 已載入");
   const ADMIN_EMAIL = "itribgc@gmail.com";
 
   let currentUser = null;
+  let unsubscribePendingGuides = null;
   let unsubscribeReports = null;
 
-  const listEl = document.getElementById("reportedGuideList");
   const msgEl = document.getElementById("guideAdminMsg");
 
   function setMsg(text, type) {
@@ -58,160 +58,193 @@ console.log("guide-admin.js 已載入");
     });
   }
 
-  function createDeleteModal() {
-    if (document.getElementById("adminDeleteGuideModal")) return;
+  function ensureAdminLayout() {
+    const page = document.querySelector(".guide-admin-page");
 
-    const modal = document.createElement("div");
-    modal.id = "adminDeleteGuideModal";
-    modal.innerHTML = `
-      <style>
-        #adminDeleteGuideModal {
-          position: fixed;
-          inset: 0;
-          z-index: 100000;
-          display: none;
-          align-items: center;
-          justify-content: center;
-          padding: 20px;
-          background: rgba(0,0,0,0.62);
-          box-sizing: border-box;
-        }
+    if (!page) return;
 
-        #adminDeleteGuideModal.show {
-          display: flex;
-        }
-
-        .admin-delete-card {
-          width: 100%;
-          max-width: 430px;
-          background: #fff;
-          color: #222;
-          border-radius: 14px;
-          padding: 24px;
-          box-shadow: 0 16px 40px rgba(0,0,0,0.34);
-          box-sizing: border-box;
-        }
-
-        .admin-delete-card h3 {
-          margin: 0 0 12px 0;
-          color: #222;
-        }
-
-        .admin-delete-card p {
-          margin: 0 0 16px 0;
-          color: #555;
-          line-height: 1.6;
-          font-size: 14px;
-        }
-
-        #adminDeleteMsg {
-          min-height: 20px;
-          color: #d93025;
-          font-size: 14px;
-          line-height: 1.5;
-        }
-
-        .admin-delete-actions {
-          display: flex;
-          justify-content: flex-end;
-          gap: 10px;
-          margin-top: 18px;
-        }
-
-        .admin-delete-actions button {
-          padding: 9px 14px;
-          border: none;
-          border-radius: 8px;
-          cursor: pointer;
-          font-weight: 700;
-        }
-
-        #adminDeleteCancelBtn {
-          background: #e8e8e8;
-          color: #333;
-        }
-
-        #adminDeleteConfirmBtn {
-          background: #d93025;
-          color: #fff;
-        }
-      </style>
-
-      <div class="admin-delete-card">
-        <h3>刪除文章</h3>
-        <p id="adminDeleteText">確定要刪除這篇文章嗎？刪除後無法復原。</p>
-        <div id="adminDeleteMsg"></div>
-
-        <div class="admin-delete-actions">
-          <button id="adminDeleteCancelBtn" type="button">取消</button>
-          <button id="adminDeleteConfirmBtn" type="button">確定刪除</button>
+    if (!document.getElementById("pendingGuideList")) {
+      const pendingSection = document.createElement("section");
+      pendingSection.className = "guide-admin-section";
+      pendingSection.innerHTML = `
+        <h2>貼文發布審核</h2>
+        <p class="guide-admin-section-desc">社員送出的文章會先出現在這裡，管理員審核通過後才會公開。</p>
+        <div id="pendingGuideList" class="reported-guide-list">
+          <div class="reported-guide-empty">待審核貼文載入中...</div>
         </div>
-      </div>
-    `;
+      `;
 
-    document.body.appendChild(modal);
+      page.appendChild(pendingSection);
+    }
 
-    document.getElementById("adminDeleteCancelBtn").addEventListener("click", closeDeleteModal);
+    if (!document.getElementById("reportedGuideList")) {
+      const reportSection = document.createElement("section");
+      reportSection.className = "guide-admin-section";
+      reportSection.innerHTML = `
+        <h2>疑慮審核</h2>
+        <p class="guide-admin-section-desc">社員回報「文章有疑慮」的內容會出現在這裡。</p>
+        <div id="reportedGuideList" class="reported-guide-list">
+          <div class="reported-guide-empty">疑慮回報載入中...</div>
+        </div>
+      `;
 
-    modal.addEventListener("click", function (event) {
-      if (event.target === modal) closeDeleteModal();
-    });
+      page.appendChild(reportSection);
+    }
   }
 
-  function closeDeleteModal() {
-    const modal = document.getElementById("adminDeleteGuideModal");
-    if (modal) modal.classList.remove("show");
+  function getPendingListEl() {
+    return document.getElementById("pendingGuideList");
   }
 
-  function openDeleteModal(guideId, reportId, title) {
-    createDeleteModal();
-
-    const modal = document.getElementById("adminDeleteGuideModal");
-    const text = document.getElementById("adminDeleteText");
-    const msg = document.getElementById("adminDeleteMsg");
-    const confirmBtn = document.getElementById("adminDeleteConfirmBtn");
-
-    text.innerText = `確定要刪除文章「${title || "未命名文章"}」嗎？刪除後無法復原。`;
-    msg.innerText = "";
-
-    const newConfirmBtn = confirmBtn.cloneNode(true);
-    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-
-    newConfirmBtn.addEventListener("click", function () {
-      deleteGuideByAdmin(guideId, reportId, newConfirmBtn, msg);
-    });
-
-    modal.classList.add("show");
+  function getReportListEl() {
+    return document.getElementById("reportedGuideList");
   }
 
-  async function deleteGuideByAdmin(guideId, reportId, confirmBtn, msg) {
+  async function approveGuide(guideId) {
     if (!isAdmin(currentUser)) {
-      msg.innerText = "你沒有管理員權限。";
+      setMsg("你沒有管理員權限。");
       return;
     }
 
+    const ok = confirm("確定審核通過並公開這篇文章嗎？");
+    if (!ok) return;
+
     try {
-      confirmBtn.disabled = true;
-      confirmBtn.innerText = "刪除中...";
-
-      await db.collection("guides").doc(guideId).delete();
-
-      await db.collection("reports").doc(reportId).update({
-        status: "deleted",
-        handledBy: currentUser.uid,
-        handledByEmail: currentUser.email,
-        handledAt: firebase.firestore.FieldValue.serverTimestamp(),
+      await db.collection("guides").doc(guideId).update({
+        status: "published",
+        reviewStatus: "approved",
+        reviewedBy: currentUser.uid,
+        reviewedByEmail: currentUser.email,
+        reviewedAt: firebase.firestore.FieldValue.serverTimestamp(),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
 
-      closeDeleteModal();
+      setMsg("文章已審核通過並公開。", "success");
+    } catch (error) {
+      console.error("審核通過失敗：", error);
+      setMsg("審核通過失敗，請稍後再試。");
+    }
+  }
+
+  async function deleteGuideByAdmin(guideId, title) {
+    if (!isAdmin(currentUser)) {
+      setMsg("你沒有管理員權限。");
+      return;
+    }
+
+    const ok = confirm(`確定刪除文章「${title || "未命名文章"}」嗎？刪除後無法復原。`);
+    if (!ok) return;
+
+    try {
+      await db.collection("guides").doc(guideId).delete();
       setMsg("文章已刪除。", "success");
     } catch (error) {
-      console.error("管理員刪除文章失敗：", error);
-      msg.innerText = "刪除失敗，請稍後再試。";
-      confirmBtn.disabled = false;
-      confirmBtn.innerText = "確定刪除";
+      console.error("刪除文章失敗：", error);
+      setMsg("刪除文章失敗，請稍後再試。");
     }
+  }
+
+  async function loadGuideData(guideId) {
+    try {
+      const doc = await db.collection("guides").doc(guideId).get();
+
+      if (!doc.exists) return null;
+
+      return {
+        id: doc.id,
+        data: doc.data()
+      };
+    } catch (error) {
+      console.error("讀取文章失敗：", error);
+      return null;
+    }
+  }
+
+  function renderPendingGuides(snapshot) {
+    const listEl = getPendingListEl();
+    if (!listEl) return;
+
+    if (!isAdmin(currentUser)) {
+      listEl.innerHTML = `<div class="reported-guide-empty">你沒有審核文章權限。</div>`;
+      return;
+    }
+
+    if (snapshot.empty) {
+      listEl.innerHTML = `<div class="reported-guide-empty">目前沒有待審核貼文。</div>`;
+      return;
+    }
+
+    const docs = snapshot.docs.slice().sort(function (a, b) {
+      const aTime = a.data().submittedAt && a.data().submittedAt.toMillis ? a.data().submittedAt.toMillis() : 0;
+      const bTime = b.data().submittedAt && b.data().submittedAt.toMillis ? b.data().submittedAt.toMillis() : 0;
+      return bTime - aTime;
+    });
+
+    let html = "";
+
+    docs.forEach(function (doc) {
+      const data = doc.data();
+      const title = data.title || "未命名文章";
+      const category = data.category || "未分類";
+      const gameName = data.gameName || "";
+      const summary = data.summary || "";
+      const coverImage = data.coverImage || "";
+      const authorName = data.authorName || "未命名社員";
+
+      html += `
+        <article class="reported-guide-card">
+          ${
+            coverImage
+              ? `
+                <a class="reported-guide-cover-link" href="/guides/post/?id=${encodeURIComponent(doc.id)}">
+                  <img class="reported-guide-cover" src="${escapeHtml(coverImage)}" alt="${escapeHtml(title)}">
+                </a>
+              `
+              : `<div class="reported-guide-cover reported-guide-cover-empty">無封面</div>`
+          }
+
+          <div class="reported-guide-body">
+            <a class="reported-guide-title-link" href="/guides/post/?id=${encodeURIComponent(doc.id)}">
+              <h2>${escapeHtml(title)}</h2>
+            </a>
+
+            <div class="reported-guide-meta">
+              <span>主題：${escapeHtml(gameName || "未分類主題")}</span>
+              <span>・${escapeHtml(authorName)}</span>
+              <span class="reported-guide-pill">${escapeHtml(category)}</span>
+              <span class="reported-guide-pill pending">待審核</span>
+            </div>
+
+            <p class="reported-guide-summary">${escapeHtml(summary || "這篇文章沒有摘要。")}</p>
+
+            <div class="reported-reason-box pending-box">
+              <strong>送審時間：</strong>
+              <div>${escapeHtml(formatTime(data.submittedAt) || "未記錄")}</div>
+            </div>
+
+            <div class="reported-guide-actions">
+              <a class="reported-guide-read-btn" href="/guides/post/?id=${encodeURIComponent(doc.id)}">查看文章</a>
+              <button class="reported-guide-approve-btn" type="button" data-guide-id="${escapeHtml(doc.id)}">審核通過</button>
+              <button class="reported-guide-delete-btn" type="button" data-guide-id="${escapeHtml(doc.id)}" data-title="${escapeHtml(title)}">刪除文章</button>
+            </div>
+          </div>
+        </article>
+      `;
+    });
+
+    listEl.innerHTML = html;
+
+    listEl.querySelectorAll(".reported-guide-approve-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        approveGuide(btn.dataset.guideId);
+      });
+    });
+
+    listEl.querySelectorAll(".reported-guide-delete-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        deleteGuideByAdmin(btn.dataset.guideId, btn.dataset.title);
+      });
+    });
   }
 
   async function markReportResolved(reportId) {
@@ -239,25 +272,35 @@ console.log("guide-admin.js 已載入");
     }
   }
 
-  async function loadGuideData(guideId) {
+  async function deleteReportedGuide(guideId, reportId, title) {
+    if (!isAdmin(currentUser)) {
+      setMsg("你沒有管理員權限。");
+      return;
+    }
+
+    const ok = confirm(`確定刪除被回報文章「${title || "未命名文章"}」嗎？刪除後無法復原。`);
+    if (!ok) return;
+
     try {
-      const doc = await db.collection("guides").doc(guideId).get();
+      await db.collection("guides").doc(guideId).delete();
 
-      if (!doc.exists) {
-        return null;
-      }
+      await db.collection("reports").doc(reportId).update({
+        status: "deleted",
+        handledBy: currentUser.uid,
+        handledByEmail: currentUser.email,
+        handledAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
 
-      return {
-        id: doc.id,
-        data: doc.data()
-      };
+      setMsg("文章已刪除，疑慮回報已標記為 deleted。", "success");
     } catch (error) {
-      console.error("讀取被回報文章失敗：", error);
-      return null;
+      console.error("刪除被回報文章失敗：", error);
+      setMsg("刪除失敗，請稍後再試。");
     }
   }
 
   async function renderReports(snapshot) {
+    const listEl = getReportListEl();
     if (!listEl) return;
 
     if (!isAdmin(currentUser)) {
@@ -312,9 +355,7 @@ console.log("guide-admin.js 已載入");
                   <img class="reported-guide-cover" src="${escapeHtml(coverImage)}" alt="${escapeHtml(title || "文章封面")}">
                 </a>
               `
-              : `
-                <div class="reported-guide-cover reported-guide-cover-empty">無封面</div>
-              `
+              : `<div class="reported-guide-cover reported-guide-cover-empty">無封面</div>`
           }
 
           <div class="reported-guide-body">
@@ -326,6 +367,7 @@ console.log("guide-admin.js 已載入");
               <span>主題：${escapeHtml(gameName || "未分類主題")}</span>
               <span>・${escapeHtml(authorName || "未命名社員")}</span>
               <span class="reported-guide-pill">${escapeHtml(category || "未分類")}</span>
+              <span class="reported-guide-pill danger">疑慮回報</span>
             </div>
 
             <p class="reported-guide-summary">${escapeHtml(summary || "這篇文章沒有摘要。")}</p>
@@ -345,30 +387,13 @@ console.log("guide-admin.js 已載入");
                 ? `
                   <div class="reported-guide-actions">
                     <a class="reported-guide-read-btn" href="/guides/post/?id=${encodeURIComponent(report.guideId)}">查看文章</a>
-                    <button
-                      class="reported-guide-delete-btn"
-                      type="button"
-                      data-guide-id="${escapeHtml(report.guideId)}"
-                      data-report-id="${escapeHtml(row.reportId)}"
-                      data-title="${escapeHtml(title || "未命名文章")}">
-                      刪除文章
-                    </button>
-                    <button
-                      class="reported-guide-resolve-btn"
-                      type="button"
-                      data-report-id="${escapeHtml(row.reportId)}">
-                      標記已處理
-                    </button>
+                    <button class="reported-guide-delete-btn" type="button" data-guide-id="${escapeHtml(report.guideId)}" data-report-id="${escapeHtml(row.reportId)}" data-title="${escapeHtml(title || "未命名文章")}">刪除文章</button>
+                    <button class="reported-guide-resolve-btn" type="button" data-report-id="${escapeHtml(row.reportId)}">標記已處理</button>
                   </div>
                 `
                 : `
                   <div class="reported-guide-actions">
-                    <button
-                      class="reported-guide-resolve-btn"
-                      type="button"
-                      data-report-id="${escapeHtml(row.reportId)}">
-                      文章已不存在，標記已處理
-                    </button>
+                    <button class="reported-guide-resolve-btn" type="button" data-report-id="${escapeHtml(row.reportId)}">文章已不存在，標記已處理</button>
                   </div>
                 `
             }
@@ -381,7 +406,7 @@ console.log("guide-admin.js 已載入");
 
     listEl.querySelectorAll(".reported-guide-delete-btn").forEach(function (btn) {
       btn.addEventListener("click", function () {
-        openDeleteModal(btn.dataset.guideId, btn.dataset.reportId, btn.dataset.title);
+        deleteReportedGuide(btn.dataset.guideId, btn.dataset.reportId, btn.dataset.title);
       });
     });
 
@@ -398,6 +423,20 @@ console.log("guide-admin.js 已載入");
     const style = document.createElement("style");
     style.id = "guideAdminExtraStyle";
     style.innerHTML = `
+      .guide-admin-section {
+        margin-top: 2.2rem;
+      }
+
+      .guide-admin-section h2 {
+        margin-bottom: 0.35rem;
+      }
+
+      .guide-admin-section-desc {
+        opacity: 0.78;
+        line-height: 1.7;
+        margin-bottom: 1rem;
+      }
+
       .reported-guide-card {
         display: grid;
         grid-template-columns: 240px minmax(0, 1fr);
@@ -484,6 +523,16 @@ console.log("guide-admin.js 已載入");
         opacity: 1;
       }
 
+      .reported-guide-pill.pending {
+        border-color: rgba(255, 214, 102, 0.6);
+        background: rgba(255, 214, 102, 0.16);
+      }
+
+      .reported-guide-pill.danger {
+        border-color: rgba(255, 138, 128, 0.6);
+        background: rgba(255, 138, 128, 0.13);
+      }
+
       .reported-guide-summary {
         margin: 0.45rem 0 0 0 !important;
         padding: 0 !important;
@@ -497,6 +546,11 @@ console.log("guide-admin.js 已載入");
         background: rgba(255,180,169,0.10);
         border: 1px solid rgba(255,180,169,0.28);
         line-height: 1.65;
+      }
+
+      .reported-reason-box.pending-box {
+        background: rgba(255, 214, 102, 0.10);
+        border-color: rgba(255, 214, 102, 0.28);
       }
 
       .reported-reason-box small {
@@ -516,7 +570,8 @@ console.log("guide-admin.js 已載入");
 
       .reported-guide-read-btn,
       .reported-guide-delete-btn,
-      .reported-guide-resolve-btn {
+      .reported-guide-resolve-btn,
+      .reported-guide-approve-btn {
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -533,9 +588,15 @@ console.log("guide-admin.js 已載入");
       }
 
       .reported-guide-read-btn:hover,
-      .reported-guide-resolve-btn:hover {
+      .reported-guide-resolve-btn:hover,
+      .reported-guide-approve-btn:hover {
         border-color: rgb(79,177,186);
         text-decoration: none;
+      }
+
+      .reported-guide-approve-btn {
+        border-color: rgba(79,177,186,0.45);
+        background: rgba(79,177,186,0.12);
       }
 
       .reported-guide-delete-btn:hover {
@@ -558,6 +619,24 @@ console.log("guide-admin.js 已載入");
     document.head.appendChild(style);
   }
 
+  function listenPendingGuides() {
+    if (unsubscribePendingGuides) {
+      unsubscribePendingGuides();
+      unsubscribePendingGuides = null;
+    }
+
+    unsubscribePendingGuides = db.collection("guides")
+      .where("status", "==", "pending")
+      .onSnapshot(renderPendingGuides, function (error) {
+        console.error("讀取待審核貼文失敗：", error);
+
+        const listEl = getPendingListEl();
+        if (listEl) {
+          listEl.innerHTML = `<div class="reported-guide-empty">讀取待審核貼文失敗，請確認權限或稍後再試。</div>`;
+        }
+      });
+  }
+
   function listenReports() {
     if (unsubscribeReports) {
       unsubscribeReports();
@@ -569,35 +648,48 @@ console.log("guide-admin.js 已載入");
       .onSnapshot(renderReports, function (error) {
         console.error("讀取疑慮回報失敗：", error);
 
+        const listEl = getReportListEl();
         if (listEl) {
           listEl.innerHTML = `<div class="reported-guide-empty">讀取疑慮回報失敗，請確認權限或稍後再試。</div>`;
         }
       });
   }
 
-  createDeleteModal();
+  ensureAdminLayout();
   injectStyles();
 
   auth.onAuthStateChanged(function (user) {
     currentUser = user;
 
+    ensureAdminLayout();
+
     if (!user) {
       setMsg("請先登入。");
-      if (listEl) {
-        listEl.innerHTML = `<div class="reported-guide-empty">請先登入後再進入審核頁。</div>`;
-      }
+
+      const pendingList = getPendingListEl();
+      const reportList = getReportListEl();
+
+      if (pendingList) pendingList.innerHTML = `<div class="reported-guide-empty">請先登入後再進入審核頁。</div>`;
+      if (reportList) reportList.innerHTML = `<div class="reported-guide-empty">請先登入後再進入審核頁。</div>`;
+
       return;
     }
 
     if (!isAdmin(user)) {
       setMsg("你沒有審核文章權限。");
-      if (listEl) {
-        listEl.innerHTML = `<div class="reported-guide-empty">你沒有審核文章權限。</div>`;
-      }
+
+      const pendingList = getPendingListEl();
+      const reportList = getReportListEl();
+
+      if (pendingList) pendingList.innerHTML = `<div class="reported-guide-empty">你沒有審核文章權限。</div>`;
+      if (reportList) reportList.innerHTML = `<div class="reported-guide-empty">你沒有審核文章權限。</div>`;
+
       return;
     }
 
     setMsg("目前登入管理員：" + user.email, "success");
+
+    listenPendingGuides();
     listenReports();
   });
 })();
