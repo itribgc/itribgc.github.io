@@ -1,42 +1,66 @@
 @font-face {
   font-family: "MyChineseFont";
   src: url("/assets/fonts/madoufmg.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
   font-display: swap;
 }
 
-/* 全站 */
-html, body,
+/* =========================
+   全站字型設定
+========================= */
+
+html,
+body,
 body * {
   font-family:
     "MyChineseFont",
     "Noto Sans TC",
     "Microsoft JhengHei",
+    "PingFang TC",
     sans-serif !important;
 }
 
 /* 主標題、副標題、文章標題 */
-h1, h2, h3, h4, h5, h6,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
 .page-title,
 .post-title,
 .entry-title,
 .site-title,
 .sidebar-title,
 .tagline,
-.lead {
+.lead,
+.heading,
+.flip-title {
   font-family:
     "MyChineseFont",
     "Noto Sans TC",
     "Microsoft JhengHei",
+    "PingFang TC",
     sans-serif !important;
 }
 
 /* 左側欄全部 */
 .sidebar,
-.sidebar * {
+.sidebar *,
+.sidebar-sticky,
+.sidebar-sticky *,
+.sidebar-nav,
+.sidebar-nav *,
+.sidebar-title,
+.sidebar-title *,
+.sidebar-about,
+.sidebar-about * {
   font-family:
     "MyChineseFont",
     "Noto Sans TC",
     "Microsoft JhengHei",
+    "PingFang TC",
     sans-serif !important;
 }
 
@@ -48,25 +72,213 @@ h1, h2, h3, h4, h5, h6,
 .drawer-menu,
 .drawer-menu *,
 .menu,
-.menu * {
+.menu *,
+nav,
+nav * {
   font-family:
     "MyChineseFont",
     "Noto Sans TC",
     "Microsoft JhengHei",
+    "PingFang TC",
     sans-serif !important;
 }
 
 /* 文章內容區 */
 .content,
-.content * {
+.content *,
+main,
+main *,
+article,
+article *,
+.post,
+.post *,
+.page,
+.page * {
   font-family:
     "MyChineseFont",
     "Noto Sans TC",
     "Microsoft JhengHei",
+    "PingFang TC",
     sans-serif !important;
 }
 
-/* 程式碼區不要被一起改掉 */
-code, pre, kbd, samp {
-  font-family: "JetBrains Mono", "Consolas", monospace !important;
+/* 首頁文章卡片 */
+.card,
+.card *,
+.post-card,
+.post-card *,
+.project-card,
+.project-card *,
+.hy-card,
+.hy-card *,
+.grid,
+.grid *,
+.grid__item,
+.grid__item *,
+.grid-item,
+.grid-item * {
+  font-family:
+    "MyChineseFont",
+    "Noto Sans TC",
+    "Microsoft JhengHei",
+    "PingFang TC",
+    sans-serif !important;
+}
+
+/* 社員論壇與文章頁 */
+.guide-card,
+.guide-card *,
+.guide-detail,
+.guide-detail *,
+.guide-detail-content,
+.guide-detail-content *,
+.guide-editor,
+.guide-editor *,
+.guide-admin-page,
+.guide-admin-page *,
+.reported-guide-card,
+.reported-guide-card * {
+  font-family:
+    "MyChineseFont",
+    "Noto Sans TC",
+    "Microsoft JhengHei",
+    "PingFang TC",
+    sans-serif !important;
+}
+
+/* 留言區、文章互動區 */
+.post-interactions,
+.post-interactions *,
+.post-comment-section,
+.post-comment-section *,
+.post-comment-card,
+.post-comment-card *,
+.guide-comment-section,
+.guide-comment-section *,
+.guide-comment-card,
+.guide-comment-card * {
+  font-family:
+    "MyChineseFont",
+    "Noto Sans TC",
+    "Microsoft JhengHei",
+    "PingFang TC",
+    sans-serif !important;
+}
+
+/* 會員 ID / 等級系統 */
+.member-profile-panel,
+.member-profile-panel *,
+.member-profile-modal-card,
+.member-profile-modal-card * {
+  font-family:
+    "MyChineseFont",
+    "Noto Sans TC",
+    "Microsoft JhengHei",
+    "PingFang TC",
+    sans-serif !important;
+}
+
+/* 首頁文章統計數 */
+.home-post-inline-stats,
+.home-post-inline-stats *,
+.home-post-stat-pill,
+.home-post-stat-pill * {
+  font-family:
+    "MyChineseFont",
+    "Noto Sans TC",
+    "Microsoft JhengHei",
+    "PingFang TC",
+    sans-serif !important;
+}
+
+/* 電子報頁面 */
+.newsletter-reader,
+.newsletter-reader *,
+.newsletter-list-wrap,
+.newsletter-list-wrap *,
+.newsletter-card,
+.newsletter-card *,
+.newsletter-item,
+.newsletter-item * {
+  font-family:
+    "MyChineseFont",
+    "Noto Sans TC",
+    "Microsoft JhengHei",
+    "PingFang TC",
+    sans-serif !important;
+}
+
+/* 表單與按鈕 */
+input,
+textarea,
+select,
+button,
+label,
+option {
+  font-family:
+    "MyChineseFont",
+    "Noto Sans TC",
+    "Microsoft JhengHei",
+    "PingFang TC",
+    sans-serif !important;
+}
+
+/* Modal 小視窗 */
+.modal,
+.modal *,
+[class*="modal"],
+[class*="modal"] *,
+[class*="Modal"],
+[class*="Modal"] * {
+  font-family:
+    "MyChineseFont",
+    "Noto Sans TC",
+    "Microsoft JhengHei",
+    "PingFang TC",
+    sans-serif !important;
+}
+
+/* =========================
+   程式碼區不要被中文字型影響
+========================= */
+
+code,
+pre,
+kbd,
+samp,
+code *,
+pre *,
+kbd *,
+samp * {
+  font-family:
+    "JetBrains Mono",
+    "Fira Code",
+    "Consolas",
+    "Monaco",
+    monospace !important;
+}
+
+/* =========================
+   小修正：避免部分按鈕與膠囊字距太怪
+========================= */
+
+button,
+.home-post-stat-pill,
+.post-stat-pill,
+.post-like-btn,
+.guide-detail-stat,
+.guide-detail-like-btn,
+.guide-detail-report-btn,
+.member-profile-level-badge {
+  letter-spacing: 0.02em;
+}
+
+/* =========================
+   字型載入失敗時避免版面跳太大
+========================= */
+
+body {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
