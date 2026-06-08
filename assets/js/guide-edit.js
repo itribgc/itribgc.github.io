@@ -17,27 +17,27 @@ console.log("guide-edit.js 已載入");
   const auth = firebase.auth();
   const db = firebase.firestore();
 
-  let currentUser = null;
-  let guideId = "";
-  let guideData = null;
-  let isLoaded = false;
+  const ADMIN_EMAIL = "itribgc@gmail.com";
+  const allowedCategories = ["桌遊攻略", "活動心得", "規則討論", "開箱分享", "揪團交流"];
 
+  let currentUser = null;
+  let currentGuideId = "";
+  let currentGuideData = null;
+
+  const categoryInput = document.getElementById("guideCategory");
   const titleInput = document.getElementById("guideTitle");
   const gameInput = document.getElementById("guideGameName");
   const coverInput = document.getElementById("guideCoverImage");
-  const currentCoverWrap = document.getElementById("guideCurrentCover");
-  const currentCoverImg = document.getElementById("guideCurrentCoverImg");
   const coverPreviewWrap = document.getElementById("guideCoverPreviewWrap");
   const coverPreview = document.getElementById("guideCoverPreview");
   const summaryInput = document.getElementById("guideSummary");
   const contentInput = document.getElementById("guideContent");
   const fontSizeInput = document.getElementById("mdFontSizeInput");
   const previewBtn = document.getElementById("guidePreviewBtn");
-  const saveBtn = document.getElementById("guideSaveBtn");
+  const saveBtn = document.getElementById("guideSaveBtn") || document.getElementById("guidePublishBtn");
   const msg = document.getElementById("guideEditorMsg");
   const previewBox = document.getElementById("guidePreview");
   const previewContent = document.getElementById("guidePreviewContent");
-  const backLink = document.getElementById("guideBackLink");
 
   const imageModal = document.getElementById("mdImageModal");
   const imageAltInput = document.getElementById("mdImageAlt");
@@ -55,31 +55,28 @@ console.log("guide-edit.js 已載入");
 
   function getGuideId() {
     const params = new URLSearchParams(window.location.search);
-    return params.get("id") || "";
+    return params.get("id");
+  }
+
+  function isAdmin() {
+    return currentUser && currentUser.email === ADMIN_EMAIL;
+  }
+
+  function canEditArticle() {
+    return (
+      currentUser &&
+      currentGuideData &&
+      (
+        currentGuideData.authorUid === currentUser.uid ||
+        isAdmin()
+      )
+    );
   }
 
   function setMsg(text, type) {
     if (!msg) return;
-
     msg.innerText = text || "";
-    msg.className = type === "success"
-      ? "guide-editor-msg success"
-      : "guide-editor-msg";
-  }
-
-  function setFormDisabled(disabled) {
-    if (titleInput) titleInput.disabled = disabled;
-    if (gameInput) gameInput.disabled = disabled;
-    if (coverInput) coverInput.disabled = disabled;
-    if (summaryInput) summaryInput.disabled = disabled;
-    if (contentInput) contentInput.disabled = disabled;
-    if (previewBtn) previewBtn.disabled = disabled;
-    if (saveBtn) saveBtn.disabled = disabled;
-    if (fontSizeInput) fontSizeInput.disabled = disabled;
-
-    document.querySelectorAll(".md-toolbar button").forEach(function (btn) {
-      btn.disabled = disabled;
-    });
+    msg.className = type === "success" ? "guide-editor-msg success" : "guide-editor-msg";
   }
 
   function escapeHtml(text) {
@@ -93,16 +90,13 @@ console.log("guide-edit.js 已載入");
 
   function normalizeImageUrl(url) {
     const value = String(url || "").trim();
-
     if (!value) return "";
     if (value.startsWith("/")) return value;
-
     return value;
   }
 
   function isValidUrl(url) {
     const value = String(url || "").trim();
-
     if (!value) return false;
     if (value.startsWith("/")) return true;
 
@@ -116,7 +110,6 @@ console.log("guide-edit.js 已載入");
 
   function isValidImageUrl(url) {
     const value = String(url || "").trim();
-
     if (!value) return true;
     if (value.startsWith("/")) return true;
 
@@ -128,48 +121,8 @@ console.log("guide-edit.js 已載入");
     }
   }
 
-  function updateCoverPreview(url) {
-    const value = String(url || "").trim();
-
-    if (!coverPreviewWrap || !coverPreview) {
-      return;
-    }
-
-    if (!value || !isValidImageUrl(value)) {
-      coverPreviewWrap.style.display = "none";
-      coverPreview.src = "";
-      return;
-    }
-
-    coverPreview.src = value;
-    coverPreviewWrap.style.display = "block";
-  }
-
-  function fillForm(data) {
-    if (!data) return;
-
-    titleInput.value = data.title || "";
-    gameInput.value = data.gameName || "";
-    coverInput.value = data.coverImage || "";
-    summaryInput.value = data.summary || "";
-    contentInput.value = data.contentMarkdown || "";
-
-    if (data.coverImage) {
-      currentCoverImg.src = data.coverImage;
-      currentCoverWrap.style.display = "block";
-    } else {
-      currentCoverImg.src = "";
-      currentCoverWrap.style.display = "none";
-    }
-
-    updateCoverPreview(data.coverImage || "");
-
-    if (backLink) {
-      backLink.href = "/guides/post/?id=" + encodeURIComponent(guideId);
-    }
-  }
-
   function validateGuide() {
+    const category = categoryInput.value.trim();
     const title = titleInput.value.trim();
     const gameName = gameInput.value.trim();
     const coverImage = coverInput.value.trim();
@@ -177,96 +130,112 @@ console.log("guide-edit.js 已載入");
     const content = contentInput.value.trim();
 
     if (!currentUser) return "請先登入。";
-    if (!isLoaded) return "文章資料尚未載入完成，請稍候。";
-    if (!guideData) return "找不到文章資料。";
-    if (guideData.authorUid !== currentUser.uid) return "只能編輯自己的文章。";
+    if (!canEditArticle()) return "你沒有編輯這篇文章的權限。";
+    if (!allowedCategories.includes(category)) return "請選擇正確的文章分類。";
     if (!title) return "請輸入文章標題。";
     if (title.length > 60) return "文章標題請控制在 60 字以內。";
-    if (!gameName) return "請輸入桌遊名稱。";
-    if (gameName.length > 40) return "桌遊名稱請控制在 40 字以內。";
+    if (!gameName) return "請輸入主題名稱。";
+    if (gameName.length > 40) return "主題名稱請控制在 40 字以內。";
     if (!summary) return "請輸入文章摘要。";
     if (summary.length > 180) return "文章摘要請控制在 180 字以內。";
-    if (!content) return "請輸入攻略內容。";
-    if (content.length > 10000) return "攻略內容請控制在 10000 字以內。";
+    if (!content) return "請輸入文章內容。";
+    if (content.length > 10000) return "文章內容請控制在 10000 字以內。";
     if (coverImage && !isValidImageUrl(coverImage)) return "封面圖片網址格式不正確。";
 
     return "";
   }
 
-  function renderPreview() {
-    const content = contentInput.value.trim();
-
-    if (!content) {
-      setMsg("請先輸入攻略內容再預覽。");
-      return;
-    }
-
-    let rawHtml = "";
-
-    if (window.marked) {
-      rawHtml = window.marked.parse(content);
-    } else {
-      rawHtml = "<p>" + escapeHtml(content).replaceAll("\n", "<br>") + "</p>";
-    }
-
-    const safeHtml = window.DOMPurify
-      ? window.DOMPurify.sanitize(rawHtml, {
-          ADD_ATTR: ["style"]
-        })
-      : rawHtml;
-
-    previewContent.innerHTML = safeHtml;
-    previewBox.style.display = "block";
-    setMsg("");
-  }
-
   async function loadGuide() {
-    guideId = getGuideId();
+    currentGuideId = getGuideId();
 
-    isLoaded = false;
-    guideData = null;
-    setFormDisabled(true);
-    setMsg("正在載入原文章資料...");
-
-    if (!guideId) {
-      setMsg("找不到文章 ID。請從桌遊攻略列表點選「編輯文章」進入。");
-      return;
-    }
-
-    if (!currentUser) {
-      setMsg("請先登入後再編輯文章。");
+    if (!currentGuideId) {
+      setMsg("找不到文章 ID。");
+      disableForm();
       return;
     }
 
     try {
-      const ref = db.collection("guides").doc(guideId);
-      const snap = await ref.get();
+      setMsg("文章載入中...");
 
-      if (!snap.exists) {
-        setMsg("找不到這篇文章。可能已被刪除，或文章 ID 不正確。");
+      const doc = await db.collection("guides").doc(currentGuideId).get();
+
+      if (!doc.exists) {
+        setMsg("找不到這篇文章。");
+        disableForm();
         return;
       }
 
-      guideData = snap.data();
+      currentGuideData = doc.data();
 
-      if (guideData.authorUid !== currentUser.uid) {
-        setMsg("只能編輯自己的文章。");
+      if (!currentUser) {
+        setMsg("請先登入。");
+        disableForm();
         return;
       }
 
-      fillForm(guideData);
+      if (!canEditArticle()) {
+        setMsg("你沒有編輯這篇文章的權限。");
+        disableForm();
+        return;
+      }
 
-      isLoaded = true;
-      setFormDisabled(false);
-      setMsg("原文章資料已載入，可以開始修改。", "success");
+      categoryInput.value = currentGuideData.category || "桌遊攻略";
+      titleInput.value = currentGuideData.title || "";
+      gameInput.value = currentGuideData.gameName || "";
+      coverInput.value = currentGuideData.coverImage || "";
+      summaryInput.value = currentGuideData.summary || "";
+      contentInput.value = currentGuideData.contentMarkdown || "";
+
+      if (coverInput.value.trim() && isValidImageUrl(coverInput.value.trim())) {
+        coverPreview.src = coverInput.value.trim();
+        coverPreviewWrap.style.display = "block";
+      }
+
+      enableForm();
+
+      if (isAdmin() && currentGuideData.authorUid !== currentUser.uid) {
+        setMsg("管理員模式：你正在編輯其他社員的文章。", "success");
+      } else {
+        setMsg("文章已載入，可以開始編輯。", "success");
+      }
     } catch (error) {
       console.error("讀取文章失敗：", error);
+      setMsg("讀取文章失敗，請稍後再試。");
+      disableForm();
+    }
+  }
 
-      if (error.code === "permission-denied") {
-        setMsg("沒有權限讀取這篇文章，請確認 Firestore Rules 是否允許作者讀取自己的文章。");
-      } else {
-        setMsg("文章讀取失敗，請稍後再試。");
-      }
+  function disableForm() {
+    [
+      categoryInput,
+      titleInput,
+      gameInput,
+      coverInput,
+      summaryInput,
+      contentInput,
+      previewBtn,
+      saveBtn
+    ].forEach(function (el) {
+      if (el) el.disabled = true;
+    });
+  }
+
+  function enableForm() {
+    [
+      categoryInput,
+      titleInput,
+      gameInput,
+      coverInput,
+      summaryInput,
+      contentInput,
+      previewBtn,
+      saveBtn
+    ].forEach(function (el) {
+      if (el) el.disabled = false;
+    });
+
+    if (saveBtn) {
+      saveBtn.innerText = "儲存修改";
     }
   }
 
@@ -279,37 +248,87 @@ console.log("guide-edit.js 已載入");
     }
 
     try {
-      setFormDisabled(true);
+      saveBtn.disabled = true;
+      previewBtn.disabled = true;
       saveBtn.innerText = "儲存中...";
       setMsg("正在儲存文章...");
 
-      const payload = {
+      await db.collection("guides").doc(currentGuideId).update({
         title: titleInput.value.trim(),
         gameName: gameInput.value.trim(),
+        category: categoryInput.value.trim(),
+        coverImage: normalizeImageUrl(coverInput.value),
         summary: summaryInput.value.trim(),
         contentMarkdown: contentInput.value.trim(),
-        coverImage: normalizeImageUrl(coverInput.value),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      };
+      });
 
-      await db.collection("guides").doc(guideId).update(payload);
-
-      setMsg("修改成功，即將回到文章頁。", "success");
+      setMsg("文章已成功更新。", "success");
 
       setTimeout(function () {
-        window.location.href = "/guides/post/?id=" + encodeURIComponent(guideId);
-      }, 800);
+        window.location.href = "/guides/post/?id=" + encodeURIComponent(currentGuideId);
+      }, 900);
     } catch (error) {
       console.error("儲存文章失敗：", error);
+      setMsg("儲存失敗，請稍後再試。");
+      saveBtn.disabled = false;
+      previewBtn.disabled = false;
+      saveBtn.innerText = "儲存修改";
+    }
+  }
 
-      if (error.code === "permission-denied") {
-        setMsg("沒有權限修改這篇文章，請確認 Firestore Rules 是否允許作者更新自己的文章。");
-      } else {
-        setMsg("儲存失敗，請稍後再試。");
+  function renderPreview() {
+    const content = contentInput.value.trim();
+
+    if (!content) {
+      setMsg("請先輸入文章內容再預覽。");
+      return;
+    }
+
+    let rawHtml = "";
+
+    if (window.marked) {
+      rawHtml = window.marked.parse(content);
+    } else {
+      rawHtml = "<p>" + escapeHtml(content).replaceAll("\n", "<br>") + "</p>";
+    }
+
+    const safeHtml = window.DOMPurify
+      ? window.DOMPurify.sanitize(rawHtml, { ADD_ATTR: ["style"] })
+      : rawHtml;
+
+    previewContent.innerHTML = safeHtml;
+    previewBox.style.display = "block";
+    setMsg("");
+  }
+
+  function bindCoverPreview() {
+    if (!coverInput) return;
+
+    coverInput.addEventListener("input", function () {
+      const url = coverInput.value.trim();
+
+      if (!url || !isValidImageUrl(url)) {
+        coverPreviewWrap.style.display = "none";
+        coverPreview.src = "";
+        return;
       }
 
-      setFormDisabled(false);
-      saveBtn.innerText = "儲存修改";
+      coverPreview.src = url;
+      coverPreviewWrap.style.display = "block";
+    });
+
+    if (coverPreview) {
+      coverPreview.addEventListener("error", function () {
+        coverPreviewWrap.style.display = "none";
+        setMsg("圖片預覽失敗，請確認是否為可公開瀏覽的圖片直接連結。");
+      });
+
+      coverPreview.addEventListener("load", function () {
+        if (coverInput.value.trim()) {
+          setMsg("");
+        }
+      });
     }
   }
 
@@ -361,11 +380,7 @@ console.log("guide-edit.js 已載入");
     const selectedText = selection.text || placeholder;
     const insertText = beforeText + selectedText + afterText;
 
-    replaceSelection(
-      insertText,
-      beforeText.length,
-      beforeText.length + selectedText.length
-    );
+    replaceSelection(insertText, beforeText.length, beforeText.length + selectedText.length);
   }
 
   function insertAtCursor(text) {
@@ -385,11 +400,9 @@ console.log("guide-edit.js 已載入");
 
   function sanitizeFontSize(value) {
     const size = Number(String(value || "").trim());
-
     if (Number.isNaN(size)) return 16;
     if (size < 8) return 8;
     if (size > 40) return 40;
-
     return Math.round(size);
   }
 
@@ -412,6 +425,8 @@ console.log("guide-edit.js 已載入");
   }
 
   function openImageModal() {
+    if (!imageModal) return;
+
     const selection = getSelection();
 
     imageAltInput.value = selection.text || "";
@@ -420,16 +435,13 @@ console.log("guide-edit.js 已載入");
     imageModal.classList.add("show");
 
     setTimeout(function () {
-      if (imageAltInput.value) {
-        imageUrlInput.focus();
-      } else {
-        imageAltInput.focus();
-      }
+      if (imageAltInput.value) imageUrlInput.focus();
+      else imageAltInput.focus();
     }, 100);
   }
 
   function closeImageModal() {
-    imageModal.classList.remove("show");
+    if (imageModal) imageModal.classList.remove("show");
   }
 
   function insertImageFromModal() {
@@ -455,6 +467,8 @@ console.log("guide-edit.js 已載入");
   }
 
   function openLinkModal() {
+    if (!linkModal) return;
+
     const selection = getSelection();
 
     linkTextInput.value = selection.text || "";
@@ -463,16 +477,13 @@ console.log("guide-edit.js 已載入");
     linkModal.classList.add("show");
 
     setTimeout(function () {
-      if (linkTextInput.value) {
-        linkUrlInput.focus();
-      } else {
-        linkTextInput.focus();
-      }
+      if (linkTextInput.value) linkUrlInput.focus();
+      else linkTextInput.focus();
     }, 100);
   }
 
   function closeLinkModal() {
-    linkModal.classList.remove("show");
+    if (linkModal) linkModal.classList.remove("show");
   }
 
   function insertLinkFromModal() {
@@ -502,21 +513,13 @@ console.log("guide-edit.js 已載入");
       btn.addEventListener("click", function () {
         const action = btn.dataset.mdAction;
 
-        if (action === "h2") {
-          ensureLinePrefix("## ", "副標題1");
-        } else if (action === "h3") {
-          ensureLinePrefix("### ", "副標題2");
-        } else if (action === "bold") {
-          wrapSelection("**", "**", "加粗文字");
-        } else if (action === "mark") {
-          wrapSelection("<mark>", "</mark>", "螢光重點");
-        } else if (action === "ul") {
-          addUnorderedList();
-        } else if (action === "image") {
-          openImageModal();
-        } else if (action === "link") {
-          openLinkModal();
-        }
+        if (action === "h2") ensureLinePrefix("## ", "副標題1");
+        else if (action === "h3") ensureLinePrefix("### ", "副標題2");
+        else if (action === "bold") wrapSelection("**", "**", "加粗文字");
+        else if (action === "mark") wrapSelection("<mark>", "</mark>", "螢光重點");
+        else if (action === "ul") addUnorderedList();
+        else if (action === "image") openImageModal();
+        else if (action === "link") openLinkModal();
       });
     });
   }
@@ -524,9 +527,7 @@ console.log("guide-edit.js 已載入");
   function bindFontSizeControl() {
     if (!fontSizeInput) return;
 
-    fontSizeInput.addEventListener("change", function () {
-      applyFontSize();
-    });
+    fontSizeInput.addEventListener("change", applyFontSize);
 
     fontSizeInput.addEventListener("keydown", function (event) {
       if (event.key === "Enter") {
@@ -545,23 +546,22 @@ console.log("guide-edit.js 已載入");
   }
 
   function bindModals() {
-    imageCancelBtn.addEventListener("click", closeImageModal);
-    imageInsertBtn.addEventListener("click", insertImageFromModal);
+    if (imageCancelBtn) imageCancelBtn.addEventListener("click", closeImageModal);
+    if (imageInsertBtn) imageInsertBtn.addEventListener("click", insertImageFromModal);
+    if (linkCancelBtn) linkCancelBtn.addEventListener("click", closeLinkModal);
+    if (linkInsertBtn) linkInsertBtn.addEventListener("click", insertLinkFromModal);
 
-    linkCancelBtn.addEventListener("click", closeLinkModal);
-    linkInsertBtn.addEventListener("click", insertLinkFromModal);
+    if (imageModal) {
+      imageModal.addEventListener("click", function (event) {
+        if (event.target === imageModal) closeImageModal();
+      });
+    }
 
-    imageModal.addEventListener("click", function (event) {
-      if (event.target === imageModal) {
-        closeImageModal();
-      }
-    });
-
-    linkModal.addEventListener("click", function (event) {
-      if (event.target === linkModal) {
-        closeLinkModal();
-      }
-    });
+    if (linkModal) {
+      linkModal.addEventListener("click", function (event) {
+        if (event.target === linkModal) closeLinkModal();
+      });
+    }
 
     document.addEventListener("keydown", function (event) {
       if (event.key === "Escape") {
@@ -571,40 +571,18 @@ console.log("guide-edit.js 已載入");
     });
   }
 
-  function bindCoverPreview() {
-    if (!coverInput) return;
+  disableForm();
 
-    coverInput.addEventListener("input", function () {
-      updateCoverPreview(coverInput.value);
-    });
-
-    if (coverPreview) {
-      coverPreview.addEventListener("error", function () {
-        coverPreviewWrap.style.display = "none";
-
-        if (coverInput.value.trim()) {
-          setMsg("圖片預覽失敗，請確認是否為可公開瀏覽的圖片直接連結。");
-        }
-      });
-
-      coverPreview.addEventListener("load", function () {
-        if (coverInput.value.trim() && isLoaded) {
-          setMsg("圖片預覽已更新。", "success");
-        }
-      });
-    }
-  }
-
-  auth.onAuthStateChanged(async function (user) {
+  auth.onAuthStateChanged(function (user) {
     currentUser = user;
 
     if (!user) {
-      setFormDisabled(true);
-      setMsg("請先登入後再編輯文章。");
+      setMsg("請先登入。");
+      disableForm();
       return;
     }
 
-    await loadGuide();
+    loadGuide();
   });
 
   bindCoverPreview();
@@ -612,13 +590,6 @@ console.log("guide-edit.js 已載入");
   bindFontSizeControl();
   bindModals();
 
-  if (previewBtn) {
-    previewBtn.addEventListener("click", renderPreview);
-  }
-
-  if (saveBtn) {
-    saveBtn.addEventListener("click", saveGuide);
-  }
-
-  setFormDisabled(true);
+  if (previewBtn) previewBtn.addEventListener("click", renderPreview);
+  if (saveBtn) saveBtn.addEventListener("click", saveGuide);
 })();
