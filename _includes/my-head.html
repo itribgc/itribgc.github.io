@@ -102,7 +102,6 @@
       monospace !important;
   }
 
-  /* 避免自訂中文字型覆蓋 Hydejack 原本的社群 icon font */
   [class^="icon-"],
   [class*=" icon-"],
   [class^="icon-"]::before,
@@ -140,7 +139,6 @@
 <meta name="twitter:image" content="https://itribgc.github.io/assets/img/og-image.png?v=1">
 
 <script>
-  // 強制覆蓋 Hydejack 原本 favicon
   (function () {
     function forceCustomFavicon() {
       const oldIcons = document.querySelectorAll(
@@ -190,7 +188,7 @@
 
 <!-- Auth / Member / Admin -->
 <script src="/assets/js/auth-guard.js?v=10"></script>
-<script src="/assets/js/profile.js?v=10"></script>
+<script src="/assets/js/profile.js?v=11"></script>
 <script src="/assets/js/admin-nav.js?v=10"></script>
 <script src="/assets/js/first-login-id.js?v=1"></script>
 
@@ -211,7 +209,6 @@
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
 
-<!-- Add HTML tags here to be included in the head. You can delete the below: -->
 <link rel="dns-prefetch" href="https://assets.gumroad.com">
 
 <script type="module">
