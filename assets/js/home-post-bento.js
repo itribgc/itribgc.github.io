@@ -18,6 +18,8 @@ console.log("home-post-bento.js 已載入");
   const db = firebase.firestore();
 
   let currentUser = null;
+  let resizeTimer = null;
+  let lastItemsWithViews = [];
 
   function isHomePage() {
     const path = window.location.pathname;
@@ -204,8 +206,15 @@ console.log("home-post-bento.js 已載入");
     const parent = findCardsParent(items);
 
     if (parent) {
-      parent.classList.remove("home-post-masonry-grid");
-      parent.classList.remove("home-post-bento-grid");
+      parent.classList.remove(
+        "home-post-bento-grid",
+        "home-post-masonry-grid",
+        "home-post-js-masonry"
+      );
+
+      parent.style.position = "";
+      parent.style.height = "";
+      parent.style.width = "";
     }
 
     items.forEach(function (item) {
@@ -218,63 +227,23 @@ console.log("home-post-bento.js 已載入");
         "home-post-masonry-xl",
         "home-post-masonry-lg",
         "home-post-masonry-md",
-        "home-post-masonry-sm"
+        "home-post-masonry-sm",
+        "home-post-js-card",
+        "home-post-js-xl",
+        "home-post-js-lg",
+        "home-post-js-md",
+        "home-post-js-sm"
       );
 
+      item.card.style.position = "";
+      item.card.style.left = "";
+      item.card.style.top = "";
+      item.card.style.width = "";
+      item.card.style.margin = "";
+      item.card.style.transform = "";
       item.card.style.order = "";
       item.card.dataset.viewCount = "";
     });
-  }
-
-  function classifyCardsByViewCount(itemsWithViews) {
-    const sorted = itemsWithViews.slice().sort(function (a, b) {
-      return b.viewCount - a.viewCount;
-    });
-
-    sorted.forEach(function (item, index) {
-      item.card.classList.add("home-post-masonry-card");
-      item.card.dataset.viewCount = String(item.viewCount);
-
-      /*
-        動態大小邏輯：
-        第 1 名：最大卡
-        第 2 名：大卡
-        第 3、4 名：中卡
-        其他：一般卡
-
-        注意：這邊不是硬塞 CSS Grid，而是交給 CSS columns 自動瀑布流排列，
-        所以卡片上下高度不同也比較不會中間破洞。
-      */
-      if (index === 0 && item.viewCount > 0) {
-        item.card.classList.add("home-post-masonry-xl");
-      } else if (index === 1 && item.viewCount > 0) {
-        item.card.classList.add("home-post-masonry-lg");
-      } else if (index <= 3 && item.viewCount > 0) {
-        item.card.classList.add("home-post-masonry-md");
-      } else {
-        item.card.classList.add("home-post-masonry-sm");
-      }
-
-      /*
-        讓高瀏覽數的文章優先排在前面。
-        CSS columns 會依照 DOM / order 排列，所以這邊直接調整 order。
-      */
-      item.card.style.order = String(index + 1);
-    });
-  }
-
-  function applyMasonryLayout(itemsWithViews) {
-    if (!itemsWithViews.length) return;
-
-    const parent = findCardsParent(itemsWithViews);
-
-    clearOldLayout(itemsWithViews);
-
-    if (parent) {
-      parent.classList.add("home-post-masonry-grid");
-    }
-
-    classifyCardsByViewCount(itemsWithViews);
   }
 
   function injectStyles() {
@@ -285,170 +254,252 @@ console.log("home-post-bento.js 已載入");
     style.id = "homePostBentoStyle";
     style.innerHTML = `
       /*
-        最新文章 Masonry / Bento 混合版
-        目標：
-        1. 文章依瀏覽數動態變大或變小
-        2. 大小可以包含左右與上下
-        3. 盡量自動補位，不要中間留空洞
-        4. 小卡片不低於原本可讀性
+        最新文章 JS Masonry 版
+        - 整個區塊吃滿寬度，盡量跟上方輪播橫幅對齊
+        - 桌機以 2 欄大卡為主
+        - 熱門文章只增加視覺份量，不把其他文章壓小
+        - 用 JS 計算欄位高度，避免中間大空洞
       */
 
-      .home-post-masonry-grid {
-        column-count: 2 !important;
-        column-gap: 1.35rem !important;
+      .home-post-js-masonry {
+        position: relative !important;
         display: block !important;
+        width: 100% !important;
+        max-width: none !important;
+        box-sizing: border-box !important;
       }
 
-      .home-post-masonry-card {
-        display: inline-block !important;
-        width: 100% !important;
-        margin: 0 0 1.35rem 0 !important;
-        break-inside: avoid !important;
-        page-break-inside: avoid !important;
-        -webkit-column-break-inside: avoid !important;
-        vertical-align: top !important;
+      .home-post-js-card {
+        position: absolute !important;
+        box-sizing: border-box !important;
+        margin: 0 !important;
         transition:
+          top 0.24s ease,
+          left 0.24s ease,
           transform 0.2s ease,
           box-shadow 0.2s ease,
-          border-color 0.2s ease,
-          opacity 0.2s ease;
+          border-color 0.2s ease;
       }
 
-      .home-post-masonry-card:hover {
+      .home-post-js-card:hover {
         transform: translateY(-4px);
       }
 
-      /*
-        圖片比例依熱門程度微調：
-        - 熱門卡：圖片更有視覺份量
-        - 一般卡：維持原本文章卡片感
-      */
-
-      .home-post-masonry-card img {
+      .home-post-js-card img {
         width: 100% !important;
         display: block !important;
         object-fit: cover !important;
         height: auto !important;
       }
 
-      .home-post-masonry-xl img {
+      .home-post-js-xl img {
         aspect-ratio: 16 / 10 !important;
       }
 
-      .home-post-masonry-lg img {
+      .home-post-js-lg img {
+        aspect-ratio: 16 / 9.5 !important;
+      }
+
+      .home-post-js-md img,
+      .home-post-js-sm img {
         aspect-ratio: 16 / 9 !important;
       }
 
-      .home-post-masonry-md img,
-      .home-post-masonry-sm img {
-        aspect-ratio: 16 / 9 !important;
-      }
-
-      /*
-        用 padding / 字體微調視覺大小。
-        不用把卡片寬度壓小，所以不會再出現又窄又小的卡片。
-      */
-
-      .home-post-masonry-xl h1,
-      .home-post-masonry-xl h2,
-      .home-post-masonry-xl h3,
-      .home-post-masonry-xl .card-title,
-      .home-post-masonry-xl .post-title,
-      .home-post-masonry-xl .project-title {
-        font-size: 1.55rem !important;
+      .home-post-js-xl h1,
+      .home-post-js-xl h2,
+      .home-post-js-xl h3,
+      .home-post-js-xl .card-title,
+      .home-post-js-xl .post-title,
+      .home-post-js-xl .project-title {
+        font-size: 1.48rem !important;
         line-height: 1.3 !important;
       }
 
-      .home-post-masonry-lg h1,
-      .home-post-masonry-lg h2,
-      .home-post-masonry-lg h3,
-      .home-post-masonry-lg .card-title,
-      .home-post-masonry-lg .post-title,
-      .home-post-masonry-lg .project-title {
-        font-size: 1.42rem !important;
+      .home-post-js-lg h1,
+      .home-post-js-lg h2,
+      .home-post-js-lg h3,
+      .home-post-js-lg .card-title,
+      .home-post-js-lg .post-title,
+      .home-post-js-lg .project-title {
+        font-size: 1.38rem !important;
         line-height: 1.3 !important;
       }
 
-      .home-post-masonry-md h1,
-      .home-post-masonry-md h2,
-      .home-post-masonry-md h3,
-      .home-post-masonry-md .card-title,
-      .home-post-masonry-md .post-title,
-      .home-post-masonry-md .project-title {
-        font-size: 1.28rem !important;
+      .home-post-js-md h1,
+      .home-post-js-md h2,
+      .home-post-js-md h3,
+      .home-post-js-md .card-title,
+      .home-post-js-md .post-title,
+      .home-post-js-md .project-title,
+      .home-post-js-sm h1,
+      .home-post-js-sm h2,
+      .home-post-js-sm h3,
+      .home-post-js-sm .card-title,
+      .home-post-js-sm .post-title,
+      .home-post-js-sm .project-title {
+        font-size: 1.26rem !important;
         line-height: 1.32 !important;
       }
 
-      .home-post-masonry-sm h1,
-      .home-post-masonry-sm h2,
-      .home-post-masonry-sm h3,
-      .home-post-masonry-sm .card-title,
-      .home-post-masonry-sm .post-title,
-      .home-post-masonry-sm .project-title {
-        font-size: 1.22rem !important;
-        line-height: 1.32 !important;
-      }
-
-      /*
-        熱門文章描述文字可以多一點呼吸感。
-      */
-
-      .home-post-masonry-xl p,
-      .home-post-masonry-xl .description,
-      .home-post-masonry-xl .excerpt,
-      .home-post-masonry-xl .card-text {
+      .home-post-js-xl p,
+      .home-post-js-xl .description,
+      .home-post-js-xl .excerpt,
+      .home-post-js-xl .card-text {
         font-size: 1.02rem !important;
         line-height: 1.75 !important;
       }
 
-      .home-post-masonry-lg p,
-      .home-post-masonry-lg .description,
-      .home-post-masonry-lg .excerpt,
-      .home-post-masonry-lg .card-text {
+      .home-post-js-lg p,
+      .home-post-js-lg .description,
+      .home-post-js-lg .excerpt,
+      .home-post-js-lg .card-text {
         font-size: 0.98rem !important;
         line-height: 1.72 !important;
       }
 
-      /*
-        寬螢幕時可以變 3 欄，會更像拼貼牆。
-        但如果你的內容區本身不夠寬，會自動維持 2 欄。
-      */
-
-      @media (min-width: 1240px) {
-        .home-post-masonry-grid {
-          column-count: 3 !important;
-        }
-
-        .home-post-masonry-xl {
-          /*
-            CSS columns 無法真正跨欄，但可以透過內容高度與視覺比例讓熱門卡更醒目。
-            這樣反而能避免 CSS grid 的大空洞問題。
-          */
-        }
-      }
-
-      @media (max-width: 980px) {
-        .home-post-masonry-grid {
-          column-count: 2 !important;
-        }
-      }
-
       @media (max-width: 640px) {
-        .home-post-masonry-grid {
-          column-count: 1 !important;
+        .home-post-js-masonry {
+          height: auto !important;
         }
 
-        .home-post-masonry-card {
+        .home-post-js-card {
+          position: static !important;
+          width: 100% !important;
           margin-bottom: 1.25rem !important;
         }
 
-        .home-post-masonry-card img {
+        .home-post-js-card img {
           aspect-ratio: 16 / 9 !important;
         }
       }
     `;
 
     document.head.appendChild(style);
+  }
+
+  function getColumnCount(containerWidth) {
+    /*
+      這裡刻意不要切太多欄：
+      你的首頁輪播約是寬版橫幅，所以最新文章也盡量維持大卡片感。
+    */
+    if (containerWidth < 641) return 1;
+    if (containerWidth < 1320) return 2;
+    return 3;
+  }
+
+  function getCardClass(index, viewCount) {
+    if (index === 0 && viewCount > 0) return "home-post-js-xl";
+    if (index === 1 && viewCount > 0) return "home-post-js-lg";
+    if (index <= 3 && viewCount > 0) return "home-post-js-md";
+    return "home-post-js-sm";
+  }
+
+  function waitForImages(parent) {
+    const images = Array.from(parent.querySelectorAll("img"));
+
+    if (!images.length) {
+      return Promise.resolve();
+    }
+
+    const promises = images.map(function (img) {
+      if (img.complete) {
+        return Promise.resolve();
+      }
+
+      return new Promise(function (resolve) {
+        img.addEventListener("load", resolve, { once: true });
+        img.addEventListener("error", resolve, { once: true });
+      });
+    });
+
+    return Promise.all(promises);
+  }
+
+  function applyJsMasonryLayout(itemsWithViews) {
+    if (!itemsWithViews.length) return;
+
+    const parent = findCardsParent(itemsWithViews);
+
+    if (!parent) {
+      console.warn("首頁最新文章卡片不是同一個父層，無法套用 JS Masonry");
+      return;
+    }
+
+    clearOldLayout(itemsWithViews);
+
+    parent.classList.add("home-post-js-masonry");
+
+    const containerWidth = parent.clientWidth;
+    const gap = 28;
+    const columnCount = getColumnCount(containerWidth);
+
+    if (columnCount === 1) {
+      parent.style.height = "";
+
+      itemsWithViews.forEach(function (item) {
+        item.card.classList.add("home-post-js-card", "home-post-js-sm");
+        item.card.style.position = "static";
+        item.card.style.width = "100%";
+        item.card.style.marginBottom = "1.25rem";
+      });
+
+      return;
+    }
+
+    const sorted = itemsWithViews.slice().sort(function (a, b) {
+      return b.viewCount - a.viewCount;
+    });
+
+    const columnWidth = (containerWidth - gap * (columnCount - 1)) / columnCount;
+    const columnHeights = new Array(columnCount).fill(0);
+
+    sorted.forEach(function (item, index) {
+      const card = item.card;
+      const visualClass = getCardClass(index, item.viewCount);
+
+      card.classList.add("home-post-js-card", visualClass);
+      card.dataset.viewCount = String(item.viewCount);
+
+      card.style.position = "absolute";
+      card.style.width = columnWidth + "px";
+      card.style.left = "0px";
+      card.style.top = "0px";
+      card.style.margin = "0";
+
+      /*
+        先放進排版流以取得正確高度。
+        等下一個 frame 量測會比較穩。
+      */
+    });
+
+    requestAnimationFrame(function () {
+      sorted.forEach(function (item) {
+        const card = item.card;
+
+        let targetColumn = 0;
+
+        for (let i = 1; i < columnHeights.length; i++) {
+          if (columnHeights[i] < columnHeights[targetColumn]) {
+            targetColumn = i;
+          }
+        }
+
+        const left = targetColumn * (columnWidth + gap);
+        const top = columnHeights[targetColumn];
+
+        card.style.left = left + "px";
+        card.style.top = top + "px";
+        card.style.width = columnWidth + "px";
+
+        const rect = card.getBoundingClientRect();
+        const cardHeight = rect.height;
+
+        columnHeights[targetColumn] += cardHeight + gap;
+      });
+
+      const maxHeight = Math.max.apply(null, columnHeights);
+      parent.style.height = Math.max(maxHeight - gap, 0) + "px";
+    });
   }
 
   async function renderBentoLayout() {
@@ -460,7 +511,7 @@ console.log("home-post-bento.js 已載入");
     const items = findHomePostCards();
 
     if (!items.length) {
-      console.warn("首頁沒有找到可套用 Masonry 排版的最新文章卡片");
+      console.warn("首頁沒有找到可套用 JS Masonry 排版的最新文章卡片");
       return;
     }
 
@@ -475,7 +526,27 @@ console.log("home-post-bento.js 已載入");
       });
     }
 
-    applyMasonryLayout(itemsWithViews);
+    lastItemsWithViews = itemsWithViews;
+
+    const parent = findCardsParent(itemsWithViews);
+
+    if (parent) {
+      await waitForImages(parent);
+    }
+
+    applyJsMasonryLayout(itemsWithViews);
+
+    /*
+      部分主題圖片 lazy load 或字型載入後高度會改變，
+      再補排幾次讓版面貼合。
+    */
+    setTimeout(function () {
+      applyJsMasonryLayout(lastItemsWithViews);
+    }, 350);
+
+    setTimeout(function () {
+      applyJsMasonryLayout(lastItemsWithViews);
+    }, 1000);
   }
 
   function scheduleRender() {
@@ -496,6 +567,16 @@ console.log("home-post-bento.js 已載入");
 
   document.addEventListener("DOMContentLoaded", scheduleRender);
   window.addEventListener("load", scheduleRender);
+
+  window.addEventListener("resize", function () {
+    clearTimeout(resizeTimer);
+
+    resizeTimer = setTimeout(function () {
+      if (lastItemsWithViews.length) {
+        applyJsMasonryLayout(lastItemsWithViews);
+      }
+    }, 220);
+  });
 
   const pushStateEl = document.querySelector("hy-push-state");
 
