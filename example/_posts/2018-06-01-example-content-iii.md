@@ -1,102 +1,91 @@
 ---
 layout: post
-title: Example Content III
-description: >
-  A page showing Hydejack-specific markdown content.
+description: > 
+  今晚不桌遊，一起保齡球！暫時離開牌桌與棋盤，換上球鞋、走上球道，一起享受輕鬆又熱鬧的夜晚。
 image: 
-  path: /assets/img/blog/example-content-iii.jpg
-  srcset:
-    1060w: /assets/img/blog/example-content-iii.jpg
-    530w:  /assets/img/blog/example-content-iii@0,5x.jpg
-    265w:  /assets/img/blog/example-content-iii@0,25x.jpg
-related_posts:
-  - example/_posts/2017-11-23-example-content-ii.md
-  - /example/2012-02-07-example-content/
+  path: /assets/img/noBoard.jpg
 sitemap: false
 ---
 
-Hydejack offers a few additional features to markup your markdown.
-Don't worry, these are merely CSS classes added with kramdown's `{:...}` syntax,
-so that your content remains compatible with other Jekyll themes.
+# 2026今晚不桌遊
 
-## Large Tables
-
-| Default aligned |Left aligned| Center aligned  | Right aligned  | Default aligned |Left aligned| Center aligned  | Right aligned  | Default aligned |Left aligned| Center aligned  | Right aligned  | Default aligned |Left aligned| Center aligned  | Right aligned  |
-|-----------------|:-----------|:---------------:|---------------:|-----------------|:-----------|:---------------:|---------------:|-----------------|:-----------|:---------------:|---------------:|-----------------|:-----------|:---------------:|---------------:|
-| First body part |Second cell | Third cell      | fourth cell    | First body part |Second cell | Third cell      | fourth cell    | First body part |Second cell | Third cell      | fourth cell    | First body part |Second cell | Third cell      | fourth cell    |
-| Second line     |foo         | **strong**      | baz            | Second line     |foo         | **strong**      | baz            | Second line     |foo         | **strong**      | baz            | Second line     |foo         | **strong**      | baz            |
-| Third line      |quux        | baz             | bar            | Third line      |quux        | baz             | bar            | Third line      |quux        | baz             | bar            | Third line      |quux        | baz             | bar            |
-| Second body     |            |                 |                | Second body     |            |                 |                | Second body     |            |                 |                | Second body     |            |                 |                |
-| 2 line          |            |                 |                | 2 line          |            |                 |                | 2 line          |            |                 |                | 2 line          |            |                 |                |
-| Footer row      |            |                 |                | Footer row      |            |                 |                | Footer row      |            |                 |                | Footer row      |            |                 |                |
-{:.scroll-table}
-
-
-## Code blocks
-
-~~~js
-// Example can be run directly in your JavaScript console
-
-// Create a function that takes two arguments and returns the sum of those
-// arguments
-var adder = new Function("a", "b", "return a + b");
-
-// Call the function
-adder(2, 6);
-// > 8
-~~~
-
-
-## Math
-Lorem ipsum $$ f(x) = x^2 $$.
-
-$$
-\begin{aligned}
-  \phi(x,y) &= \phi \left(\sum_{i=1}^n x_ie_i, \sum_{j=1}^n y_je_j \right) \\[2em]
-            &= \sum_{i=1}^n \sum_{j=1}^n x_i y_j \phi(e_i, e_j)            \\[2em]
-            &= (x_1, \ldots, x_n)
-               \left(\begin{array}{ccc}
-                 \phi(e_1, e_1)  & \cdots & \phi(e_1, e_n) \\
-                 \vdots          & \ddots & \vdots         \\
-                 \phi(e_n, e_1)  & \cdots & \phi(e_n, e_n)
-               \end{array}\right)
-               \left(\begin{array}{c}
-                 y_1    \\
-                 \vdots \\
-                 y_n
-               \end{array}\right)
-\end{aligned}
-$$
-
-
-## Message boxes
-**NOTE**: You can add a message box.
-{:.message}
-
-## Large text
-You can add large text.
+5 月 16 日，桌遊社走出室內，來到西門、艋舺一帶，舉辦《艋舺生存遊戲》城市尋寶活動。這次大家不再只是坐在桌邊推理，而是把整座城市當成遊戲地圖，在老街巷弄、歷史建築與在地景點之間尋找線索、破解關卡。
 {:.lead}
 
-## Large images
-![Full-width image](https://via.placeholder.com/800x100){:.lead width="800" height="100"}
+![活動隊伍合照](/assets/img/blog/city-treasure/city-treasure-01.png)
+突破紅塵尋寶藏、解碼紫微見星光：傳說中還在閱讀故事就解出答案的隊伍，榮登第一名當之無愧。
+{:.figcaption}
 
-## Captions to images
-![Full-width image](https://via.placeholder.com/800x100){:.lead width="800" height="100"}
-A caption to an image.
-{:.figure}
+- Table of Contents
+{:toc .large-only}
 
-## Large quotes
-> You can make a quote "pop out".
-{:.lead}
+## 把城市變成遊戲地圖
 
-## Faded text
-I'm faded, faded, faded.
-{:.faded}
+活動當天，各隊伍帶著任務紙與地圖出發，穿梭在西門紅樓、剝皮寮老街、龍山寺周邊等地點。大家一路上都非常投入，仔細觀察街區中的每個細節：從牆上的雕塑、老街建築的裝飾，到龍山寺壁畫與周邊環境，都可能藏著解題的關鍵。
+
+這次的城市尋寶不只考驗推理能力，也非常考驗大家的細心與觀察力。
+
+## 緊咬第一名的解謎高手們
+
+![GGGHow 隊伍合照](/assets/img/blog/city-treasure/city-treasure-02.png)
+由冀豪領軍 GGGHow 的隊伍實力堅強，在解謎過程中緊咬第一名、緊追在後！
+{:.figcaption}
+
+![西門紅樓小隊解謎過程](/assets/img/blog/city-treasure/city-treasure-03.png)
+![隊伍在戶外討論線索](/assets/img/blog/city-treasure/city-treasure-04.png)
+西門紅樓小隊有位資深大將，不可小覷。
+{:.figcaption}
+
+過程中可以看到每一隊都有自己的合作方式。有人負責閱讀題目，有人負責比對地圖，有人專心觀察周遭環境，也有人不斷提出新的解題方向。
+
+更有趣的是，每個隊伍在老街或寺廟周邊相遇時，總會忍不住試探一下對方目前找到的線索。大家一邊小心翼翼地討論，一邊又怕被別隊聽見關鍵資訊，那種既合作又競爭的氣氛，真的讓整個活動變得更有趣。
+
+## 選擇會改變劇情，也會改變命運
+
+這次最讓大家印象深刻的，除了找線索之外，還有遊戲中各種選擇造成的不同結果。
+
+每個小隊面對械鬥、捐款、選邊站等劇情時，做出的決定都不太一樣，也因此讓主角走向不同命運。有些隊伍的主角非常出師不利，竟然死掉了兩次；也有隊伍一路順順，主角完全沒死。
+
+沒想到城市尋寶不只考驗觀察力和推理力，連主角能不能平安活下來都要看大家怎麼選，真的非常有趣，也成為這次活動中大家事後聊天最有共鳴的笑點之一。
+
+## 艋舺老街裡的隊伍身影
+
+![隊伍在艋舺老街合照](/assets/img/blog/city-treasure/city-treasure-05.png)
+伊布兩步三步四步望著天，看起來非常享受艋舺老街氣氛。
+{:.figcaption}
+
+![我只想 Take a break 小隊合照](/assets/img/blog/city-treasure/city-treasure-06.png)
+「我只想 Take a break 小隊」動起來啊！
+{:.figcaption}
+
+![努力解謎的隊伍](/assets/img/blog/city-treasure/city-treasure-07.png)
+努力解謎的男人最帥。
+{:.figcaption}
+
+![勝利笑容隊伍合照](/assets/img/blog/city-treasure/city-treasure-08.png)
+勝利的笑容，看來只是一塊小蛋糕呢！
+{:.figcaption}
+
+![目標 3 點下午茶小隊](/assets/img/blog/city-treasure/city-treasure-09.png)
+發下豪語「目標 3 點下午茶」小隊，真的達標了，恭喜！
+{:.figcaption}
+
+## 排行榜與破關成果
+
+最後，各隊伍都順利完成挑戰，排行榜上也留下了大家努力破關的成果。
+
+第一名由「突破紅塵尋寶藏、解碼紫微見星光」拿下；第二名是「目標 3 點下午茶」；第三名則是「艋舺扛霸子」。其他隊伍也都展現了滿滿的行動力與解謎精神，讓這次活動充滿競爭感，也充滿歡笑。
+
+![西門紅樓隊伍合照](/assets/img/blog/city-treasure/city-treasure-10.png)
+城市尋寶不只是一場遊戲，也是一次一起走過街區、破解線索、留下回憶的旅程。
+{:.figcaption}
+
+## 一起走過艋舺，也一起留下回憶
+
+這次《艋舺生存遊戲》讓我們用不同方式認識艋舺。原本可能只是經過的街道、古蹟或牆面，因為任務與線索，變成了大家認真觀察的對象。
+
+城市尋寶就像一場放大版的桌遊，而這次的遊戲版圖，就是我們腳下的街區。
+
+感謝所有參與的社員與隊伍，也謝謝大家在炎熱天氣中依然認真投入。希望這次活動不只是一場破關紀錄，也成為大家一起走過艋舺、一起解謎、一起留下回憶的社團篇章。
 
 
-[mm]: https://guides.github.com/features/mastering-markdown/
-[ksyn]: https://kramdown.gettalong.org/syntax.html
-[ksyntab]:https://kramdown.gettalong.org/syntax.html#tables
-[ksynmath]: https://kramdown.gettalong.org/syntax.html#math-blocks
-[katex]: https://khan.github.io/KaTeX/
-[rtable]: https://dbushell.com/2016/03/04/css-only-responsive-tables/
