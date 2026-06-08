@@ -323,6 +323,254 @@ console.log("guide-detail.js 已載入");
     }
   }
 
+  function createReportModal() {
+    if (document.getElementById("guideReportModal")) return;
+
+    const modal = document.createElement("div");
+    modal.id = "guideReportModal";
+    modal.innerHTML = `
+      <style>
+        #guideReportModal {
+          position: fixed;
+          inset: 0;
+          z-index: 100000;
+          display: none;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
+          background: rgba(0, 0, 0, 0.62);
+          box-sizing: border-box;
+        }
+
+        #guideReportModal.show {
+          display: flex;
+        }
+
+        .guide-report-card {
+          width: 100%;
+          max-width: 480px;
+          background: #fff;
+          color: #222;
+          border-radius: 14px;
+          padding: 24px;
+          box-shadow: 0 16px 40px rgba(0, 0, 0, 0.34);
+          box-sizing: border-box;
+        }
+
+        .guide-report-card h3 {
+          margin: 0 0 12px 0;
+          color: #222;
+        }
+
+        .guide-report-card p {
+          margin: 0 0 14px 0;
+          color: #555;
+          font-size: 14px;
+          line-height: 1.6;
+        }
+
+        .guide-report-card textarea {
+          width: 100%;
+          min-height: 120px;
+          resize: vertical;
+          box-sizing: border-box;
+          padding: 10px 12px;
+          border-radius: 8px;
+          border: 1px solid #d6d6d6;
+          color: #222;
+          background: #fff;
+          font: inherit;
+          line-height: 1.6;
+        }
+
+        #guideReportMsg {
+          min-height: 20px;
+          margin-top: 10px;
+          color: #d93025;
+          font-size: 14px;
+          line-height: 1.5;
+        }
+
+        #guideReportMsg.success {
+          color: #188038;
+        }
+
+        .guide-report-actions {
+          display: flex;
+          justify-content: flex-end;
+          gap: 10px;
+          margin-top: 16px;
+        }
+
+        .guide-report-actions button {
+          padding: 9px 14px;
+          border: none;
+          border-radius: 8px;
+          cursor: pointer;
+          font-weight: 700;
+        }
+
+        #guideReportCancelBtn {
+          background: #e8e8e8;
+          color: #333;
+        }
+
+        #guideReportSubmitBtn {
+          background: rgb(79,177,186);
+          color: #fff;
+        }
+
+        .guide-report-actions button:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+      </style>
+
+      <div class="guide-report-card">
+        <h3>文章有疑慮</h3>
+        <p>請簡單說明這篇文章讓你覺得有疑慮的地方，送出後會提供給管理員查看。</p>
+
+        <textarea id="guideReportReason" maxlength="500" placeholder="例如：內容不適當、資訊有誤、疑似冒用圖片、與社團無關等"></textarea>
+
+        <div id="guideReportMsg"></div>
+
+        <div class="guide-report-actions">
+          <button id="guideReportCancelBtn" type="button">取消</button>
+          <button id="guideReportSubmitBtn" type="button">送出</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    document.getElementById("guideReportCancelBtn").addEventListener("click", closeReportModal);
+    document.getElementById("guideReportSubmitBtn").addEventListener("click", submitReport);
+
+    modal.addEventListener("click", function (event) {
+      if (event.target === modal) closeReportModal();
+    });
+
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") closeReportModal();
+    });
+  }
+
+  function openReportModal() {
+    if (!currentUser) {
+      alert("請先登入後再回報文章。");
+      return;
+    }
+
+    createReportModal();
+
+    const modal = document.getElementById("guideReportModal");
+    const reason = document.getElementById("guideReportReason");
+    const msg = document.getElementById("guideReportMsg");
+    const submitBtn = document.getElementById("guideReportSubmitBtn");
+
+    reason.value = "";
+    msg.innerText = "";
+    msg.className = "";
+    submitBtn.disabled = false;
+    submitBtn.innerText = "送出";
+
+    modal.classList.add("show");
+
+    setTimeout(function () {
+      reason.focus();
+    }, 100);
+  }
+
+  function closeReportModal() {
+    const modal = document.getElementById("guideReportModal");
+
+    if (modal) {
+      modal.classList.remove("show");
+    }
+  }
+
+  async function getReporterName(user) {
+    try {
+      const doc = await db.collection("users").doc(user.uid).get();
+
+      if (doc.exists && doc.data().displayName) {
+        return doc.data().displayName;
+      }
+    } catch (error) {
+      console.error("讀取回報者名稱失敗：", error);
+    }
+
+    return user.displayName || user.email || "未命名社員";
+  }
+
+  async function submitReport() {
+    const reason = document.getElementById("guideReportReason");
+    const msg = document.getElementById("guideReportMsg");
+    const submitBtn = document.getElementById("guideReportSubmitBtn");
+
+    if (!currentUser) {
+      msg.innerText = "請先登入。";
+      return;
+    }
+
+    const reasonText = reason.value.trim();
+
+    if (!reasonText) {
+      msg.innerText = "請輸入有疑慮的原因。";
+      reason.focus();
+      return;
+    }
+
+    if (reasonText.length > 500) {
+      msg.innerText = "疑慮內容請控制在 500 字以內。";
+      return;
+    }
+
+    if (!currentGuideId || !currentGuideData) {
+      msg.innerText = "找不到文章資料，請重新整理後再試。";
+      return;
+    }
+
+    try {
+      submitBtn.disabled = true;
+      submitBtn.innerText = "送出中...";
+      msg.innerText = "";
+
+      const reporterName = await getReporterName(currentUser);
+
+      await db.collection("reports").add({
+        guideId: currentGuideId,
+        guideTitle: currentGuideData.title || "未命名文章",
+        guideCategory: currentGuideData.category || "未分類",
+        guideGameName: currentGuideData.gameName || "",
+        guideSummary: currentGuideData.summary || "",
+        guideCoverImage: currentGuideData.coverImage || "",
+        guideAuthorUid: currentGuideData.authorUid || "",
+        guideAuthorName: currentGuideData.authorName || "未命名社員",
+
+        reporterUid: currentUser.uid,
+        reporterEmail: currentUser.email || "",
+        reporterName: reporterName,
+
+        reason: reasonText,
+        status: "open",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      msg.className = "success";
+      msg.innerText = "已送出，管理員會再查看，謝謝你的提醒。";
+
+      setTimeout(closeReportModal, 1000);
+    } catch (error) {
+      console.error("送出文章疑慮失敗：", error);
+      msg.className = "";
+      msg.innerText = "送出失敗，請稍後再試。";
+      submitBtn.disabled = false;
+      submitBtn.innerText = "送出";
+    }
+  }
+
   function injectDetailStyle() {
     if (document.getElementById("guideDetailExtraStyle")) return;
 
@@ -357,7 +605,8 @@ console.log("guide-detail.js 已載入");
 
       .guide-detail-category,
       .guide-detail-stat,
-      .guide-detail-like-btn {
+      .guide-detail-like-btn,
+      .guide-detail-report-btn {
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -378,7 +627,8 @@ console.log("guide-detail.js 已載入");
         border-color: rgba(79,177,186,0.35);
       }
 
-      .guide-detail-like-btn {
+      .guide-detail-like-btn,
+      .guide-detail-report-btn {
         cursor: pointer;
       }
 
@@ -386,6 +636,11 @@ console.log("guide-detail.js 已載入");
       .guide-detail-like-btn.liked {
         border-color: rgb(79,177,186);
         background: rgba(79,177,186,0.16);
+      }
+
+      .guide-detail-report-btn:hover {
+        border-color: #ffb4a9;
+        background: rgba(255, 180, 169, 0.10);
       }
 
       .guide-detail-owner-actions {
@@ -495,6 +750,7 @@ console.log("guide-detail.js 已載入");
           <button id="guideLikeBtn" class="guide-detail-like-btn ${liked ? "liked" : ""}" type="button">👍 ${likeCount}</button>
           <span class="guide-detail-stat">👁 ${viewCount}</span>
           <span class="guide-detail-stat">💬 ${currentCommentCount}</span>
+          <button id="guideReportBtn" class="guide-detail-report-btn" type="button">文章有疑慮</button>
         </div>
       </div>
 
@@ -524,6 +780,7 @@ console.log("guide-detail.js 已載入");
 
     const deleteBtn = document.getElementById("guideDetailDeleteBtn");
     const likeBtn = document.getElementById("guideLikeBtn");
+    const reportBtn = document.getElementById("guideReportBtn");
 
     if (deleteBtn) {
       deleteBtn.addEventListener("click", openDeleteModal);
@@ -531,6 +788,10 @@ console.log("guide-detail.js 已載入");
 
     if (likeBtn) {
       likeBtn.addEventListener("click", toggleGuideLike);
+    }
+
+    if (reportBtn) {
+      reportBtn.addEventListener("click", openReportModal);
     }
   }
 
@@ -588,6 +849,7 @@ console.log("guide-detail.js 已載入");
   }
 
   createDeleteModal();
+  createReportModal();
 
   auth.onAuthStateChanged(function (user) {
     currentUser = user;
