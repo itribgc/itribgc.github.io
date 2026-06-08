@@ -1,9 +1,9 @@
 ---
 layout: post
-description: >
-第一次使用守夜人桌遊社網站嗎？這篇整理登入方式、社員 ID、社員論壇、留言互動、電子報閱讀與等級系統等操作說明。
-image:
-path: /assets/img/site_user_guide.png
+description: > 
+  第一次使用守夜人桌遊社網站嗎？這篇整理登入方式、社員 ID、社員論壇、留言互動、電子報閱讀與等級系統等操作說明。
+image: 
+  path: /assets/img/site_user_guide.png
 sitemap: false
 ---
 
