@@ -1,0 +1,58 @@
+---
+layout: page
+title: 審核文章
+description: >
+  查看社員回報的有疑慮文章。
+---
+
+<style>
+  .guide-admin-page {
+    max-width: 980px;
+  }
+
+  .guide-admin-intro {
+    opacity: 0.82;
+    line-height: 1.8;
+    margin-bottom: 1.5rem;
+  }
+
+  .guide-admin-msg {
+    margin: 1rem 0;
+    min-height: 24px;
+    color: #ffb4a9;
+    line-height: 1.6;
+  }
+
+  .guide-admin-msg.success {
+    color: #8fd19e;
+  }
+
+  .reported-guide-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .reported-guide-empty {
+    padding: 1rem;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.055);
+    opacity: 0.82;
+  }
+</style>
+
+<div class="guide-admin-page">
+  <h1>審核文章</h1>
+
+  <p class="guide-admin-intro">
+    這裡會顯示社員回報「文章有疑慮」的貼文。確認內容有問題時，可以直接刪除文章。
+  </p>
+
+  <div id="guideAdminMsg" class="guide-admin-msg"></div>
+
+  <div id="reportedGuideList" class="reported-guide-list">
+    <div class="reported-guide-empty">資料載入中...</div>
+  </div>
+</div>
+
+<script src="/assets/js/guide-admin.js"></script>
