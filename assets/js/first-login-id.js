@@ -245,11 +245,15 @@ console.log("first-login-id.js 已載入");
 
   function closeModal() {
     const modal = document.getElementById("firstLoginIdModal");
-    if (modal) modal.classList.remove("show");
+
+    if (modal) {
+      modal.classList.remove("show");
+    }
   }
 
   function setModalMsg(text, type) {
     const msg = document.getElementById("firstLoginIdMsg");
+
     if (!msg) return;
 
     msg.innerText = text || "";
@@ -307,19 +311,12 @@ console.log("first-login-id.js 已載入");
       setTimeout(function () {
         closeModal();
 
-        /*
-          通知 profile.js 重新刷新左側顯示。
-          如果你的 profile.js 沒有監聽這個事件，也不會壞掉。
-        */
         window.dispatchEvent(new CustomEvent("bgc-profile-updated", {
           detail: {
             displayName: displayName
           }
         }));
 
-        /*
-          保險做法：稍微重整一次首頁，讓左側 ID、等級系統與所有 UI 都更新。
-        */
         window.location.reload();
       }, 700);
     } catch (error) {
@@ -346,10 +343,6 @@ console.log("first-login-id.js 已載入");
 
       const data = userDoc.data();
 
-      /*
-        如果還在強制改密碼階段，不要跳 ID 視窗。
-        等他改完密碼、重新登入、真的進首頁後再跳。
-      */
       if (data.mustChangePassword === true) {
         return {
           shouldAsk: false,
