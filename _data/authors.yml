@@ -1,325 +1,98 @@
-@font-face {
-  font-family: "MyChineseFont";
-  src: url("/assets/fonts/madoufmg.ttf") format("truetype");
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
+# The primary author of this blog.
+# Must be the same as `author` in `_config.yml`.
+# Change `author1` to your shortname.
+author1:
+  name:              守夜人-桌遊社
+  email:             itribgc@gmail.com
 
-/* =========================
-   全站中文字型
-========================= */
+  # Used at the bottom of each page and at the top of the `about` layout
+  # Markdown enabled, can use multiple paragraphs (enabled by `|`)
+  about:             |
+    守夜人桌遊社，這裡收藏我們的活動紀錄、社員交流、電子報與桌遊回憶。
 
-html,
-body,
-body * {
-  font-family:
-    "MyChineseFont",
-    "Noto Sans TC",
-    "Microsoft JhengHei",
-    "PingFang TC",
-    sans-serif !important;
-}
+    歡迎一起開局、一起冒險、一起留下精彩故事。
 
-/* 主標題、副標題、文章標題 */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
-.page-title,
-.post-title,
-.entry-title,
-.site-title,
-.sidebar-title,
-.tagline,
-.lead,
-.heading,
-.flip-title {
-  font-family:
-    "MyChineseFont",
-    "Noto Sans TC",
-    "Microsoft JhengHei",
-    "PingFang TC",
-    sans-serif !important;
-}
+  # This photo will be used in the about section
+  picture:
+    path:            /assets/img/favicon.png
+    srcset:
+      1x:            /assets/img/favicon.png
+      2x:            /assets/img/favicon.png
 
-/* 左側欄全部 */
-.sidebar,
-.sidebar *,
-.sidebar-sticky,
-.sidebar-sticky *,
-.sidebar-nav,
-.sidebar-nav *,
-.sidebar-title,
-.sidebar-title *,
-.sidebar-about,
-.sidebar-about * {
-  font-family:
-    "MyChineseFont",
-    "Noto Sans TC",
-    "Microsoft JhengHei",
-    "PingFang TC",
-    sans-serif !important;
-}
+  # Social media icons in sidebar
+  # Comment/uncomment to show/hide
+  # Rearrange to change the order in which they appear
+  # 這裡先維持 Hydejack 原本可辨識的 username 格式，實際連結會由 custom-social-links.js 修正
+  social:
+    # twitter:         <username>
+    # github:          <username>
+    # email:           <mail@domain.tld>
+    # rss:             https://<url>/feed.xml
+    # facebook:        <username>
+    # google:          <number>
+    # vk:              <username>
 
-/* 導覽列 */
-.nav-btn,
-.nav-btn-bar,
-.sidebar-nav,
-.sidebar-nav-item,
-.drawer-menu,
-.drawer-menu *,
-.menu,
-.menu *,
-nav,
-nav * {
-  font-family:
-    "MyChineseFont",
-    "Noto Sans TC",
-    "Microsoft JhengHei",
-    "PingFang TC",
-    sans-serif !important;
-}
+    youtube:         itribgc
 
-/* 文章內容區 */
-.content,
-.content *,
-main,
-main *,
-article,
-article *,
-.post,
-.post *,
-.page,
-.page * {
-  font-family:
-    "MyChineseFont",
-    "Noto Sans TC",
-    "Microsoft JhengHei",
-    "PingFang TC",
-    sans-serif !important;
-}
+    # vimeo:           <username>
+    # vine:            <username>
+    # spotify:         <user>/<number>
+    # soundcloud:      <username>
+    # lastfm:          <username>
 
-/* 首頁文章卡片 */
-.card,
-.card *,
-.post-card,
-.post-card *,
-.project-card,
-.project-card *,
-.hy-card,
-.hy-card *,
-.grid,
-.grid *,
-.grid__item,
-.grid__item *,
-.grid-item,
-.grid-item * {
-  font-family:
-    "MyChineseFont",
-    "Noto Sans TC",
-    "Microsoft JhengHei",
-    "PingFang TC",
-    sans-serif !important;
-}
+    instagram:       itri_bgc
 
-/* 社員論壇與文章頁 */
-.guide-card,
-.guide-card *,
-.guide-detail,
-.guide-detail *,
-.guide-detail-content,
-.guide-detail-content *,
-.guide-editor,
-.guide-editor *,
-.guide-admin-page,
-.guide-admin-page *,
-.reported-guide-card,
-.reported-guide-card * {
-  font-family:
-    "MyChineseFont",
-    "Noto Sans TC",
-    "Microsoft JhengHei",
-    "PingFang TC",
-    sans-serif !important;
-}
+    # flickr:          <string@string>
+    # 500px:           <username>
+    # dribbble:        <username>
+    # behance:         <username>
+    # deviantart:      <username>
+    # ello:            <username>
+    # twitch:          <username>
+    # steam:           <number>
+    # reddit:          <username>
+    # tumblr:          <username>
+    # pinterest:       <username>
+    # foursquare:      <number>
+    # yelp:            <string>
+    # stackoverflow:   <number/username>
+    # npm:             <username>
+    # hackernews:      <username>
+    # trello:          <firstnamelastname>
+    # linkedin:        <firstname-lastname-string>
+    # xing:            <firstname_lastname_counter>
+    # blogger:         <number>
+    # delicious:       <username>
+    # stumbleupon:     <username>
+    # paypal:          <username>
+    # download:        <url>
+    # keybase:         <username>
+    # signal:          <group-invite-code>
+    # threads:         @<username>
+    # playstation:     https://<url>
+    # messenger:       https://<url>
+    # stripe:          https://<url>
+    # slack:           https://<url>
+    # gitlab:          <username>
+    # line:            <username>
+    # medium:          <path>
+    # xbox:            <gamer-tag>
+    # wechat:          https://<url>
+    # discord:         <invite-code>
+    # mastodon:        https://<url>
+    # x:               <username>
 
-/* 留言區、文章互動區 */
-.post-interactions,
-.post-interactions *,
-.post-comment-section,
-.post-comment-section *,
-.post-comment-card,
-.post-comment-card *,
-.guide-comment-section,
-.guide-comment-section *,
-.guide-comment-card,
-.guide-comment-card * {
-  font-family:
-    "MyChineseFont",
-    "Noto Sans TC",
-    "Microsoft JhengHei",
-    "PingFang TC",
-    sans-serif !important;
-}
+# Another author (optional)
+author2:
+  name:              <firstname> <lastname>
+  email:             <mail@domain.tld>
+  about:             |
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit,
+    sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+    Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
 
-/* 會員 ID / 等級系統 */
-.member-profile-panel,
-.member-profile-panel *,
-.member-profile-modal-card,
-.member-profile-modal-card * {
-  font-family:
-    "MyChineseFont",
-    "Noto Sans TC",
-    "Microsoft JhengHei",
-    "PingFang TC",
-    sans-serif !important;
-}
+    Open `_data/authors.yml` to edit this text.
 
-/* 首頁文章統計數 */
-.home-post-inline-stats,
-.home-post-inline-stats *,
-.home-post-stat-pill,
-.home-post-stat-pill * {
-  font-family:
-    "MyChineseFont",
-    "Noto Sans TC",
-    "Microsoft JhengHei",
-    "PingFang TC",
-    sans-serif !important;
-}
-
-/* 電子報頁面 */
-.newsletter-reader,
-.newsletter-reader *,
-.newsletter-list-wrap,
-.newsletter-list-wrap *,
-.newsletter-card,
-.newsletter-card *,
-.newsletter-item,
-.newsletter-item * {
-  font-family:
-    "MyChineseFont",
-    "Noto Sans TC",
-    "Microsoft JhengHei",
-    "PingFang TC",
-    sans-serif !important;
-}
-
-/* 表單與按鈕 */
-input,
-textarea,
-select,
-button,
-label,
-option {
-  font-family:
-    "MyChineseFont",
-    "Noto Sans TC",
-    "Microsoft JhengHei",
-    "PingFang TC",
-    sans-serif !important;
-}
-
-/* Modal 小視窗 */
-.modal,
-.modal *,
-[class*="modal"],
-[class*="modal"] *,
-[class*="Modal"],
-[class*="Modal"] * {
-  font-family:
-    "MyChineseFont",
-    "Noto Sans TC",
-    "Microsoft JhengHei",
-    "PingFang TC",
-    sans-serif !important;
-}
-
-/* =========================
-   程式碼區不要被中文字型影響
-========================= */
-
-code,
-pre,
-kbd,
-samp,
-code *,
-pre *,
-kbd *,
-samp * {
-  font-family:
-    "JetBrains Mono",
-    "Fira Code",
-    "Consolas",
-    "Monaco",
-    monospace !important;
-}
-
-/* =========================
-   Hydejack 社群圖示修正
-   避免中文字型覆蓋 icon font
-========================= */
-
-[class^="icon-"],
-[class*=" icon-"],
-[class^="icon-"]::before,
-[class*=" icon-"]::before,
-.social a,
-.social a *,
-.sidebar-social a,
-.sidebar-social a *,
-.sidebar-social a::before,
-.social a::before,
-.sidebar .social a,
-.sidebar .social a *,
-.sidebar .social a::before,
-.sidebar a[href*="youtube.com"],
-.sidebar a[href*="youtube.com"] *,
-.sidebar a[href*="youtube.com"]::before,
-.sidebar a[href*="instagram.com"],
-.sidebar a[href*="instagram.com"] *,
-.sidebar a[href*="instagram.com"]::before {
-  font-family: "icomoon" !important;
-  font-style: normal !important;
-  font-weight: normal !important;
-  font-variant: normal !important;
-  text-transform: none !important;
-  speak: none;
-  line-height: 1;
-}
-
-/* 如果社群圖示是用 span 包住，強制恢復 icon 字型 */
-.sidebar span[class^="icon-"],
-.sidebar span[class*=" icon-"],
-.social span[class^="icon-"],
-.social span[class*=" icon-"] {
-  font-family: "icomoon" !important;
-}
-
-/* =========================
-   小修正：避免部分按鈕與膠囊字距太怪
-========================= */
-
-button,
-.home-post-stat-pill,
-.post-stat-pill,
-.post-like-btn,
-.guide-detail-stat,
-.guide-detail-like-btn,
-.guide-detail-report-btn,
-.member-profile-level-badge {
-  letter-spacing: 0.02em;
-}
-
-/* =========================
-   字型載入失敗時避免版面跳太大
-========================= */
-
-body {
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+  picture:           https://placehold.it/128x128
+  twitter:           <username>
+  github:            <username>
