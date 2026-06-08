@@ -229,6 +229,12 @@ console.log("home-post-bento.js 已載入");
     sorted.forEach(function (item, index) {
       item.card.classList.add("home-post-bento-card");
 
+      /*
+        排版邏輯：
+        第 1 名：大卡片，左右變寬
+        第 2 名：中卡片，略寬
+        其他：維持一般卡片，不再縮小
+      */
       if (index === 0 && item.viewCount > 0) {
         item.card.classList.add("home-post-bento-large");
       } else if (index === 1 && item.viewCount > 0) {
@@ -242,14 +248,22 @@ console.log("home-post-bento.js 已載入");
   }
 
   function injectStyles() {
-    if (document.getElementById("homePostBentoStyle")) return;
+    const oldStyle = document.getElementById("homePostBentoStyle");
+    if (oldStyle) oldStyle.remove();
 
     const style = document.createElement("style");
     style.id = "homePostBentoStyle";
     style.innerHTML = `
+      /*
+        平衡版首頁最新文章：
+        - 不再把小卡片壓到過窄
+        - 一般卡片至少維持接近原本寬度
+        - 熱門文章只做左右加寬，不做上下拉長
+      */
+
       .home-post-bento-grid {
         display: grid !important;
-        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
         grid-auto-flow: dense !important;
         gap: 1.35rem !important;
         align-items: start !important;
@@ -269,38 +283,34 @@ console.log("home-post-bento.js 已載入");
         transform: translateY(-4px);
       }
 
-      /*
-        重點：
-        大卡片只左右變寬，不再上下變高
-      */
       .home-post-bento-large {
-        grid-column: span 2 !important;
+        grid-column: span 3 !important;
         grid-row: span 1 !important;
       }
 
       .home-post-bento-medium {
-        grid-column: span 2 !important;
+        grid-column: span 3 !important;
         grid-row: span 1 !important;
       }
 
       .home-post-bento-normal {
-        grid-column: span 1 !important;
+        grid-column: span 3 !important;
         grid-row: span 1 !important;
       }
+
+      /*
+        讓全部卡片最小都維持兩欄版大小。
+        也就是：瀏覽數少的文章不再被壓成窄長卡。
+      */
 
       .home-post-bento-card img {
         width: 100% !important;
         display: block !important;
         object-fit: cover !important;
         aspect-ratio: 16 / 9 !important;
-      }
-
-      .home-post-bento-large img,
-      .home-post-bento-medium img,
-      .home-post-bento-normal img {
+        height: auto !important;
         min-height: unset !important;
         max-height: unset !important;
-        height: auto !important;
       }
 
       .home-post-bento-large h1,
@@ -319,7 +329,7 @@ console.log("home-post-bento.js 已載入");
       .home-post-bento-medium .card-title,
       .home-post-bento-medium .post-title,
       .home-post-bento-medium .project-title {
-        font-size: 1.35rem !important;
+        font-size: 1.32rem !important;
         line-height: 1.3 !important;
       }
 
@@ -329,18 +339,37 @@ console.log("home-post-bento.js 已載入");
       .home-post-bento-normal .card-title,
       .home-post-bento-normal .post-title,
       .home-post-bento-normal .project-title {
-        font-size: 1.15rem !important;
+        font-size: 1.25rem !important;
         line-height: 1.3 !important;
       }
 
-      @media (max-width: 980px) {
+      @media (min-width: 1180px) {
+        .home-post-bento-grid {
+          grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+        }
+
+        .home-post-bento-large {
+          grid-column: span 4 !important;
+        }
+
+        .home-post-bento-medium {
+          grid-column: span 2 !important;
+        }
+
+        .home-post-bento-normal {
+          grid-column: span 3 !important;
+        }
+      }
+
+      @media (max-width: 1179px) {
         .home-post-bento-grid {
           grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
         }
 
         .home-post-bento-large,
-        .home-post-bento-medium {
-          grid-column: span 2 !important;
+        .home-post-bento-medium,
+        .home-post-bento-normal {
+          grid-column: span 1 !important;
           grid-row: span 1 !important;
         }
       }
