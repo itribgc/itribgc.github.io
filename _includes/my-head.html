@@ -1,21 +1,13 @@
+<!-- Custom Favicon -->
+<link rel="icon" type="image/png" href="/assets/img/favicon.png?v=1">
+<link rel="shortcut icon" type="image/png" href="/assets/img/favicon.png?v=1">
+<link rel="apple-touch-icon" href="/assets/img/favicon.png?v=1">
+
 {% unless page.url contains '/login/' %}
-<!-- Firebase Auth / Firestore -->
+<!-- Firebase Auth Guard -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-
-<!-- Markdown Render -->
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
-
-<!-- Site Auth / Profile -->
 <script src="/assets/js/auth-guard.js"></script>
-<script src="/assets/js/profile.js"></script>
-
-{% if page.layout == 'post' %}
-<!-- Blog Comments -->
-<script src="/assets/js/comment-section.js"></script>
-{% endif %}
 {% endunless %}
 
 <!-- Add HTML tags here to be included in the head. You can delete the below: -->
@@ -24,7 +16,7 @@
 <script type="module">
   const loadJS = x => new Promise(r => {
     if (!window.loadJS) {
-      console.warn("window.loadJS 尚未載入，略過外部 JS 載入");
+      console.warn("window.loadJS 尚未載入，無法載入：", x);
       r();
       return;
     }
@@ -32,7 +24,7 @@
     const script = window.loadJS(x);
 
     if (script && script.addEventListener) {
-      script.addEventListener('load', r);
+      script.addEventListener("load", r);
     } else {
       r();
     }
@@ -43,11 +35,6 @@
   function initGumroad() {
     if (!window.loadJS) {
       console.warn("window.loadJS 尚未載入，略過 Gumroad 初始化");
-      return;
-    }
-
-    if (!("IntersectionObserver" in window)) {
-      console.warn("瀏覽器不支援 IntersectionObserver，略過 Gumroad 初始化");
       return;
     }
 
