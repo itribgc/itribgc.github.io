@@ -101,11 +101,19 @@
       "Monaco",
       monospace !important;
   }
+
+  /* 避免自訂中文字型覆蓋 Hydejack 原本的社群 icon font */
+  [class^="icon-"],
+  [class*=" icon-"],
+  [class^="icon-"]::before,
+  [class*=" icon-"]::before {
+    font-family: "icomoon" !important;
+  }
 </style>
 
 <!-- Custom CSS -->
 <link rel="preload" href="/assets/fonts/madoufmg.ttf?v=10" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="/assets/css/custom.css?v=10">
+<link rel="stylesheet" href="/assets/css/custom.css?v=14">
 
 <!-- Custom Favicon -->
 <link rel="icon" href="/favicon.ico?v=10" sizes="any">
@@ -185,9 +193,8 @@
 <script src="/assets/js/profile.js?v=10"></script>
 <script src="/assets/js/admin-nav.js?v=10"></script>
 
-<!-- Home Latest Posts Stats -->
-<script src="/assets/js/home-post-bento.js?v=1"></script>
-<!-- <script src="/assets/js/home-post-stats.js?v=10"></script> -->
+<!-- Home Latest Posts Bento Layout -->
+<script src="/assets/js/home-post-bento.js?v=2"></script>
 
 {% if page.layout == 'post' %}
 <script>
