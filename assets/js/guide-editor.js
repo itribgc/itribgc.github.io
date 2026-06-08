@@ -17,6 +17,7 @@ console.log("guide-editor.js 已載入");
   const auth = firebase.auth();
   const db = firebase.firestore();
 
+  const ADMIN_EMAIL = "itribgc@gmail.com";
   const allowedCategories = ["桌遊攻略", "活動心得", "規則討論", "開箱分享", "揪團交流"];
 
   let currentUser = null;
@@ -50,6 +51,10 @@ console.log("guide-editor.js 已載入");
   const linkMsg = document.getElementById("mdLinkMsg");
   const linkCancelBtn = document.getElementById("mdLinkCancelBtn");
   const linkInsertBtn = document.getElementById("mdLinkInsertBtn");
+
+  function isAdmin() {
+    return currentUser && currentUser.email === ADMIN_EMAIL;
+  }
 
   function setMsg(text, type) {
     if (!msg) return;
@@ -169,8 +174,11 @@ console.log("guide-editor.js 已載入");
     try {
       publishBtn.disabled = true;
       previewBtn.disabled = true;
-      publishBtn.innerText = "發布中...";
-      setMsg("正在發布文章...");
+
+      const adminMode = isAdmin();
+
+      publishBtn.innerText = adminMode ? "發布中..." : "送出審核中...";
+      setMsg(adminMode ? "正在發布文章..." : "正在送出文章審核...");
 
       const payload = {
         title: titleInput.value.trim(),
@@ -179,26 +187,41 @@ console.log("guide-editor.js 已載入");
         coverImage: normalizeImageUrl(coverInput.value),
         summary: summaryInput.value.trim(),
         contentMarkdown: contentInput.value.trim(),
+
         authorUid: currentUser.uid,
         authorName: currentDisplayName,
-        status: "published",
+
+        status: adminMode ? "published" : "pending",
+        reviewStatus: adminMode ? "approved" : "pending",
+
         likeCount: 0,
         viewCount: 0,
         likedBy: {},
+
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+
+        reviewedAt: adminMode ? firebase.firestore.FieldValue.serverTimestamp() : null,
+        reviewedBy: adminMode ? currentUser.uid : "",
+        reviewedByEmail: adminMode ? currentUser.email : ""
       };
 
       const docRef = await db.collection("guides").add(payload);
 
-      setMsg("文章發布成功，即將前往文章頁。", "success");
+      setMsg(
+        adminMode
+          ? "文章已發布，即將前往文章頁。"
+          : "文章已送出審核，審核通過後才會出現在社員論壇。",
+        "success"
+      );
 
       setTimeout(function () {
         window.location.href = "/guides/post/?id=" + encodeURIComponent(docRef.id);
       }, 900);
     } catch (error) {
-      console.error("發布文章失敗：", error);
-      setMsg("發布失敗，請稍後再試。");
+      console.error("送出文章失敗：", error);
+      setMsg("送出失敗，請稍後再試。");
       publishBtn.disabled = false;
       previewBtn.disabled = false;
       publishBtn.innerText = "發布文章";
@@ -480,13 +503,20 @@ console.log("guide-editor.js 已載入");
     currentDisplayName = await getDisplayName(user);
 
     if (!currentDisplayName) {
-      setMsg("請先設定社員 ID，才能投稿。請點右上角「設定 ID」。");
+      setMsg("請先設定社員 ID，才能投稿。請點左側「更改 ID」。");
       publishBtn.disabled = true;
       previewBtn.disabled = false;
       return;
     }
 
-    setMsg("目前投稿身分：" + currentDisplayName, "success");
+    if (isAdmin()) {
+      setMsg("目前為管理員身分，文章會直接發布。", "success");
+      publishBtn.innerText = "發布文章";
+    } else {
+      setMsg("目前投稿身分：" + currentDisplayName + "。送出後會先進入管理員審核。", "success");
+      publishBtn.innerText = "送出審核";
+    }
+
     publishBtn.disabled = false;
     previewBtn.disabled = false;
   });
