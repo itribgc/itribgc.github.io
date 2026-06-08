@@ -779,9 +779,9 @@ console.log("profile.js 已載入");
 
     if (xpSourceEl) {
       xpSourceEl.innerHTML = `
-        <div>發文 XP：${xpInfo.postXp}（${xpInfo.postCount} 篇）</div>
-        <div>文章獲讚 XP：${xpInfo.articleReceivedLikeXp}（文章總讚數 ${xpInfo.totalArticleLikes}，每 10 讚 +1 XP）</div>
-        <div>按讚文章 XP：${xpInfo.articleGivenLikeXp}（已按讚 ${xpInfo.givenArticleLikeCount} 篇別人的文章）</div>
+        <<div>發文 XP：${xpInfo.postXp}</div>
+        <div>文章獲讚 XP：${xpInfo.articleReceivedLikeXp}</div>
+        <div>按讚文章 XP：${xpInfo.articleGivenLikeXp}</div>
       `;
     }
   }
