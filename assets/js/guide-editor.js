@@ -170,7 +170,7 @@ console.log("guide-editor.js 已載入");
       publishBtn.disabled = true;
       previewBtn.disabled = true;
       publishBtn.innerText = "發布中...";
-      setMsg("正在儲存文章...");
+      setMsg("正在發布文章...");
 
       const payload = {
         title: titleInput.value.trim(),
@@ -191,11 +191,11 @@ console.log("guide-editor.js 已載入");
 
       const docRef = await db.collection("guides").add(payload);
 
-      setMsg("發布成功，即將前往文章頁。", "success");
+      setMsg("文章發布成功，即將前往文章頁。", "success");
 
       setTimeout(function () {
         window.location.href = "/guides/post/?id=" + encodeURIComponent(docRef.id);
-      }, 800);
+      }, 900);
     } catch (error) {
       console.error("發布文章失敗：", error);
       setMsg("發布失敗，請稍後再試。");
