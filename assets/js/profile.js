@@ -779,7 +779,7 @@ console.log("profile.js 已載入");
 
     if (xpSourceEl) {
       xpSourceEl.innerHTML = `
-        <<div>發文 XP：${xpInfo.postXp}</div>
+        <div>發文 XP：${xpInfo.postXp}</div>
         <div>文章獲讚 XP：${xpInfo.articleReceivedLikeXp}</div>
         <div>按讚文章 XP：${xpInfo.articleGivenLikeXp}</div>
       `;
