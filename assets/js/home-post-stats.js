@@ -18,20 +18,10 @@ console.log("home-post-stats.js 已載入");
   const db = firebase.firestore();
 
   let currentUser = null;
-  let hasRenderedOnce = false;
 
   function isHomePage() {
     const path = window.location.pathname;
     return path === "/" || path === "/index.html";
-  }
-
-  function escapeHtml(text) {
-    return String(text || "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
   }
 
   function makePostId(path) {
@@ -65,7 +55,10 @@ console.log("home-post-stats.js 已載入");
       "/login/",
       "/guides/",
       "/newsletter/",
-      "/admin/"
+      "/admin/",
+      "/tags/",
+      "/about/",
+      "/search/"
     ];
 
     return skipPrefixes.some(function (prefix) {
@@ -73,29 +66,52 @@ console.log("home-post-stats.js 已載入");
     });
   }
 
-  function findCardFromLink(link) {
-    return link.closest(
-      "article, .card, .project-card, .post-card, .grid__item, .list-item, li"
-    );
-  }
-
   function isInsideIgnoredArea(link) {
     return !!link.closest(
-      "nav, .sidebar, .sidebar-sticky, .menu, .navbar, footer, .footer, .social, .pagination"
+      "nav, .sidebar, .sidebar-sticky, .menu, .navbar, footer, .footer, .social, .pagination, .breadcrumbs"
     );
   }
 
-  function getCardTitle(card, link) {
-    const titleEl = card.querySelector("h1, h2, h3, .heading, .card-title, .post-title");
-    if (titleEl && titleEl.innerText.trim()) {
-      return titleEl.innerText.trim();
+  function findCardFromLink(link) {
+    return link.closest(
+      "article, .card, .project-card, .post-card, .hy-card, .grid__item, .grid-item, li"
+    );
+  }
+
+  function findTitleInCard(card, link) {
+    const titleSelectors = [
+      "h1",
+      "h2",
+      "h3",
+      ".card-title",
+      ".post-title",
+      ".project-title",
+      ".heading",
+      ".flip-title"
+    ];
+
+    for (const selector of titleSelectors) {
+      const el = card.querySelector(selector);
+
+      if (el && el.innerText && el.innerText.trim()) {
+        return el;
+      }
     }
 
-    if (link && link.innerText.trim()) {
-      return link.innerText.trim();
+    if (link && link.innerText && link.innerText.trim()) {
+      return link;
     }
 
-    return "未命名文章";
+    return null;
+  }
+
+  function cardLooksLikePostCard(card) {
+    if (!card) return false;
+
+    const hasTitle = !!card.querySelector("h1, h2, h3, .card-title, .post-title, .project-title, .heading, .flip-title");
+    const hasText = card.innerText && card.innerText.trim().length > 0;
+
+    return hasTitle && hasText;
   }
 
   function ensureStyles() {
@@ -104,25 +120,45 @@ console.log("home-post-stats.js 已載入");
     const style = document.createElement("style");
     style.id = "homePostStatsStyle";
     style.innerHTML = `
-      .home-post-stats {
+      .home-post-title-stat-row {
         display: flex;
         align-items: center;
         flex-wrap: wrap;
-        gap: 0.45rem;
-        margin-top: 0.65rem;
-        margin-bottom: 0.2rem;
+        gap: 0.55rem;
+        margin: 0 0 0.45rem 0;
+      }
+
+      .home-post-title-stat-row > h1,
+      .home-post-title-stat-row > h2,
+      .home-post-title-stat-row > h3,
+      .home-post-title-stat-row > .card-title,
+      .home-post-title-stat-row > .post-title,
+      .home-post-title-stat-row > .project-title,
+      .home-post-title-stat-row > .heading,
+      .home-post-title-stat-row > .flip-title {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        display: inline-block;
+      }
+
+      .home-post-inline-stats {
+        display: inline-flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        vertical-align: middle;
       }
 
       .home-post-stat-pill {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        padding: 4px 10px;
+        padding: 3px 9px;
         border-radius: 999px;
         border: 1px solid rgba(255,255,255,0.18);
         background: rgba(255,255,255,0.055);
         color: inherit;
-        font-size: 0.82rem;
+        font-size: 0.78rem;
         font-weight: 700;
         line-height: 1.25;
         white-space: nowrap;
@@ -130,16 +166,46 @@ console.log("home-post-stats.js 已載入");
       }
 
       .home-post-stat-pill.like {
-        border-color: rgba(79,177,186,0.36);
-        background: rgba(79,177,186,0.10);
+        border-color: rgba(79,177,186,0.38);
+        background: rgba(79,177,186,0.12);
       }
 
       .home-post-stat-loading {
         opacity: 0.55;
       }
+
+      @media (max-width: 640px) {
+        .home-post-title-stat-row {
+          gap: 0.45rem;
+        }
+
+        .home-post-inline-stats {
+          gap: 0.3rem;
+        }
+
+        .home-post-stat-pill {
+          font-size: 0.74rem;
+          padding: 3px 8px;
+        }
+      }
     `;
 
     document.head.appendChild(style);
+  }
+
+  function removeOldStats() {
+    document.querySelectorAll(".home-post-stats, .home-post-inline-stats").forEach(function (el) {
+      el.remove();
+    });
+
+    document.querySelectorAll(".home-post-title-stat-row").forEach(function (row) {
+      const title = row.querySelector("h1, h2, h3, .card-title, .post-title, .project-title, .heading, .flip-title, a");
+
+      if (title && row.parentNode) {
+        row.parentNode.insertBefore(title, row);
+        row.remove();
+      }
+    });
   }
 
   function findHomePostCards() {
@@ -152,22 +218,22 @@ console.log("home-post-stats.js 已載入");
 
       const path = normalizePostPath(link.getAttribute("href"));
       if (shouldSkipPath(path)) return;
-
       if (seenPaths.has(path)) return;
 
       const card = findCardFromLink(link);
       if (!card) return;
+      if (!cardLooksLikePostCard(card)) return;
 
-      if (card.querySelector(".home-post-stats")) return;
+      const titleEl = findTitleInCard(card, link);
+      if (!titleEl) return;
 
       seenPaths.add(path);
 
       results.push({
         path: path,
         postId: makePostId(path),
-        title: getCardTitle(card, link),
         card: card,
-        link: link
+        titleEl: titleEl
       });
     });
 
@@ -175,8 +241,8 @@ console.log("home-post-stats.js 已載入");
   }
 
   function createStatsElement(item) {
-    const stats = document.createElement("div");
-    stats.className = "home-post-stats";
+    const stats = document.createElement("span");
+    stats.className = "home-post-inline-stats";
     stats.dataset.postPath = item.path;
     stats.dataset.postId = item.postId;
     stats.innerHTML = `
@@ -185,13 +251,21 @@ console.log("home-post-stats.js 已載入");
       <span class="home-post-stat-pill home-post-stat-loading" data-stat="comments">💬 0</span>
     `;
 
-    const titleEl = item.card.querySelector("h1, h2, h3, .heading, .card-title, .post-title");
+    const titleEl = item.titleEl;
 
-    if (titleEl && titleEl.parentNode) {
-      titleEl.insertAdjacentElement("afterend", stats);
-    } else {
-      item.card.appendChild(stats);
+    if (titleEl.parentElement && titleEl.parentElement.classList.contains("home-post-title-stat-row")) {
+      titleEl.parentElement.appendChild(stats);
+      return stats;
     }
+
+    const row = document.createElement("div");
+    row.className = "home-post-title-stat-row";
+
+    const parent = titleEl.parentNode;
+
+    parent.insertBefore(row, titleEl);
+    row.appendChild(titleEl);
+    row.appendChild(stats);
 
     return stats;
   }
@@ -261,6 +335,7 @@ console.log("home-post-stats.js 已載入");
     if (!currentUser) return;
 
     ensureStyles();
+    removeOldStats();
 
     const items = findHomePostCards();
 
@@ -281,23 +356,13 @@ console.log("home-post-stats.js 已載入");
         commentCount: commentCount
       });
     }
-
-    hasRenderedOnce = true;
-  }
-
-  function clearOldStatsIfNeeded() {
-    if (!isHomePage()) {
-      document.querySelectorAll(".home-post-stats").forEach(function (el) {
-        el.remove();
-      });
-      hasRenderedOnce = false;
-    }
   }
 
   function scheduleRender() {
-    clearOldStatsIfNeeded();
-
-    if (!isHomePage()) return;
+    if (!isHomePage()) {
+      removeOldStats();
+      return;
+    }
 
     setTimeout(renderHomePostStats, 250);
     setTimeout(renderHomePostStats, 900);
@@ -313,12 +378,7 @@ console.log("home-post-stats.js 已載入");
   });
 
   document.addEventListener("DOMContentLoaded", scheduleRender);
-
   window.addEventListener("load", scheduleRender);
-
-  document.addEventListener("click", function () {
-    setTimeout(scheduleRender, 600);
-  });
 
   const pushStateEl = document.querySelector("hy-push-state");
 
