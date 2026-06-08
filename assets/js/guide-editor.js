@@ -22,6 +22,7 @@ console.log("guide-editor.js 已載入");
 
   let currentUser = null;
   let currentDisplayName = "";
+  let hasAcceptedPostRules = false;
 
   const categoryInput = document.getElementById("guideCategory");
   const titleInput = document.getElementById("guideTitle");
@@ -104,6 +105,245 @@ console.log("guide-editor.js 已載入");
     }
   }
 
+  function setEditorDisabled(disabled) {
+    [
+      categoryInput,
+      titleInput,
+      gameInput,
+      coverInput,
+      summaryInput,
+      contentInput,
+      fontSizeInput,
+      previewBtn,
+      publishBtn
+    ].forEach(function (el) {
+      if (el) el.disabled = disabled;
+    });
+
+    document.querySelectorAll(".md-toolbar button").forEach(function (btn) {
+      btn.disabled = disabled;
+    });
+  }
+
+  function canUseEditorNow() {
+    return currentUser && currentDisplayName && hasAcceptedPostRules;
+  }
+
+  function refreshEditorState() {
+    if (!currentUser) {
+      setEditorDisabled(true);
+      setMsg("請先登入後再投稿。");
+      return;
+    }
+
+    if (!currentDisplayName) {
+      setEditorDisabled(true);
+      setMsg("請先設定社員 ID，才能投稿。請點左側「更改 ID」。");
+      return;
+    }
+
+    if (!hasAcceptedPostRules) {
+      setEditorDisabled(true);
+      setMsg("請先閱讀並確認發文規範，確認後即可開始撰寫。");
+      openPostRulesModal();
+      return;
+    }
+
+    setEditorDisabled(false);
+
+    if (isAdmin()) {
+      setMsg("目前為管理員身分，文章會直接發布。", "success");
+      if (publishBtn) publishBtn.innerText = "發布文章";
+    } else {
+      setMsg("目前投稿身分：" + currentDisplayName + "。送出後會先進入管理員審核。", "success");
+      if (publishBtn) publishBtn.innerText = "送出審核";
+    }
+  }
+
+  function createPostRulesModal() {
+    if (document.getElementById("postRulesModal")) return;
+
+    const modal = document.createElement("div");
+    modal.id = "postRulesModal";
+    modal.innerHTML = `
+      <style>
+        #postRulesModal {
+          position: fixed;
+          inset: 0;
+          z-index: 100000;
+          display: none;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
+          background: rgba(0, 0, 0, 0.66);
+          box-sizing: border-box;
+        }
+
+        #postRulesModal.show {
+          display: flex;
+        }
+
+        .post-rules-card {
+          width: 100%;
+          max-width: 560px;
+          max-height: calc(100vh - 40px);
+          overflow: auto;
+          background: #fff;
+          color: #222;
+          border-radius: 18px;
+          padding: 26px;
+          box-shadow: 0 18px 46px rgba(0, 0, 0, 0.36);
+          box-sizing: border-box;
+        }
+
+        .post-rules-card h2 {
+          margin: 0 0 12px 0;
+          color: #222;
+          font-size: 24px;
+          line-height: 1.35;
+        }
+
+        .post-rules-intro {
+          margin: 0 0 16px 0;
+          color: #555;
+          line-height: 1.7;
+          font-size: 15px;
+        }
+
+        .post-rules-list {
+          margin: 0;
+          padding-left: 1.25rem;
+          color: #333;
+          line-height: 1.8;
+          font-size: 15px;
+        }
+
+        .post-rules-list li {
+          margin-bottom: 0.55rem;
+        }
+
+        .post-rules-notice {
+          margin-top: 16px;
+          padding: 12px 14px;
+          border-radius: 12px;
+          background: rgba(79, 177, 186, 0.12);
+          border: 1px solid rgba(79, 177, 186, 0.28);
+          color: #333;
+          line-height: 1.7;
+          font-size: 14px;
+        }
+
+        .post-rules-actions {
+          display: flex;
+          justify-content: flex-end;
+          gap: 10px;
+          margin-top: 20px;
+        }
+
+        .post-rules-actions button {
+          padding: 10px 16px;
+          border: none;
+          border-radius: 999px;
+          cursor: pointer;
+          font-weight: 800;
+          font-size: 15px;
+        }
+
+        #postRulesCancelBtn {
+          background: #e8e8e8;
+          color: #333;
+        }
+
+        #postRulesConfirmBtn {
+          background: rgb(79, 177, 186);
+          color: #fff;
+        }
+
+        #postRulesConfirmBtn:hover {
+          filter: brightness(1.05);
+        }
+
+        @media (max-width: 640px) {
+          .post-rules-card {
+            padding: 22px;
+          }
+
+          .post-rules-actions {
+            flex-direction: column-reverse;
+          }
+
+          .post-rules-actions button {
+            width: 100%;
+          }
+        }
+      </style>
+
+      <div class="post-rules-card">
+        <h2>發文規範與投稿提醒</h2>
+
+        <p class="post-rules-intro">
+          歡迎在社員論壇分享桌遊攻略、活動心得、規則討論、開箱分享與揪團交流。
+          為了讓論壇維持友善、清楚且適合社團交流的環境，發文前請先閱讀以下規範。
+        </p>
+
+        <ol class="post-rules-list">
+          <li>
+            發文內容請保持友善與尊重，避免煽動性、仇恨、歧視、攻擊、騷擾、過度煽情或不適合社團公開交流的言論。
+          </li>
+          <li>
+            請勿發布違反法律、侵犯他人權益、未經授權使用圖片或文字，或可能造成他人困擾的內容。
+          </li>
+          <li>
+            所有社員投稿文章都會先送交管理員審核，審核通過後才會公開顯示在社員論壇中。
+          </li>
+          <li>
+            管理員可依社團規範，要求修改、退回審核、刪除或不予發布不適合的文章。
+          </li>
+          <li>
+            一經發文送出，即視為投稿者同意該貼文之智慧財產、創作內容與後續展示使用權歸屬於「守夜人-桌遊社」，社團可用於網站展示、社團紀錄、活動推廣與相關非營利用途。
+          </li>
+        </ol>
+
+        <div class="post-rules-notice">
+          按下「我已閱讀並同意」後，即代表你已理解上述規範，並同意文章送出後進入審核流程。
+        </div>
+
+        <div class="post-rules-actions">
+          <button id="postRulesCancelBtn" type="button">返回論壇</button>
+          <button id="postRulesConfirmBtn" type="button">我已閱讀並同意</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    document.getElementById("postRulesConfirmBtn").addEventListener("click", function () {
+      hasAcceptedPostRules = true;
+      closePostRulesModal();
+      refreshEditorState();
+    });
+
+    document.getElementById("postRulesCancelBtn").addEventListener("click", function () {
+      window.location.href = "/guides/";
+    });
+  }
+
+  function openPostRulesModal() {
+    createPostRulesModal();
+
+    const modal = document.getElementById("postRulesModal");
+    if (!modal) return;
+
+    modal.classList.add("show");
+  }
+
+  function closePostRulesModal() {
+    const modal = document.getElementById("postRulesModal");
+    if (!modal) return;
+
+    modal.classList.remove("show");
+  }
+
   async function getDisplayName(user) {
     const userDoc = await db.collection("users").doc(user.uid).get();
 
@@ -124,6 +364,7 @@ console.log("guide-editor.js 已載入");
 
     if (!currentUser) return "請先登入後再投稿。";
     if (!currentDisplayName) return "請先設定社員 ID，才能投稿。";
+    if (!hasAcceptedPostRules) return "請先閱讀並確認發文規範。";
     if (!allowedCategories.includes(category)) return "請選擇正確的文章分類。";
     if (!title) return "請輸入文章標題。";
     if (title.length > 60) return "文章標題請控制在 60 字以內。";
@@ -140,6 +381,12 @@ console.log("guide-editor.js 已載入");
 
   function renderPreview() {
     const content = contentInput.value.trim();
+
+    if (!canUseEditorNow()) {
+      setMsg("請先閱讀並確認發文規範。");
+      openPostRulesModal();
+      return;
+    }
 
     if (!content) {
       setMsg("請先輸入文章內容再預覽。");
@@ -168,6 +415,11 @@ console.log("guide-editor.js 已載入");
 
     if (error) {
       setMsg(error);
+
+      if (!hasAcceptedPostRules) {
+        openPostRulesModal();
+      }
+
       return;
     }
 
@@ -193,6 +445,7 @@ console.log("guide-editor.js 已載入");
 
         status: adminMode ? "published" : "pending",
         reviewStatus: adminMode ? "approved" : "pending",
+        rejectionReason: "",
 
         likeCount: 0,
         viewCount: 0,
@@ -224,7 +477,7 @@ console.log("guide-editor.js 已載入");
       setMsg("送出失敗，請稍後再試。");
       publishBtn.disabled = false;
       previewBtn.disabled = false;
-      publishBtn.innerText = "發布文章";
+      publishBtn.innerText = isAdmin() ? "發布文章" : "送出審核";
     }
   }
 
@@ -433,6 +686,11 @@ console.log("guide-editor.js 已載入");
   function bindToolbar() {
     document.querySelectorAll(".md-toolbar button").forEach(function (btn) {
       btn.addEventListener("click", function () {
+        if (!canUseEditorNow()) {
+          openPostRulesModal();
+          return;
+        }
+
         const action = btn.dataset.mdAction;
 
         if (action === "h2") ensureLinePrefix("## ", "副標題1");
@@ -449,11 +707,24 @@ console.log("guide-editor.js 已載入");
   function bindFontSizeControl() {
     if (!fontSizeInput) return;
 
-    fontSizeInput.addEventListener("change", applyFontSize);
+    fontSizeInput.addEventListener("change", function () {
+      if (!canUseEditorNow()) {
+        openPostRulesModal();
+        return;
+      }
+
+      applyFontSize();
+    });
 
     fontSizeInput.addEventListener("keydown", function (event) {
       if (event.key === "Enter") {
         event.preventDefault();
+
+        if (!canUseEditorNow()) {
+          openPostRulesModal();
+          return;
+        }
+
         applyFontSize();
       }
     });
@@ -489,36 +760,20 @@ console.log("guide-editor.js 已載入");
     });
   }
 
+  setEditorDisabled(true);
+  createPostRulesModal();
+
   auth.onAuthStateChanged(async function (user) {
     currentUser = user;
 
     if (!user) {
       currentDisplayName = "";
-      setMsg("請先登入後再投稿。");
-      publishBtn.disabled = true;
-      previewBtn.disabled = true;
+      refreshEditorState();
       return;
     }
 
     currentDisplayName = await getDisplayName(user);
-
-    if (!currentDisplayName) {
-      setMsg("請先設定社員 ID，才能投稿。請點左側「更改 ID」。");
-      publishBtn.disabled = true;
-      previewBtn.disabled = false;
-      return;
-    }
-
-    if (isAdmin()) {
-      setMsg("目前為管理員身分，文章會直接發布。", "success");
-      publishBtn.innerText = "發布文章";
-    } else {
-      setMsg("目前投稿身分：" + currentDisplayName + "。送出後會先進入管理員審核。", "success");
-      publishBtn.innerText = "送出審核";
-    }
-
-    publishBtn.disabled = false;
-    previewBtn.disabled = false;
+    refreshEditorState();
   });
 
   bindCoverPreview();
