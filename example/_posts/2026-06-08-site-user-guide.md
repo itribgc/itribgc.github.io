@@ -199,6 +199,8 @@ sitemap: false
 * 所有社員投稿文章會先送交審核，通過後才會公開顯示。
 * 文章送出後，即代表投稿者同意相關內容可用於社團網站展示、社團紀錄、活動推廣與相關非營利用途。
 
+![發文規範](/assets/img/site_img/specification.png)
+
 文章完成後點選「送出審核」，文章會先進入審核狀態，通過後才會公開顯示在社員論壇。
 
 ---
@@ -291,6 +293,8 @@ sitemap: false
 
 撰寫文章時，內容欄上方會有 Markdown 工具列，可以快速加入常用格式。
 
+![Markdown 工具列](/assets/img/site_img/content.png)
+
 工具列功能包含：
 
 * 副標題1
@@ -314,9 +318,9 @@ sitemap: false
 
 圖片語法如下：
 
-```md
-![圖片說明](https://example.com/image.jpg)
-```
+
+![Markdown 工具列](/assets/img/site_img/img_url.png)
+
 
 如果圖片無法顯示，常見原因可能是圖片網址不是直接連結、需要登入才能查看，或圖片網站不允許外部引用。
 
