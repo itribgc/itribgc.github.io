@@ -10,9 +10,9 @@ console.log("guide-editor.js 已載入");
     appId: "1:535892877472:web:2270ac423ffd6f38b1e9c5"
   };
 
-  const EMAILJS_SERVICE_ID = "你的_SERVICE_ID";
-  const EMAILJS_TEMPLATE_ID = "你的_TEMPLATE_ID";
-  const EMAILJS_PUBLIC_KEY = "你的_PUBLIC_KEY";
+  const EMAILJS_SERVICE_ID = "service_amga7rb";
+  const EMAILJS_TEMPLATE_ID = "template_a3hy8nk";
+  const EMAILJS_PUBLIC_KEY = "eITgAuEGm5GwvMQg5";
 
   if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
