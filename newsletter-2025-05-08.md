@@ -11,76 +11,91 @@ pdf_url: /assets/newsletter/2025_05_08/2025-05~08.pdf
 
 <style>
   .newsletter-reader {
-    max-width: 1560px;
-    width: min(96vw, 1560px);
+    max-width: 1180px;
+    width: min(94vw, 1180px);
     margin: 0 auto;
   }
 
   .newsletter-reader-header {
-    text-align: center;
-    margin-bottom: 1.2rem;
+    margin: 0.35rem 0 0.7rem;
   }
 
-  .newsletter-reader-header h1 {
-    margin-bottom: 0.5rem;
-  }
-
-  .newsletter-reader-header p {
-    margin: 0;
-    opacity: 0.78;
-    line-height: 1.7;
-  }
-
-  .newsletter-actions {
+  .newsletter-toolbar,
+  .newsletter-pager {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 10px;
-    margin: 1rem 0;
+    gap: 8px;
     flex-wrap: wrap;
   }
 
-  .newsletter-actions a,
-  .newsletter-actions button {
+  .newsletter-toolbar {
+    margin: 0.35rem 0 0.45rem;
+  }
+
+  .newsletter-pager {
+    margin: 0 0 0.85rem;
+  }
+
+  .newsletter-note {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 8px 14px;
+    opacity: 0.78;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin-right: 4px;
+  }
+
+  .newsletter-toolbar a,
+  .newsletter-pager button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 12px;
     border-radius: 999px;
     border: 1px solid rgba(255,255,255,0.18);
     background: transparent;
     color: inherit;
     text-decoration: none;
     font: inherit;
+    font-size: 0.9rem;
     font-weight: 700;
     cursor: pointer;
     line-height: 1.2;
   }
 
-  .newsletter-actions a:hover,
-  .newsletter-actions button:hover {
+  .newsletter-toolbar a:hover,
+  .newsletter-pager button:hover {
     border-color: rgb(79,177,186);
     background: rgba(79,177,186,0.08);
     text-decoration: none;
   }
 
-  .newsletter-actions button:disabled {
+  .newsletter-pager button:disabled {
     opacity: 0.45;
     cursor: not-allowed;
   }
 
   .newsletter-page-info {
-    text-align: center;
-    margin: 0.8rem 0 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.045);
     opacity: 0.86;
+    font-size: 0.9rem;
     font-weight: 700;
+    line-height: 1.2;
   }
 
   .newsletter-error {
     display: none;
     text-align: center;
-    padding: 1rem;
-    margin: 1rem 0;
+    padding: 0.8rem 1rem;
+    margin: 0.75rem 0;
     border-radius: 12px;
     background: rgba(255, 120, 120, 0.12);
     border: 1px solid rgba(255, 120, 120, 0.25);
@@ -94,19 +109,19 @@ pdf_url: /assets/newsletter/2025_05_08/2025-05~08.pdf
 
   .desktop-spread-wrap {
     width: 100%;
-    padding: 1rem;
+    padding: 0.75rem;
     box-sizing: border-box;
-    border-radius: 18px;
-    background: rgba(255,255,255,0.04);
+    border-radius: 16px;
+    background: rgba(255,255,255,0.035);
     border: 1px solid rgba(255,255,255,0.08);
   }
 
   .desktop-spread {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
+    gap: 12px;
     width: 100%;
-    max-width: 1480px;
+    max-width: 1080px;
     margin: 0 auto;
   }
 
@@ -114,7 +129,7 @@ pdf_url: /assets/newsletter/2025_05_08/2025-05~08.pdf
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    min-height: 520px;
+    min-height: 390px;
     background: rgba(255,255,255,0.10);
     border-radius: 10px;
     overflow: hidden;
@@ -138,7 +153,7 @@ pdf_url: /assets/newsletter/2025_05_08/2025-05~08.pdf
 
   .mobile-page-wrap {
     width: 100%;
-    padding: 0.6rem;
+    padding: 0.5rem;
     box-sizing: border-box;
     border-radius: 16px;
     background: rgba(255,255,255,0.04);
@@ -163,6 +178,7 @@ pdf_url: /assets/newsletter/2025_05_08/2025-05~08.pdf
   @media (max-width: 768px) {
     .newsletter-reader {
       width: 100%;
+      max-width: 100%;
     }
 
     .desktop-reader {
@@ -173,30 +189,41 @@ pdf_url: /assets/newsletter/2025_05_08/2025-05~08.pdf
       display: block;
     }
 
-    .newsletter-actions a,
-    .newsletter-actions button {
-      padding: 7px 12px;
-      font-size: 0.92rem;
+    .newsletter-toolbar,
+    .newsletter-pager {
+      gap: 6px;
+    }
+
+    .newsletter-note {
+      width: 100%;
+      font-size: 0.82rem;
+      margin-right: 0;
+    }
+
+    .newsletter-toolbar a,
+    .newsletter-pager button,
+    .newsletter-page-info {
+      padding: 6px 10px;
+      font-size: 0.84rem;
     }
   }
 </style>
 
 <div class="newsletter-reader">
   <div class="newsletter-reader-header">
-    <p>電腦版為雙頁閱讀，手機版為單頁閱讀。PDF 會直接讀取並以高解析度渲染。</p>
+    <div class="newsletter-toolbar">
+      <span class="newsletter-note">電腦雙頁／手機單頁，高解析度渲染</span>
+      <a href="/newsletter/">返回電子報列表</a>
+      <a href="{{ page.pdf_url }}" target="_blank" rel="noopener">開啟 PDF 原檔</a>
+      <span id="pageInfo" class="newsletter-page-info">PDF 載入中...</span>
+    </div>
+
+    <div class="newsletter-pager">
+      <button id="prevPageBtn" type="button">上一頁</button>
+      <button id="nextPageBtn" type="button">下一頁</button>
+    </div>
   </div>
 
-  <div class="newsletter-actions">
-    <a href="/newsletter/">返回電子報列表</a>
-    <a href="{{ page.pdf_url }}" target="_blank" rel="noopener">開啟 PDF 原檔</a>
-  </div>
-
-  <div class="newsletter-actions">
-    <button id="prevPageBtn" type="button">上一頁</button>
-    <button id="nextPageBtn" type="button">下一頁</button>
-  </div>
-
-  <div id="pageInfo" class="newsletter-page-info">PDF 載入中...</div>
   <div id="readerError" class="newsletter-error"></div>
 
   <div class="desktop-reader">
@@ -342,7 +369,7 @@ pdf_url: /assets/newsletter/2025_05_08/2025-05~08.pdf
       hideError();
       updateControls();
 
-      const wrapWidth = document.querySelector(".mobile-page-wrap").clientWidth - 20;
+      const wrapWidth = document.querySelector(".mobile-page-wrap").clientWidth - 18;
       await renderPdfPageToCanvas(pageNumber, mobileCanvas, wrapWidth);
 
       currentMobilePage = pageNumber;
@@ -365,7 +392,7 @@ pdf_url: /assets/newsletter/2025_05_08/2025-05~08.pdf
       updateControls();
 
       const spreadWidth = document.querySelector(".desktop-spread").clientWidth;
-      const pageMaxWidth = Math.floor((spreadWidth - 16) / 2);
+      const pageMaxWidth = Math.min(Math.floor((spreadWidth - 12) / 2), 520);
 
       currentDesktopStartPage = startPage;
 
