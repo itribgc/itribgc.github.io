@@ -22,7 +22,7 @@ sitemap: false
 
 若忘記密碼，可以在登入頁面使用「忘記密碼」功能。系統會寄送密碼重設信到該帳號綁定的電子信箱，社員需至信箱收信，並依照信件中的連結重新設定密碼。
 
-![點擊忘記密碼來收取更改密碼電子郵件](/assets/img/manual/change_password.png)
+![點擊忘記密碼來收取更改密碼電子郵件](/assets/img/site_img/change_password.png)
 
 若沒有收到密碼重設信，請先確認垃圾郵件、促銷內容或其他信件分類資料夾。若仍未收到，可能是信箱輸入錯誤，或該信箱尚未註冊為網站帳號。
 
@@ -34,7 +34,7 @@ sitemap: false
 
 社員 ID 是你在網站中的主要顯示名稱，會出現在文章作者、留言作者、會員資訊與等級資訊中。若是第一次登入，系統可能會要求先設定社員 ID。
 
-![第一次登入請先修改社員ID](/assets/img/manual/change_ID.png)
+![第一次登入請先修改社員ID](/assets/img/site_img/change_ID.png)
 
 社員 ID 可以在左側會員資訊區點選「更改ID」進行修改，建議使用大家容易辨識的暱稱，方便社員之間互相認得。
 
@@ -48,7 +48,7 @@ sitemap: false
 
 經驗值條會以橫向進度條呈現目前升級進度，當經驗值達到門檻後，等級會自動提升。
 
-![社員等級資訊](/assets/img/manual/xp.png)
+![社員等級資訊](/assets/img/site_img/xp.png)
 
 ---
 
