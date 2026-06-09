@@ -301,3 +301,45 @@ body {
 .sidebar a[href*="x.com"] {
   display: none !important;
 }
+
+/* 會員資訊區：經驗值進度條 */
+.member-exp-bar-wrap {
+  width: 100%;
+  height: 9px;
+  margin: 0.55rem 0 0.65rem;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.28),
+    0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.member-exp-bar-fill {
+  position: relative;
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    #f6c544 0%,
+    #ffd86b 55%,
+    #fff0a6 100%
+  );
+  box-shadow:
+    0 0 10px rgba(255, 216, 107, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  transition: width 0.45s ease;
+}
+
+.member-exp-bar-shine {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.45),
+    rgba(255, 255, 255, 0.04)
+  );
+  pointer-events: none;
+}
