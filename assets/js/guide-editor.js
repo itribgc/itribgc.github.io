@@ -10,6 +10,10 @@ console.log("guide-editor.js 已載入");
     appId: "1:535892877472:web:2270ac423ffd6f38b1e9c5"
   };
 
+  const EMAILJS_SERVICE_ID = "你的_SERVICE_ID";
+  const EMAILJS_TEMPLATE_ID = "你的_TEMPLATE_ID";
+  const EMAILJS_PUBLIC_KEY = "你的_PUBLIC_KEY";
+
   if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
   }
@@ -18,11 +22,13 @@ console.log("guide-editor.js 已載入");
   const db = firebase.firestore();
 
   const ADMIN_EMAIL = "itribgc@gmail.com";
+  const REVIEW_URL = "https://itribgc.github.io/guides/admin/";
   const allowedCategories = ["桌遊攻略", "活動心得", "規則討論", "開箱分享", "揪團交流"];
 
   let currentUser = null;
   let currentDisplayName = "";
   let hasAcceptedPostRules = false;
+  let emailJsReady = false;
 
   const categoryInput = document.getElementById("guideCategory");
   const titleInput = document.getElementById("guideTitle");
@@ -52,6 +58,78 @@ console.log("guide-editor.js 已載入");
   const linkMsg = document.getElementById("mdLinkMsg");
   const linkCancelBtn = document.getElementById("mdLinkCancelBtn");
   const linkInsertBtn = document.getElementById("mdLinkInsertBtn");
+
+  function initEmailJS() {
+    if (!window.emailjs) {
+      console.warn("EmailJS 尚未載入，將略過通知信。");
+      return;
+    }
+
+    if (
+      !EMAILJS_SERVICE_ID ||
+      !EMAILJS_TEMPLATE_ID ||
+      !EMAILJS_PUBLIC_KEY ||
+      EMAILJS_SERVICE_ID.includes("你的_") ||
+      EMAILJS_TEMPLATE_ID.includes("你的_") ||
+      EMAILJS_PUBLIC_KEY.includes("你的_")
+    ) {
+      console.warn("EmailJS 尚未設定完整 SERVICE_ID / TEMPLATE_ID / PUBLIC_KEY，將略過通知信。");
+      return;
+    }
+
+    try {
+      emailjs.init({
+        publicKey: EMAILJS_PUBLIC_KEY
+      });
+
+      emailJsReady = true;
+      console.log("EmailJS 初始化完成");
+    } catch (error) {
+      console.error("EmailJS 初始化失敗：", error);
+      emailJsReady = false;
+    }
+  }
+
+  function formatNowForEmail() {
+    return new Date().toLocaleString("zh-TW", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  }
+
+  async function sendReviewNotificationEmail(payload, guideId) {
+    try {
+      if (!emailJsReady || !window.emailjs) {
+        console.warn("EmailJS 未就緒，略過通知信。");
+        return;
+      }
+
+      await emailjs.send(
+        EMAILJS_SERVICE_ID,
+        EMAILJS_TEMPLATE_ID,
+        {
+          post_title: payload.title || "未命名貼文",
+          author_name: payload.authorName || "未知社員",
+          category: payload.category || "未分類",
+          game_name: payload.gameName || "未填寫",
+          created_time: formatNowForEmail(),
+          summary: payload.summary || "無摘要",
+          review_url: REVIEW_URL,
+          guide_id: guideId || ""
+        },
+        {
+          publicKey: EMAILJS_PUBLIC_KEY
+        }
+      );
+
+      console.log("待審核貼文通知信已寄出");
+    } catch (error) {
+      console.error("待審核貼文通知信寄送失敗：", error);
+    }
+  }
 
   function isAdmin() {
     return currentUser && currentUser.email === ADMIN_EMAIL;
@@ -462,6 +540,10 @@ console.log("guide-editor.js 已載入");
 
       const docRef = await db.collection("guides").add(payload);
 
+      if (!adminMode) {
+        await sendReviewNotificationEmail(payload, docRef.id);
+      }
+
       setMsg(
         adminMode
           ? "文章已發布，即將前往文章頁。"
@@ -759,6 +841,8 @@ console.log("guide-editor.js 已載入");
       }
     });
   }
+
+  initEmailJS();
 
   setEditorDisabled(true);
   createPostRulesModal();
