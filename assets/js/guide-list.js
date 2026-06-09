@@ -17,10 +17,22 @@ console.log("guide-list.js 已載入");
   const auth = firebase.auth();
   const db = firebase.firestore();
 
+  const ADMIN_EMAIL = "itribgc@gmail.com";
+
   let currentUser = null;
-  let unsubscribeGuides = null;
-  let pendingDeleteGuideId = "";
-  let pendingDeleteGuideTitle = "";
+  let allGuides = [];
+  let currentCategory = "all";
+
+  const guideList = document.getElementById("guideList");
+  const guideListMsg = document.getElementById("guideListMsg");
+  const filterButtons = document.querySelectorAll(".guide-filter-btn");
+
+  function setMsg(text, type) {
+    if (!guideListMsg) return;
+
+    guideListMsg.innerText = text || "";
+    guideListMsg.className = type === "success" ? "guide-list-msg success" : "guide-list-msg";
+  }
 
   function escapeHtml(text) {
     return String(text || "")
@@ -31,7 +43,22 @@ console.log("guide-list.js 已載入");
       .replaceAll("'", "&#039;");
   }
 
-  function formatTime(timestamp) {
+  function isAdmin() {
+    return currentUser && currentUser.email === ADMIN_EMAIL;
+  }
+
+  function canManageGuide(guide) {
+    return (
+      currentUser &&
+      guide &&
+      (
+        guide.authorUid === currentUser.uid ||
+        isAdmin()
+      )
+    );
+  }
+
+  function formatDate(timestamp) {
     if (!timestamp || !timestamp.toDate) return "";
 
     const date = timestamp.toDate();
@@ -41,10 +68,6 @@ console.log("guide-list.js 已載入");
       month: "2-digit",
       day: "2-digit"
     });
-  }
-
-  function getCategory(data) {
-    return data.category || "桌遊攻略";
   }
 
   async function getCommentCount(guideId) {
@@ -60,14 +83,182 @@ console.log("guide-list.js 已載入");
     }
   }
 
+  function getFilteredGuides() {
+    if (currentCategory === "all") {
+      return allGuides;
+    }
+
+    return allGuides.filter(function (item) {
+      return item.data.category === currentCategory;
+    });
+  }
+
+  function renderEmptyMessage() {
+    if (!guideList) return;
+
+    const text = currentCategory === "all"
+      ? "目前還沒有社員論壇文章。"
+      : "目前沒有「" + currentCategory + "」分類的文章。";
+
+    guideList.innerHTML = `
+      <div class="guide-empty">${escapeHtml(text)}</div>
+    `;
+  }
+
+  async function renderGuides() {
+    if (!guideList) return;
+
+    const filteredGuides = getFilteredGuides();
+
+    if (filteredGuides.length === 0) {
+      renderEmptyMessage();
+      return;
+    }
+
+    guideList.innerHTML = `
+      <div class="guide-empty">文章載入中...</div>
+    `;
+
+    let html = "";
+
+    for (const item of filteredGuides) {
+      const guide = item.data;
+      const guideId = item.id;
+
+      const title = guide.title || "未命名文章";
+      const gameName = guide.gameName || "未分類主題";
+      const category = guide.category || "未分類";
+      const authorName = guide.authorName || "未命名社員";
+      const summary = guide.summary || "這篇文章沒有摘要。";
+      const coverImage = guide.coverImage || "";
+      const likeCount = Number(guide.likeCount || 0);
+      const viewCount = Number(guide.viewCount || 0);
+      const commentCount = await getCommentCount(guideId);
+      const createdAt = formatDate(guide.createdAt);
+
+      html += `
+        <article class="guide-card" data-guide-id="${escapeHtml(guideId)}" data-category="${escapeHtml(category)}">
+          ${
+            coverImage
+              ? `
+                <a class="guide-card-cover-link" href="/guides/post/?id=${encodeURIComponent(guideId)}">
+                  <img class="guide-card-cover" src="${escapeHtml(coverImage)}" alt="${escapeHtml(title)}">
+                </a>
+              `
+              : `
+                <a class="guide-card-cover-link" href="/guides/post/?id=${encodeURIComponent(guideId)}">
+                  <div class="guide-card-cover guide-card-cover-empty">無封面</div>
+                </a>
+              `
+          }
+
+          <div class="guide-card-body">
+            <div class="guide-card-title-row">
+              <a href="/guides/post/?id=${encodeURIComponent(guideId)}">
+                <h2>${escapeHtml(title)}</h2>
+              </a>
+            </div>
+
+            <div class="guide-card-meta">
+              <span>主題：${escapeHtml(gameName)}</span>
+              <span>・${escapeHtml(authorName)}</span>
+              ${createdAt ? `<span>・${escapeHtml(createdAt)}</span>` : ""}
+              <span class="guide-card-category">${escapeHtml(category)}</span>
+              <span class="guide-card-stat">👁 ${viewCount}</span>
+              <span class="guide-card-stat">💬 ${commentCount}</span>
+              <span class="guide-card-stat">👍 ${likeCount}</span>
+            </div>
+
+            <p class="guide-card-summary">${escapeHtml(summary)}</p>
+
+            <div class="guide-card-actions">
+              <a href="/guides/post/?id=${encodeURIComponent(guideId)}">閱讀全文</a>
+
+              ${
+                canManageGuide(guide)
+                  ? `
+                    <a href="/guides/edit/?id=${encodeURIComponent(guideId)}">編輯文章</a>
+                    <button type="button" class="guide-delete-btn" data-guide-id="${escapeHtml(guideId)}" data-title="${escapeHtml(title)}">
+                      刪除文章
+                    </button>
+                  `
+                  : ""
+              }
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    guideList.innerHTML = html;
+
+    bindDeleteButtons();
+  }
+
+  function bindFilterButtons() {
+    filterButtons.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        const selectedCategory = btn.dataset.category || "all";
+
+        currentCategory = selectedCategory;
+
+        filterButtons.forEach(function (item) {
+          item.classList.remove("active");
+        });
+
+        btn.classList.add("active");
+
+        renderGuides();
+      });
+    });
+  }
+
+  async function loadGuides() {
+    if (!guideList) return;
+
+    try {
+      setMsg("");
+      guideList.innerHTML = `
+        <div class="guide-empty">社員論壇文章載入中...</div>
+      `;
+
+      const snapshot = await db.collection("guides")
+        .where("status", "==", "published")
+        .get();
+
+      allGuides = snapshot.docs.map(function (doc) {
+        return {
+          id: doc.id,
+          data: doc.data()
+        };
+      });
+
+      allGuides.sort(function (a, b) {
+        const aTime = a.data.createdAt && a.data.createdAt.toMillis ? a.data.createdAt.toMillis() : 0;
+        const bTime = b.data.createdAt && b.data.createdAt.toMillis ? b.data.createdAt.toMillis() : 0;
+        return bTime - aTime;
+      });
+
+      renderGuides();
+    } catch (error) {
+      console.error("讀取社員論壇文章失敗：", error);
+
+      guideList.innerHTML = `
+        <div class="guide-empty">文章讀取失敗，請稍後再試。</div>
+      `;
+
+      setMsg("文章讀取失敗，請確認 Firestore 權限或網路狀態。");
+    }
+  }
+
   function createDeleteModal() {
-    if (document.getElementById("guideDeleteModal")) return;
+    if (document.getElementById("guideListDeleteModal")) return;
 
     const modal = document.createElement("div");
-    modal.id = "guideDeleteModal";
+    modal.id = "guideListDeleteModal";
     modal.innerHTML = `
       <style>
-        #guideDeleteModal {
+        #guideListDeleteModal {
           position: fixed;
           inset: 0;
           z-index: 100000;
@@ -79,11 +270,11 @@ console.log("guide-list.js 已載入");
           box-sizing: border-box;
         }
 
-        #guideDeleteModal.show {
+        #guideListDeleteModal.show {
           display: flex;
         }
 
-        .guide-delete-modal-card {
+        .guide-list-delete-card {
           width: 100%;
           max-width: 420px;
           background: #fff;
@@ -94,35 +285,33 @@ console.log("guide-list.js 已載入");
           box-sizing: border-box;
         }
 
-        .guide-delete-modal-card h3 {
+        .guide-list-delete-card h3 {
           margin: 0 0 12px 0;
-          font-size: 20px;
           color: #222;
         }
 
-        .guide-delete-modal-card p {
+        .guide-list-delete-card p {
           margin: 0 0 16px 0;
           color: #555;
           font-size: 14px;
           line-height: 1.6;
         }
 
-        #guideDeleteMsg {
+        #guideListDeleteMsg {
           min-height: 20px;
-          margin-top: 10px;
           color: #d93025;
           font-size: 14px;
           line-height: 1.5;
         }
 
-        .guide-delete-actions {
+        .guide-list-delete-actions {
           display: flex;
           justify-content: flex-end;
           gap: 10px;
           margin-top: 18px;
         }
 
-        .guide-delete-actions button {
+        .guide-list-delete-actions button {
           padding: 9px 14px;
           border: none;
           border-radius: 8px;
@@ -130,391 +319,117 @@ console.log("guide-list.js 已載入");
           font-weight: 700;
         }
 
-        #guideDeleteCancelBtn {
+        #guideListDeleteCancelBtn {
           background: #e8e8e8;
           color: #333;
         }
 
-        #guideDeleteConfirmBtn {
+        #guideListDeleteConfirmBtn {
           background: #d93025;
           color: #fff;
         }
 
-        .guide-delete-actions button:disabled {
+        .guide-list-delete-actions button:disabled {
           opacity: 0.6;
           cursor: not-allowed;
         }
       </style>
 
-      <div class="guide-delete-modal-card">
+      <div class="guide-list-delete-card">
         <h3>刪除文章</h3>
-        <p id="guideDeleteText">是否確定刪除文章？刪除後將無法復原。</p>
-        <div id="guideDeleteMsg"></div>
+        <p id="guideListDeleteText">是否確定刪除文章？刪除後無法復原。</p>
+        <div id="guideListDeleteMsg"></div>
 
-        <div class="guide-delete-actions">
-          <button id="guideDeleteCancelBtn" type="button">取消</button>
-          <button id="guideDeleteConfirmBtn" type="button">確定</button>
+        <div class="guide-list-delete-actions">
+          <button id="guideListDeleteCancelBtn" type="button">取消</button>
+          <button id="guideListDeleteConfirmBtn" type="button">確定刪除</button>
         </div>
       </div>
     `;
 
     document.body.appendChild(modal);
 
-    document.getElementById("guideDeleteCancelBtn").addEventListener("click", closeDeleteModal);
-    document.getElementById("guideDeleteConfirmBtn").addEventListener("click", deleteGuide);
+    document.getElementById("guideListDeleteCancelBtn").addEventListener("click", closeDeleteModal);
 
     modal.addEventListener("click", function (event) {
-      if (event.target === modal) closeDeleteModal();
-    });
-
-    document.addEventListener("keydown", function (event) {
-      if (event.key === "Escape") closeDeleteModal();
+      if (event.target === modal) {
+        closeDeleteModal();
+      }
     });
   }
 
-  function openDeleteModal(guideId, guideTitle) {
+  function openDeleteModal(guideId, title) {
     createDeleteModal();
 
-    pendingDeleteGuideId = guideId;
-    pendingDeleteGuideTitle = guideTitle || "";
+    const modal = document.getElementById("guideListDeleteModal");
+    const text = document.getElementById("guideListDeleteText");
+    const msg = document.getElementById("guideListDeleteMsg");
+    const confirmBtn = document.getElementById("guideListDeleteConfirmBtn");
 
-    const modal = document.getElementById("guideDeleteModal");
-    const text = document.getElementById("guideDeleteText");
-    const msg = document.getElementById("guideDeleteMsg");
-    const confirmBtn = document.getElementById("guideDeleteConfirmBtn");
-
-    text.innerText = `是否確定刪除文章「${pendingDeleteGuideTitle || "未命名文章"}」？刪除後將無法復原。`;
+    text.innerText = `是否確定刪除文章「${title || "未命名文章"}」？刪除後無法復原。`;
     msg.innerText = "";
-    confirmBtn.disabled = false;
-    confirmBtn.innerText = "確定";
+
+    const newConfirmBtn = confirmBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+
+    newConfirmBtn.addEventListener("click", function () {
+      deleteGuide(guideId, newConfirmBtn, msg);
+    });
 
     modal.classList.add("show");
   }
 
   function closeDeleteModal() {
-    const modal = document.getElementById("guideDeleteModal");
+    const modal = document.getElementById("guideListDeleteModal");
 
     if (modal) {
       modal.classList.remove("show");
     }
-
-    pendingDeleteGuideId = "";
-    pendingDeleteGuideTitle = "";
   }
 
-  async function deleteGuide() {
-    const msg = document.getElementById("guideDeleteMsg");
-    const confirmBtn = document.getElementById("guideDeleteConfirmBtn");
-
-    if (!currentUser) {
-      msg.innerText = "請先登入。";
-      return;
-    }
-
-    if (!pendingDeleteGuideId) {
-      msg.innerText = "找不到文章資料，請重新整理後再試。";
-      return;
-    }
-
+  async function deleteGuide(guideId, confirmBtn, msg) {
     try {
       confirmBtn.disabled = true;
       confirmBtn.innerText = "刪除中...";
 
-      const ref = db.collection("guides").doc(pendingDeleteGuideId);
-      const snap = await ref.get();
+      await db.collection("guides").doc(guideId).delete();
 
-      if (!snap.exists) {
-        closeDeleteModal();
-        return;
-      }
+      allGuides = allGuides.filter(function (item) {
+        return item.id !== guideId;
+      });
 
-      const data = snap.data();
-
-      if (data.authorUid !== currentUser.uid) {
-        msg.innerText = "只能刪除自己的文章。";
-        confirmBtn.disabled = false;
-        confirmBtn.innerText = "確定";
-        return;
-      }
-
-      await ref.delete();
       closeDeleteModal();
+      setMsg("文章已刪除。", "success");
+      renderGuides();
     } catch (error) {
       console.error("刪除文章失敗：", error);
       msg.innerText = "刪除失敗，請稍後再試。";
       confirmBtn.disabled = false;
-      confirmBtn.innerText = "確定";
+      confirmBtn.innerText = "確定刪除";
     }
   }
 
-  async function renderGuides(snapshot) {
-    const guideList = document.getElementById("guideList");
-
-    if (!guideList) return;
-
-    if (snapshot.empty) {
-      guideList.innerHTML = `<div class="guide-empty">目前還沒有文章，快來發布第一篇吧！</div>`;
-      return;
-    }
-
-    let html = "";
-
-    const rows = [];
-
-    for (const doc of snapshot.docs) {
-      const data = doc.data();
-      const commentCount = await getCommentCount(doc.id);
-
-      rows.push({
-        id: doc.id,
-        data: data,
-        commentCount: commentCount
-      });
-    }
-
-    rows.forEach(function (item) {
-      const docId = item.id;
-      const data = item.data;
-      const commentCount = item.commentCount;
-
-      const isOwner = currentUser && data.authorUid === currentUser.uid;
-      const category = getCategory(data);
-      const likeCount = data.likeCount || 0;
-      const viewCount = data.viewCount || 0;
-
-      const coverImage = data.coverImage && data.coverImage.trim()
-        ? data.coverImage.trim()
-        : "/assets/img/home_page_img.png";
-
-      html += `
-        <article class="guide-card">
-          <a class="guide-card-cover-link" href="/guides/post/?id=${encodeURIComponent(docId)}">
-            <img class="guide-card-cover" src="${escapeHtml(coverImage)}" alt="${escapeHtml(data.title || "文章封面")}">
-          </a>
-
-          <div class="guide-card-body">
-            <a class="guide-card-title-link" href="/guides/post/?id=${encodeURIComponent(docId)}">
-              <h2>${escapeHtml(data.title || "未命名文章")}</h2>
-            </a>
-
-            <div class="guide-meta">
-              <span>主題：${escapeHtml(data.gameName || "未分類主題")}</span>
-              <span>・${escapeHtml(data.authorName || "未命名社員")}</span>
-              <span>・${escapeHtml(formatTime(data.createdAt))}</span>
-              <span class="guide-category-pill">${escapeHtml(category)}</span>
-              <span class="guide-count-pill">👁 ${viewCount}</span>
-              <span class="guide-count-pill">💬 ${commentCount}</span>
-              <span class="guide-count-pill">👍 ${likeCount}</span>
-            </div>
-
-            <p class="guide-summary">${escapeHtml(data.summary || "這篇文章還沒有摘要。")}</p>
-
-            <div class="guide-card-actions">
-              <a class="guide-read-btn" href="/guides/post/?id=${encodeURIComponent(docId)}">閱讀全文</a>
-
-              ${
-                isOwner
-                  ? `
-                    <a class="guide-edit-btn" href="/guides/edit/?id=${encodeURIComponent(docId)}">編輯文章</a>
-                    <button
-                      class="guide-delete-btn"
-                      type="button"
-                      data-guide-id="${escapeHtml(docId)}"
-                      data-guide-title="${escapeHtml(data.title || "未命名文章")}">
-                      刪除文章
-                    </button>
-                  `
-                  : ""
-              }
-            </div>
-          </div>
-        </article>
-      `;
-    });
-
-    guideList.innerHTML = html;
-
-    guideList.querySelectorAll(".guide-delete-btn").forEach(function (btn) {
+  function bindDeleteButtons() {
+    document.querySelectorAll(".guide-delete-btn").forEach(function (btn) {
       btn.addEventListener("click", function () {
-        openDeleteModal(btn.dataset.guideId, btn.dataset.guideTitle);
+        openDeleteModal(btn.dataset.guideId, btn.dataset.title);
       });
     });
   }
 
-  function loadGuides() {
-    if (unsubscribeGuides) {
-      unsubscribeGuides();
-      unsubscribeGuides = null;
-    }
+  function init() {
+    bindFilterButtons();
+    createDeleteModal();
 
-    unsubscribeGuides = db.collection("guides")
-      .where("status", "==", "published")
-      .orderBy("createdAt", "desc")
-      .onSnapshot(renderGuides, function (error) {
-        console.error("讀取文章列表失敗：", error);
-
-        const guideList = document.getElementById("guideList");
-
-        if (guideList) {
-          guideList.innerHTML = `<div class="guide-empty">文章列表讀取失敗，請稍後再試。</div>`;
-        }
-      });
+    auth.onAuthStateChanged(function (user) {
+      currentUser = user;
+      loadGuides();
+    });
   }
 
-  function injectExtraStyles() {
-    if (document.getElementById("guideListOwnerStyle")) return;
-
-    const style = document.createElement("style");
-    style.id = "guideListOwnerStyle";
-    style.innerHTML = `
-      .guide-card {
-        display: grid;
-        grid-template-columns: 240px minmax(0, 1fr);
-        gap: 1.35rem;
-        align-items: center;
-        padding: 1rem;
-        border-radius: 16px;
-        background: rgba(255,255,255,0.055);
-        border: 1px solid rgba(255,255,255,0.08);
-        color: inherit;
-      }
-
-      .guide-card-cover-link {
-        display: block;
-        line-height: 0;
-      }
-
-      .guide-card-cover {
-        width: 100%;
-        height: 150px;
-        object-fit: cover;
-        border-radius: 12px;
-        background: #303437;
-        display: block;
-      }
-
-      .guide-card-body {
-        min-width: 0;
-        display: block;
-      }
-
-      .guide-card-title-link {
-        display: block !important;
-        color: inherit;
-        text-decoration: none;
-        margin: 0 !important;
-        padding: 0 !important;
-      }
-
-      .guide-card-title-link:hover {
-        text-decoration: none;
-      }
-
-      .guide-card-title-link h2 {
-        margin: 0 0 0.45rem 0 !important;
-        padding: 0 !important;
-        line-height: 1.25 !important;
-        font-size: 1.45rem;
-      }
-
-      .guide-meta {
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 0.35rem;
-        opacity: 0.78;
-        font-size: 0.92rem;
-        line-height: 1.55;
-        margin: 0 !important;
-        padding: 0 !important;
-      }
-
-      .guide-category-pill,
-      .guide-count-pill {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 3px 10px;
-        border-radius: 999px;
-        border: 1px solid rgba(79,177,186,0.45);
-        background: rgba(79,177,186,0.12);
-        color: inherit;
-        font-size: 0.82rem;
-        font-weight: 700;
-        line-height: 1.25;
-        white-space: nowrap;
-        opacity: 1;
-      }
-
-      .guide-count-pill {
-        border-color: rgba(255,255,255,0.18);
-        background: rgba(255,255,255,0.055);
-        font-weight: 600;
-      }
-
-      .guide-summary {
-        margin: 0.45rem 0 0 0 !important;
-        padding: 0 !important;
-        line-height: 1.65;
-      }
-
-      .guide-card-actions {
-        display: flex;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-        align-items: center;
-        margin-top: 0.95rem;
-      }
-
-      .guide-read-btn,
-      .guide-edit-btn,
-      .guide-delete-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 7px 12px;
-        border-radius: 999px;
-        font-size: 0.88rem;
-        font-weight: 700;
-        text-decoration: none;
-        border: 1px solid rgba(255,255,255,0.18);
-        background: transparent;
-        color: inherit;
-        cursor: pointer;
-        line-height: 1.2;
-      }
-
-      .guide-read-btn:hover,
-      .guide-edit-btn:hover {
-        border-color: rgb(79,177,186);
-        text-decoration: none;
-      }
-
-      .guide-delete-btn:hover {
-        border-color: #ff8a80;
-        color: #ffb4a9;
-      }
-
-      @media (max-width: 720px) {
-        .guide-card {
-          grid-template-columns: 1fr;
-          align-items: start;
-        }
-
-        .guide-card-cover {
-          height: 190px;
-        }
-      }
-    `;
-
-    document.head.appendChild(style);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
   }
-
-  createDeleteModal();
-  injectExtraStyles();
-
-  auth.onAuthStateChanged(function (user) {
-    currentUser = user;
-    loadGuides();
-  });
 })();
