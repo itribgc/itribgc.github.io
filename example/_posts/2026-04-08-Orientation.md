@@ -32,23 +32,35 @@ sitemap: false
 看來1隊的各位都很滿意自己的分組呢?都1隊了，一定可以拿第一!
 {:.figcaption}
 
+
+
 ![2 隊伍合照](/assets/img/blog/Orientation/Orientation_260408_14.jpg)
 2隊剛好可以比2，好像也不錯?男女比數平均的他們是不是破關時間也能更平均加速一點呢?
 {:.figcaption}
+
+
 
 ![3 隊伍合照](/assets/img/blog/Orientation/Orientation_260408_16.jpg)
 我們的老社長荒荒大人領隊的第3小隊，有著前人多年經驗，應該也能順利過關斬將!!
 {:.figcaption}
 
+
+
 ![4 隊伍合照](/assets/img/blog/Orientation/Orientation_260408_18.jpg)
 看起來較為靦腆的第4小隊，看似輕巧，實則動如疾風~往往輕鬆的神情下藏著睿智的想法!
 {:.figcaption}
+
+
 
 ![5 隊伍合照](/assets/img/blog/Orientation/Orientation_260408_18.jpg)
 第5小隊的各位看起來勢在必得呢!卡牌都已經蓋起來....是..蓋牌了嗎?在他們心中早就已經結束了!!不可能，窩咬驗牌!
 {:.figcaption}
 
+
+
 看來大家都已經躍躍欲試了!!來人阿~~讓他們感受一下關主們的溫情(困難?)!
+
+
 
 ## 困難重重的關卡卻可以開心巧取!
 
