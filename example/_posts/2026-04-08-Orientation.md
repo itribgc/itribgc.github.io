@@ -1,12 +1,13 @@
----
+--- 
 
-layout: post
-description: >
-歡迎加入 2026 第七屆桌遊社！迎新活動熱鬧開局，新舊夥伴一同組隊闖關、認識彼此，也為新一年的桌遊社寫下精彩序章。
-image:
-path: /assets/img/Orientation.jpg
-sitemap: false
---------------
+layout: post 
+description: > 
+歡迎加入 2026 第七屆桌遊社，一起開局、一起認識、一起玩出精彩回憶！ 
+image: 
+  path: /assets/img/Orientation.jpg 
+sitemap: false 
+
+---
 
 # 2026 迎新活動｜今晚同桌，故事開局
 
