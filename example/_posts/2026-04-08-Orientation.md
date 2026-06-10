@@ -52,7 +52,7 @@ sitemap: false
 
 
 
-![5 隊伍合照](/assets/img/blog/Orientation/Orientation_260408_18.jpg)
+![5 隊伍合照](/assets/img/blog/Orientation/Orientation_260408_17.jpg)
 第5小隊的各位看起來勢在必得呢!卡牌都已經蓋起來....是..蓋牌了嗎?在他們心中早就已經結束了!!不可能，窩咬驗牌!
 {:.figcaption}
 
@@ -94,8 +94,8 @@ sitemap: false
 
 最後來看到鐘元的關卡，比手畫腳大家一定都玩過很多了，但...真正比的出來又猜得出東西的，能有多少隊呢?
 
-![鐘元關卡](/assets/img/blog/Orientation/Orientation_260408_23.jpg)
-比的動作是甚麼呢...?這是..啊!!一定就是那個!!你看，猜的隊員都看懂了呢(歪頭燦笑
+![鐘元關卡](/assets/img/blog/Orientation/Orientation_260408_67.jpg)
+比的動作是甚麼呢...?這是..啊!!一定就是那個!!你看，都比出一個正確的手勢了呢!(圈圈~
 {:.figcaption}
 
 ## 歷經艱辛，恭賀排名!
