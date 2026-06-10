@@ -156,16 +156,10 @@ sitemap: false
 {:.figcaption}
 
 ![第二名](/assets/img/blog/Orientation/Orientation_260408_39.jpg)
-第二名也非常精彩，能一路闖到這裡，絕對不只是靠運氣。
-{:.figcaption}
 
 ![第三名](/assets/img/blog/Orientation/Orientation_260408_40.jpg)
-第三名同樣不惶多讓，每一關的努力都值得掌聲。
-{:.figcaption}
 
 ![第四名](/assets/img/blog/Orientation/Orientation_260408_42.jpg)
-第四名的大家也辛苦了！勝負之外，最重要的是一起完成挑戰的回憶。
-{:.figcaption}
 
 ![第五名](/assets/img/blog/Orientation/Orientation_260408_45.jpg)
 剩下的隊伍也完全不輸氣勢。勝負固然重要，但過程中的歡笑更讓人回味無窮。
