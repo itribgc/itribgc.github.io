@@ -19,8 +19,15 @@ console.log("guide-admin.js 已載入");
 
   const ADMIN_EMAIL = "itribgc@gmail.com";
 
+  // 請貼上你的 Apps Script Web App URL
+  const APPS_SCRIPT_NOTIFY_URL = "https://script.google.com/macros/s/AKfycbygV-qWpana-D-0JSoA8_nJL61tPRYrmCW-ArVhjYJKhA2sdrUeHJl11-mwUzMPqHJJ/exec";
+
+  // 請貼上你在 Apps Script 裡設定的 ADMIN_SECRET
+  const APPS_SCRIPT_SECRET = "itribgc2026";
+
   let currentUser = null;
   let unsubscribePendingGuides = null;
+  let unsubscribePublishedGuides = null;
   let unsubscribeReports = null;
 
   const msgEl = document.getElementById("guideAdminMsg");
@@ -79,6 +86,20 @@ console.log("guide-admin.js 已載入");
       page.appendChild(pendingSection);
     }
 
+    if (!document.getElementById("publishedGuideList")) {
+      const publishedSection = document.createElement("section");
+      publishedSection.className = "guide-admin-section";
+      publishedSection.innerHTML = `
+        <h2>已公開文章通知管理</h2>
+        <p class="guide-admin-section-desc">文章審核通過並公開後，可以在這裡寄出「上架通知」給所有社員。</p>
+        <div id="publishedGuideList" class="reported-guide-list">
+          <div class="reported-guide-empty">已公開文章載入中...</div>
+        </div>
+      `;
+
+      page.appendChild(publishedSection);
+    }
+
     if (!document.getElementById("reportedGuideList")) {
       const reportSection = document.createElement("section");
       reportSection.className = "guide-admin-section";
@@ -96,6 +117,10 @@ console.log("guide-admin.js 已載入");
 
   function getPendingListEl() {
     return document.getElementById("pendingGuideList");
+  }
+
+  function getPublishedListEl() {
+    return document.getElementById("publishedGuideList");
   }
 
   function getReportListEl() {
@@ -121,7 +146,7 @@ console.log("guide-admin.js 已載入");
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
 
-      setMsg("文章已審核通過並公開。", "success");
+      setMsg("文章已審核通過並公開。可到「已公開文章通知管理」寄出上架通知。", "success");
     } catch (error) {
       console.error("審核通過失敗：", error);
       setMsg("審核通過失敗，請稍後再試。");
@@ -173,6 +198,113 @@ console.log("guide-admin.js 已載入");
     } catch (error) {
       console.error("刪除文章失敗：", error);
       setMsg("刪除文章失敗，請稍後再試。");
+    }
+  }
+
+  async function getAllMemberEmails() {
+    const snapshot = await db.collection("users").get();
+
+    return [...new Set(
+      snapshot.docs
+        .map(function (doc) {
+          const data = doc.data();
+          return String(data.email || "").trim();
+        })
+        .filter(function (email) {
+          return email && email.includes("@");
+        })
+    )];
+  }
+
+  async function sendPublishedNotice(guideId) {
+    if (!isAdmin(currentUser)) {
+      setMsg("你沒有管理員權限。");
+      return;
+    }
+
+    if (!APPS_SCRIPT_NOTIFY_URL || APPS_SCRIPT_NOTIFY_URL.includes("請貼上")) {
+      alert("尚未設定 Apps Script Web App URL。");
+      return;
+    }
+
+    if (!APPS_SCRIPT_SECRET || APPS_SCRIPT_SECRET.includes("請貼上")) {
+      alert("尚未設定 Apps Script Secret。");
+      return;
+    }
+
+    try {
+      const guideDoc = await db.collection("guides").doc(guideId).get();
+
+      if (!guideDoc.exists) {
+        setMsg("找不到這篇文章。");
+        return;
+      }
+
+      const guide = guideDoc.data();
+
+      if (guide.status !== "published") {
+        alert("這篇文章尚未公開，不能寄送上架通知。");
+        return;
+      }
+
+      if (guide.publishedNotifySent === true) {
+        alert("這篇文章已經寄送過上架通知。");
+        return;
+      }
+
+      const emails = await getAllMemberEmails();
+
+      if (emails.length === 0) {
+        alert("找不到可通知的社員信箱。");
+        return;
+      }
+
+      const ok = confirm(
+        "確定要寄出上架通知嗎？\n\n" +
+        "文章：" + (guide.title || "未命名文章") + "\n" +
+        "通知人數：" + emails.length + " 位社員\n\n" +
+        "信件會透過你的 Gmail 寄出，社員信箱會放在 BCC。"
+      );
+
+      if (!ok) return;
+
+      setMsg("上架通知寄送中，請稍候...");
+
+      const postUrl = "https://itribgc.github.io/guides/post/?id=" + encodeURIComponent(guideId);
+
+      const payload = {
+        secret: APPS_SCRIPT_SECRET,
+        postTitle: guide.title || "未命名文章",
+        category: guide.category || "未分類",
+        gameName: guide.gameName || "",
+        authorName: guide.authorName || "未知社員",
+        summary: guide.summary || "無摘要",
+        postUrl: postUrl,
+        emails: emails
+      };
+
+      await fetch(APPS_SCRIPT_NOTIFY_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      await db.collection("guides").doc(guideId).update({
+        publishedNotifySent: true,
+        publishedNotifySentAt: firebase.firestore.FieldValue.serverTimestamp(),
+        publishedNotifySentBy: currentUser.uid,
+        publishedNotifySentByEmail: currentUser.email,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      setMsg("已送出上架通知，並標記為已通知。", "success");
+
+    } catch (error) {
+      console.error("寄送上架通知失敗：", error);
+      setMsg("寄送上架通知失敗，請稍後再試。");
     }
   }
 
@@ -276,6 +408,108 @@ console.log("guide-admin.js 已載入");
     listEl.querySelectorAll(".reported-guide-reject-btn").forEach(function (btn) {
       btn.addEventListener("click", function () {
         rejectGuide(btn.dataset.guideId);
+      });
+    });
+
+    listEl.querySelectorAll(".reported-guide-delete-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        deleteGuideByAdmin(btn.dataset.guideId, btn.dataset.title);
+      });
+    });
+  }
+
+  function renderPublishedGuides(snapshot) {
+    const listEl = getPublishedListEl();
+    if (!listEl) return;
+
+    if (!isAdmin(currentUser)) {
+      listEl.innerHTML = `<div class="reported-guide-empty">你沒有管理文章權限。</div>`;
+      return;
+    }
+
+    if (snapshot.empty) {
+      listEl.innerHTML = `<div class="reported-guide-empty">目前沒有已公開文章。</div>`;
+      return;
+    }
+
+    const docs = snapshot.docs.slice().sort(function (a, b) {
+      const aTime = a.data().reviewedAt && a.data().reviewedAt.toMillis ? a.data().reviewedAt.toMillis() : 0;
+      const bTime = b.data().reviewedAt && b.data().reviewedAt.toMillis ? b.data().reviewedAt.toMillis() : 0;
+      return bTime - aTime;
+    });
+
+    let html = "";
+
+    docs.forEach(function (doc) {
+      const data = doc.data();
+      const title = data.title || "未命名文章";
+      const category = data.category || "未分類";
+      const gameName = data.gameName || "";
+      const summary = data.summary || "";
+      const coverImage = data.coverImage || "";
+      const authorName = data.authorName || "未命名社員";
+      const notified = data.publishedNotifySent === true;
+
+      html += `
+        <article class="reported-guide-card">
+          ${
+            coverImage
+              ? `
+                <a class="reported-guide-cover-link" href="/guides/post/?id=${encodeURIComponent(doc.id)}">
+                  <img class="reported-guide-cover" src="${escapeHtml(coverImage)}" alt="${escapeHtml(title)}">
+                </a>
+              `
+              : `<div class="reported-guide-cover reported-guide-cover-empty">無封面</div>`
+          }
+
+          <div class="reported-guide-body">
+            <a class="reported-guide-title-link" href="/guides/post/?id=${encodeURIComponent(doc.id)}">
+              <h2>${escapeHtml(title)}</h2>
+            </a>
+
+            <div class="reported-guide-meta">
+              <span>主題：${escapeHtml(gameName || "未分類主題")}</span>
+              <span>・${escapeHtml(authorName)}</span>
+              <span class="reported-guide-pill">${escapeHtml(category)}</span>
+              <span class="reported-guide-pill published">已公開</span>
+              ${
+                notified
+                  ? `<span class="reported-guide-pill notified">已通知</span>`
+                  : `<span class="reported-guide-pill pending">尚未通知</span>`
+              }
+            </div>
+
+            <p class="reported-guide-summary">${escapeHtml(summary || "這篇文章沒有摘要。")}</p>
+
+            <div class="reported-reason-box pending-box">
+              <strong>公開時間：</strong>
+              <div>${escapeHtml(formatTime(data.reviewedAt) || "未記錄")}</div>
+              ${
+                notified
+                  ? `<small>通知時間：${escapeHtml(formatTime(data.publishedNotifySentAt) || "未記錄")}</small>`
+                  : ``
+              }
+            </div>
+
+            <div class="reported-guide-actions">
+              <a class="reported-guide-read-btn" href="/guides/post/?id=${encodeURIComponent(doc.id)}">查看文章</a>
+              ${
+                notified
+                  ? `<button class="reported-guide-notified-btn" type="button" disabled>已通知</button>`
+                  : `<button class="reported-guide-notify-btn" type="button" data-guide-id="${escapeHtml(doc.id)}">上架通知</button>`
+              }
+              <button class="reported-guide-delete-btn" type="button" data-guide-id="${escapeHtml(doc.id)}" data-title="${escapeHtml(title)}">刪除文章</button>
+            </div>
+          </div>
+        </article>
+      `;
+    });
+
+    listEl.innerHTML = html;
+
+    listEl.querySelectorAll(".reported-guide-notify-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        sendPublishedNotice(btn.dataset.guideId);
       });
     });
 
@@ -573,6 +807,16 @@ console.log("guide-admin.js 已載入");
         background: rgba(255, 138, 128, 0.13);
       }
 
+      .reported-guide-pill.published {
+        border-color: rgba(143, 209, 158, 0.6);
+        background: rgba(143, 209, 158, 0.14);
+      }
+
+      .reported-guide-pill.notified {
+        border-color: rgba(79,177,186,0.55);
+        background: rgba(79,177,186,0.16);
+      }
+
       .reported-guide-summary {
         margin: 0.45rem 0 0 0 !important;
         padding: 0 !important;
@@ -612,7 +856,9 @@ console.log("guide-admin.js 已載入");
       .reported-guide-delete-btn,
       .reported-guide-resolve-btn,
       .reported-guide-approve-btn,
-      .reported-guide-reject-btn {
+      .reported-guide-reject-btn,
+      .reported-guide-notify-btn,
+      .reported-guide-notified-btn {
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -638,6 +884,20 @@ console.log("guide-admin.js 已載入");
       .reported-guide-approve-btn {
         border-color: rgba(79,177,186,0.45);
         background: rgba(79,177,186,0.12);
+      }
+
+      .reported-guide-notify-btn {
+        border-color: rgba(79,177,186,0.45);
+        background: rgba(79,177,186,0.12);
+      }
+
+      .reported-guide-notify-btn:hover {
+        border-color: rgb(79,177,186);
+      }
+
+      .reported-guide-notified-btn {
+        opacity: 0.55;
+        cursor: not-allowed;
       }
 
       .reported-guide-reject-btn {
@@ -669,77 +929,88 @@ console.log("guide-admin.js 已載入");
     document.head.appendChild(style);
   }
 
-  function listenPendingGuides() {
+  function clearSubscriptions() {
     if (unsubscribePendingGuides) {
       unsubscribePendingGuides();
       unsubscribePendingGuides = null;
     }
 
-    unsubscribePendingGuides = db.collection("guides")
-      .where("status", "==", "pending")
-      .onSnapshot(renderPendingGuides, function (error) {
-        console.error("讀取待審核貼文失敗：", error);
+    if (unsubscribePublishedGuides) {
+      unsubscribePublishedGuides();
+      unsubscribePublishedGuides = null;
+    }
 
-        const listEl = getPendingListEl();
-        if (listEl) {
-          listEl.innerHTML = `<div class="reported-guide-empty">讀取待審核貼文失敗，請確認權限或稍後再試。</div>`;
-        }
-      });
-  }
-
-  function listenReports() {
     if (unsubscribeReports) {
       unsubscribeReports();
       unsubscribeReports = null;
     }
+  }
+
+  function startAdminListeners() {
+    clearSubscriptions();
+    ensureAdminLayout();
+
+    unsubscribePendingGuides = db.collection("guides")
+      .where("status", "==", "pending")
+      .onSnapshot(renderPendingGuides, function (error) {
+        console.error("監聽待審核貼文失敗：", error);
+        const listEl = getPendingListEl();
+        if (listEl) {
+          listEl.innerHTML = `<div class="reported-guide-empty">待審核貼文載入失敗。</div>`;
+        }
+      });
+
+    unsubscribePublishedGuides = db.collection("guides")
+      .where("status", "==", "published")
+      .onSnapshot(renderPublishedGuides, function (error) {
+        console.error("監聽已公開文章失敗：", error);
+        const listEl = getPublishedListEl();
+        if (listEl) {
+          listEl.innerHTML = `<div class="reported-guide-empty">已公開文章載入失敗。</div>`;
+        }
+      });
 
     unsubscribeReports = db.collection("reports")
       .where("status", "==", "open")
       .onSnapshot(renderReports, function (error) {
-        console.error("讀取疑慮回報失敗：", error);
-
+        console.error("監聽疑慮回報失敗：", error);
         const listEl = getReportListEl();
         if (listEl) {
-          listEl.innerHTML = `<div class="reported-guide-empty">讀取疑慮回報失敗，請確認權限或稍後再試。</div>`;
+          listEl.innerHTML = `<div class="reported-guide-empty">疑慮回報載入失敗。</div>`;
         }
       });
   }
 
-  ensureAdminLayout();
   injectStyles();
 
   auth.onAuthStateChanged(function (user) {
     currentUser = user;
 
-    ensureAdminLayout();
-
     if (!user) {
-      setMsg("請先登入。");
-
-      const pendingList = getPendingListEl();
-      const reportList = getReportListEl();
-
-      if (pendingList) pendingList.innerHTML = `<div class="reported-guide-empty">請先登入後再進入審核頁。</div>`;
-      if (reportList) reportList.innerHTML = `<div class="reported-guide-empty">請先登入後再進入審核頁。</div>`;
-
+      clearSubscriptions();
+      setMsg("請先登入管理員帳號。");
       return;
     }
 
     if (!isAdmin(user)) {
-      setMsg("你沒有審核文章權限。");
+      clearSubscriptions();
+      ensureAdminLayout();
 
-      const pendingList = getPendingListEl();
-      const reportList = getReportListEl();
+      const pendingEl = getPendingListEl();
+      const publishedEl = getPublishedListEl();
+      const reportEl = getReportListEl();
 
-      if (pendingList) pendingList.innerHTML = `<div class="reported-guide-empty">你沒有審核文章權限。</div>`;
-      if (reportList) reportList.innerHTML = `<div class="reported-guide-empty">你沒有審核文章權限。</div>`;
+      if (pendingEl) pendingEl.innerHTML = `<div class="reported-guide-empty">你沒有審核文章權限。</div>`;
+      if (publishedEl) publishedEl.innerHTML = `<div class="reported-guide-empty">你沒有管理文章權限。</div>`;
+      if (reportEl) reportEl.innerHTML = `<div class="reported-guide-empty">你沒有疑慮審核權限。</div>`;
 
+      setMsg("你沒有管理員權限。");
       return;
     }
 
-    setMsg("目前登入管理員：" + user.email, "success");
-
-    listenPendingGuides();
-    listenReports();
+    setMsg("");
+    startAdminListeners();
   });
+
+  window.addEventListener("beforeunload", clearSubscriptions);
 })();
