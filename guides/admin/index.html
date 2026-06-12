@@ -2,7 +2,7 @@
 layout: page
 title: 審核文章
 description: >
-  查看社員回報的有疑慮文章。
+  查看社員送審文章、已公開文章通知狀態，以及社員回報的有疑慮文章。
 ---
 
 <style>
@@ -45,14 +45,22 @@ description: >
   <h1>審核文章</h1>
 
   <p class="guide-admin-intro">
-    這裡會顯示社員回報「文章有疑慮」的貼文。確認內容有問題時，可以直接刪除文章。
+    這裡可以審核社員送出的文章、寄送已公開文章的上架通知，也可以處理社員回報「文章有疑慮」的內容。
   </p>
 
   <div id="guideAdminMsg" class="guide-admin-msg"></div>
+
+  <div id="pendingGuideList" class="reported-guide-list">
+    <div class="reported-guide-empty">資料載入中...</div>
+  </div>
+
+  <div id="publishedGuideList" class="reported-guide-list">
+    <div class="reported-guide-empty">資料載入中...</div>
+  </div>
 
   <div id="reportedGuideList" class="reported-guide-list">
     <div class="reported-guide-empty">資料載入中...</div>
   </div>
 </div>
 
-<script src="/assets/js/guide-admin.js"></script>
+<script src="/assets/js/guide-admin.js?v=3"></script>
