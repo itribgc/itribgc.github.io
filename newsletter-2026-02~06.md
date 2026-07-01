@@ -6,7 +6,7 @@ description: 守夜人桌遊社電子報 2026 年 02~06 月
 newsletter_issue: true
 newsletter_label: 2026 年 02–06 月
 newsletter_sort: 20260206
-pdf_url: /assets/newsletter/2026_03_04/2025-02~06.pdf
+pdf_url: /assets/newsletter/2026_02_06/2025-02~06.pdf
 ---
 
 <style>
