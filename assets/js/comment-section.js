@@ -17,9 +17,24 @@ console.log("comment-section.js 已載入");
   const auth = firebase.auth();
   const db = firebase.firestore();
 
+  const ADMIN_EMAIL = "itribgc@gmail.com";
+  const MAX_LEVEL = 9999;
+
+  const POST_XP_TABLE = {
+    "桌遊攻略": 30,
+    "活動心得": 20,
+    "開箱分享": 20,
+    "規則討論": 12,
+    "揪團交流": 12
+  };
+
   let currentUser = null;
   let currentDisplayName = "";
   let unsubscribeComments = null;
+
+  let publishedGuidesCache = null;
+  let userDataCache = {};
+  let memberLevelCache = {};
 
   function normalizePath(path) {
     if (!path.endsWith("/")) {
@@ -71,6 +86,54 @@ console.log("comment-section.js 已載入");
     });
   }
 
+  function getLikeCount(data) {
+    const directLikeCount = Number(data && data.likeCount);
+
+    if (Number.isFinite(directLikeCount) && directLikeCount >= 0) {
+      return directLikeCount;
+    }
+
+    const likedBy = data && data.likedBy ? data.likedBy : {};
+
+    return Object.keys(likedBy).filter(function (uid) {
+      return likedBy[uid] === true;
+    }).length;
+  }
+
+  function getXpRequiredForLevel(level) {
+    const lv = Math.max(Number(level || 1), 1);
+
+    if (lv >= MAX_LEVEL) return 0;
+
+    return 30 + (lv - 1) * 15;
+  }
+
+  function calculateLevelFromXp(totalXp) {
+    let xp = Math.max(Number(totalXp || 0), 0);
+    let level = 1;
+
+    while (level < MAX_LEVEL) {
+      const need = getXpRequiredForLevel(level);
+
+      if (xp < need) break;
+
+      xp -= need;
+      level += 1;
+    }
+
+    const currentLevelRequiredXp = getXpRequiredForLevel(level);
+
+    return {
+      level: level,
+      totalXp: Math.max(Number(totalXp || 0), 0),
+      currentXp: xp,
+      nextLevelXp: currentLevelRequiredXp,
+      progressPercent: currentLevelRequiredXp > 0
+        ? Math.min(Math.round((xp / currentLevelRequiredXp) * 100), 100)
+        : 100
+    };
+  }
+
   async function getCurrentDisplayName(user) {
     if (!user) {
       return "";
@@ -92,6 +155,219 @@ console.log("comment-section.js 已載入");
       console.error("讀取社員 ID 失敗：", error);
       return user.displayName || "";
     }
+  }
+
+  async function getUserData(uid) {
+    if (!uid) return null;
+
+    if (userDataCache[uid]) {
+      return userDataCache[uid];
+    }
+
+    try {
+      const doc = await db.collection("users").doc(uid).get();
+
+      const data = doc.exists ? doc.data() : null;
+      userDataCache[uid] = data;
+
+      return data;
+    } catch (error) {
+      console.error("讀取留言者資料失敗：", error);
+      userDataCache[uid] = null;
+      return null;
+    }
+  }
+
+  async function getPublishedGuidesForLevel() {
+    if (publishedGuidesCache) {
+      return publishedGuidesCache;
+    }
+
+    const snapshot = await db.collection("guides")
+      .where("status", "==", "published")
+      .get();
+
+    publishedGuidesCache = snapshot.docs.map(function (doc) {
+      return {
+        id: doc.id,
+        data: doc.data()
+      };
+    });
+
+    return publishedGuidesCache;
+  }
+
+  async function getCommentsByUid(uid) {
+    if (!uid) return [];
+
+    const snapshot = await db.collection("comments")
+      .where("uid", "==", uid)
+      .get();
+
+    return snapshot.docs.map(function (doc) {
+      return {
+        id: doc.id,
+        data: doc.data()
+      };
+    });
+  }
+
+  function calculatePostXp(uid, guides) {
+    let postXp = 0;
+
+    guides.forEach(function (item) {
+      const data = item.data || {};
+
+      if (data.authorUid !== uid) return;
+
+      const category = data.category || "桌遊攻略";
+      const xp = POST_XP_TABLE[category] ?? 0;
+
+      postXp += xp;
+    });
+
+    return postXp;
+  }
+
+  function calculateArticleReceivedLikeXp(uid, guides) {
+    let articleReceivedLikeXp = 0;
+
+    guides.forEach(function (item) {
+      const data = item.data || {};
+
+      if (data.authorUid !== uid) return;
+
+      const likeCount = getLikeCount(data);
+
+      articleReceivedLikeXp += likeCount;
+    });
+
+    return articleReceivedLikeXp;
+  }
+
+  function calculateArticleGivenLikeXp(uid, guides) {
+    let articleGivenLikeXp = 0;
+
+    guides.forEach(function (item) {
+      const data = item.data || {};
+      const likedBy = data.likedBy || {};
+      const authorUid = data.authorUid || "";
+
+      const hasLikedThisArticle = likedBy[uid] === true;
+      const isOwnArticle = authorUid === uid;
+
+      if (hasLikedThisArticle && !isOwnArticle) {
+        articleGivenLikeXp += 1;
+      }
+    });
+
+    return articleGivenLikeXp;
+  }
+
+  function calculateCommentReceivedLikeXp(comments) {
+    let commentLikeXp = 0;
+
+    comments.forEach(function (item) {
+      const data = item.data || {};
+      const likeCount = getLikeCount(data);
+
+      commentLikeXp += likeCount;
+    });
+
+    return commentLikeXp;
+  }
+
+  async function calculateMemberLevelByUid(uid) {
+    if (!uid) {
+      return {
+        level: 1,
+        totalXp: 0
+      };
+    }
+
+    if (memberLevelCache[uid]) {
+      return memberLevelCache[uid];
+    }
+
+    try {
+      const userData = await getUserData(uid);
+
+      if (userData && userData.email === ADMIN_EMAIL) {
+        const adminLevel = {
+          level: MAX_LEVEL,
+          totalXp: 0,
+          isAdmin: true
+        };
+
+        memberLevelCache[uid] = adminLevel;
+        return adminLevel;
+      }
+
+      const guides = await getPublishedGuidesForLevel();
+      const comments = await getCommentsByUid(uid);
+
+      const postXp = calculatePostXp(uid, guides);
+      const articleReceivedLikeXp = calculateArticleReceivedLikeXp(uid, guides);
+      const articleGivenLikeXp = calculateArticleGivenLikeXp(uid, guides);
+      const commentLikeXp = calculateCommentReceivedLikeXp(comments);
+
+      const totalXp =
+        postXp +
+        articleReceivedLikeXp +
+        articleGivenLikeXp +
+        commentLikeXp;
+
+      const levelInfo = calculateLevelFromXp(totalXp);
+
+      const result = {
+        level: levelInfo.level,
+        totalXp: totalXp,
+        isAdmin: false
+      };
+
+      memberLevelCache[uid] = result;
+      return result;
+    } catch (error) {
+      console.error("計算留言者等級失敗：", error);
+
+      const fallback = {
+        level: 1,
+        totalXp: 0,
+        isAdmin: false
+      };
+
+      memberLevelCache[uid] = fallback;
+      return fallback;
+    }
+  }
+
+  async function preloadCommentAuthorLevels(comments) {
+    const uidList = [...new Set(
+      comments
+        .map(function (item) {
+          const data = item.data || {};
+          return data.uid || "";
+        })
+        .filter(function (uid) {
+          return !!uid;
+        })
+    )];
+
+    await Promise.all(uidList.map(function (uid) {
+      return calculateMemberLevelByUid(uid);
+    }));
+  }
+
+  function refreshLevelCacheAfterLike(commentOwnerUid) {
+    if (commentOwnerUid && memberLevelCache[commentOwnerUid]) {
+      delete memberLevelCache[commentOwnerUid];
+    }
+
+    if (currentUser && memberLevelCache[currentUser.uid]) {
+      delete memberLevelCache[currentUser.uid];
+    }
+
+    publishedGuidesCache = null;
   }
 
   function getCommentMountTarget() {
@@ -258,6 +534,25 @@ console.log("comment-section.js 已載入");
         .firebase-comment-name {
           font-weight: 700;
           opacity: 0.98;
+        }
+
+        .firebase-comment-level-badge {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 2px 8px;
+          border-radius: 999px;
+          border: 1px solid rgba(79, 177, 186, 0.45);
+          background: rgba(79, 177, 186, 0.13);
+          font-size: 0.76rem;
+          font-weight: 900;
+          line-height: 1.35;
+          opacity: 0.95;
+        }
+
+        .firebase-comment-level-badge.admin {
+          border-color: rgba(255, 214, 102, 0.65);
+          background: rgba(255, 214, 102, 0.18);
         }
 
         .firebase-comment-edited {
@@ -562,7 +857,7 @@ console.log("comment-section.js 已載入");
     warning.style.display = "none";
   }
 
-  function renderComments(snapshot) {
+  async function renderComments(snapshot) {
     const commentList = document.getElementById("commentList");
 
     if (!commentList) return;
@@ -572,21 +867,45 @@ console.log("comment-section.js 已載入");
       return;
     }
 
+    const docs = snapshot.docs.map(function (doc) {
+      return {
+        id: doc.id,
+        data: doc.data()
+      };
+    });
+
+    await preloadCommentAuthorLevels(docs);
+
     let html = "";
 
-    snapshot.forEach(function (doc) {
-      const data = doc.data();
+    docs.forEach(function (item) {
+      const data = item.data || {};
       const likedBy = data.likedBy || {};
       const uid = currentUser ? currentUser.uid : "";
       const isOwner = uid && data.uid === uid;
       const isLiked = uid && likedBy[uid] === true;
-      const likeCount = data.likeCount || 0;
+      const likeCount = getLikeCount(data);
       const editedText = data.editedAt ? `<span class="firebase-comment-edited">已編輯</span>` : "";
+
+      const levelInfo = memberLevelCache[data.uid] || {
+        level: 1,
+        totalXp: 0,
+        isAdmin: false
+      };
+
+      const levelBadgeClass = levelInfo.isAdmin
+        ? "firebase-comment-level-badge admin"
+        : "firebase-comment-level-badge";
+
+      const levelText = levelInfo.isAdmin
+        ? "Lv.9999"
+        : "Lv." + levelInfo.level;
 
       html += `
         <div class="firebase-comment-item">
           <div class="firebase-comment-meta">
             <span class="firebase-comment-name">${escapeHtml(data.displayName || "未命名社員")}</span>
+            <span class="${levelBadgeClass}" title="目前等級">${escapeHtml(levelText)}</span>
             <span>・</span>
             <span>${escapeHtml(formatTime(data.createdAt))}</span>
             ${editedText ? `<span>・</span>${editedText}` : ""}
@@ -599,7 +918,7 @@ console.log("comment-section.js 已載入");
               <button
                 class="firebase-like-btn ${isLiked ? "liked" : ""}"
                 type="button"
-                data-comment-id="${doc.id}">
+                data-comment-id="${item.id}">
                 👍 ${likeCount}
               </button>
             </div>
@@ -611,7 +930,7 @@ console.log("comment-section.js 已載入");
                     <button
                       class="firebase-edit-btn"
                       type="button"
-                      data-comment-id="${doc.id}"
+                      data-comment-id="${item.id}"
                       data-comment-content="${escapeHtml(data.content)}">
                       編輯
                     </button>
@@ -619,7 +938,7 @@ console.log("comment-section.js 已載入");
                     <button
                       class="firebase-delete-btn"
                       type="button"
-                      data-comment-id="${doc.id}">
+                      data-comment-id="${item.id}">
                       刪除
                     </button>
                   </div>
@@ -722,6 +1041,10 @@ console.log("comment-section.js 已載入");
         likeCount: 0
       });
 
+      if (memberLevelCache[currentUser.uid]) {
+        delete memberLevelCache[currentUser.uid];
+      }
+
       commentInput.value = "";
       updateTextCount();
       setMessage("留言已送出。", "success");
@@ -743,6 +1066,7 @@ console.log("comment-section.js 已載入");
     if (!commentId) return;
 
     const ref = db.collection("comments").doc(commentId);
+    let commentOwnerUid = "";
 
     try {
       await db.runTransaction(async function (transaction) {
@@ -754,6 +1078,8 @@ console.log("comment-section.js 已載入");
         const likedBy = data.likedBy || {};
         const uid = currentUser.uid;
         const hasLiked = likedBy[uid] === true;
+
+        commentOwnerUid = data.uid || "";
 
         if (hasLiked) {
           delete likedBy[uid];
@@ -773,6 +1099,10 @@ console.log("comment-section.js 已載入");
           });
         }
       });
+
+      refreshLevelCacheAfterLike(commentOwnerUid);
+
+      window.dispatchEvent(new CustomEvent("bgc-xp-refresh"));
     } catch (error) {
       console.error("按讚失敗：", error);
       alert("按讚失敗，請稍後再試。");
@@ -944,6 +1274,12 @@ console.log("comment-section.js 已載入");
 
       await ref.delete();
 
+      if (memberLevelCache[currentUser.uid]) {
+        delete memberLevelCache[currentUser.uid];
+      }
+
+      window.dispatchEvent(new CustomEvent("bgc-xp-refresh"));
+
       closeDeleteModal();
     } catch (error) {
       console.error("刪除留言失敗：", error);
@@ -1051,6 +1387,11 @@ console.log("comment-section.js 已載入");
       currentDisplayName = await getCurrentDisplayName(user);
 
       updateFormState();
+
+      userDataCache = {};
+      memberLevelCache = {};
+      publishedGuidesCache = null;
+
       listenComments();
     });
   }
